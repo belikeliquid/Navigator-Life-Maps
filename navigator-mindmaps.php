@@ -18,6 +18,7 @@ require_once NMM_PATH . 'includes/class-rest-api.php';
 require_once NMM_PATH . 'includes/class-shortcodes.php';
 require_once NMM_PATH . 'includes/class-settings.php';
 require_once NMM_PATH . 'includes/class-auth.php';
+require_once NMM_PATH . 'includes/plugin-update-checker/update-checker.php';
 
 class Navigator_MindMaps {
 
@@ -156,6 +157,15 @@ class Navigator_MindMaps {
 }
 
 new Navigator_MindMaps();
+
+// GitHub auto-update checker
+// Checks github.com/belikeliquid/Navigator-Life-Maps for new releases
+new NMM_GitHub_Updater(
+    __FILE__,
+    'belikeliquid',
+    'Navigator-Life-Maps',
+    NMM_VERSION
+);
 
 register_activation_hook( __FILE__, function() {
     NMM_Post_Types::register();
