@@ -1,0 +1,1316 @@
+/* ============================================================
+   ENFOLD LAYOUT ESCAPE — removes padding injected by theme
+   ============================================================ */
+
+/* Kill Enfold's content padding on NMM pages */
+body:has(.nmm-app) #main,
+body:has(.nmm-app) #content,
+body:has(.nmm-app) .entry-content,
+body:has(.nmm-app) .post-content,
+body:has(.nmm-app) #av-content-area,
+body:has(.nmm-app) .container,
+body:has(.nmm-app) .template-page,
+body:has(.nmm-app) .av-content-part,
+body:has(.nmm-app) .avia-section {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+}
+
+/* Also target Enfold's inner padding wrappers */
+body:has(.nmm-app) .av-column-1,
+body:has(.nmm-app) .flex_column,
+body:has(.nmm-app) .avia_textblock,
+body:has(.nmm-app) .av_textblock_section {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Force full width — no negative margins */
+.nmm-app {
+    position: relative;
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
+
+/* Remove any white gap above the app */
+body:has(.nmm-app) .entry-content > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+
+/* ============================================================
+   TOPOGRAPHIC BACKGROUND — inline SVG tile
+   ============================================================ */
+
+/* Applied to canvas background and manager body */
+.nmm-canvas-wrap,
+.nmm-manager-body {
+    background-color: #e8e4db;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400'%3E%3Crect width='800' height='400' fill='%23e8e4db'/%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23c8c4bb' stroke-width='0.8' opacity='0.5'%3E%3Cpath d='M0,180 C60,160 120,200 180,170 C240,140 300,190 360,165 C420,140 480,185 540,160 C600,135 660,175 720,155 C760,142 800,160 800,160'/%3E%3Cpath d='M0,280 C50,260 110,300 170,275 C230,250 290,285 350,265 C410,245 470,280 530,260 C590,240 650,275 710,255 C760,240 800,260 800,258'/%3E%3Cpath d='M0,80 C70,65 130,95 190,75 C250,55 310,85 370,68 C430,51 490,78 550,62 C610,46 670,70 730,55 C770,44 800,58 800,56'/%3E%3Cpath d='M0,340 C55,325 115,355 175,335 C235,315 295,345 355,328 C415,311 475,338 535,322 C595,306 655,330 715,315 C758,304 800,318 800,316'/%3E%3Cpath d='M100,0 C90,40 110,80 95,120 C80,160 100,200 88,240 C76,280 95,320 82,360'/%3E%3Cpath d='M500,0 C515,45 495,90 510,135 C525,180 505,220 518,265 C531,310 512,350 525,390'/%3E%3Cpath d='M250,0 C240,50 260,95 248,140 C236,185 255,225 244,270 C233,315 250,355 240,395'/%3E%3Cpath d='M700,0 C712,42 695,85 708,128 C721,171 705,212 716,255 C727,298 712,338 722,378'/%3E%3C/g%3E%3Cg stroke='%23b8b4ab' stroke-width='0.6' opacity='0.4'%3E%3Cpath d='M0,130 C80,115 140,145 200,128 C260,111 320,138 380,122 C440,106 500,130 560,116 C620,102 680,124 740,110 C775,100 800,112 800,110'/%3E%3Cpath d='M0,230 C65,218 125,238 185,222 C245,206 305,228 365,214 C425,200 485,220 545,207 C605,194 665,215 725,202 C765,192 800,205 800,203'/%3E%3Cpath d='M150,0 C138,55 158,105 145,155 C132,205 150,250 138,300 C126,350 143,380 135,400'/%3E%3Cpath d='M400,0 C412,48 395,98 408,148 C421,198 405,242 417,292 C429,342 414,375 425,400'/%3E%3C/g%3E%3Cg stroke='%230BBFBF' stroke-width='0.5' opacity='0.15'%3E%3Cpath d='M0,200 C90,185 150,215 210,198 C270,181 330,208 390,192 C450,176 510,200 570,186 C630,172 690,194 750,180 C778,172 800,182 800,180'/%3E%3Cpath d='M300,0 C288,58 308,112 296,166 C284,220 302,268 291,322'/%3E%3C/g%3E%3Cg stroke='%23c0bcb3' stroke-width='0.7' opacity='0.4'%3E%3Cellipse cx='180' cy='150' rx='55' ry='30' transform='rotate(-15,180,150)'/%3E%3Cellipse cx='180' cy='150' rx='35' ry='18' transform='rotate(-15,180,150)'/%3E%3Cellipse cx='580' cy='250' rx='65' ry='28' transform='rotate(10,580,250)'/%3E%3Cellipse cx='580' cy='250' rx='42' ry='17' transform='rotate(10,580,250)'/%3E%3Cellipse cx='380' cy='80' rx='48' ry='22' transform='rotate(-8,380,80)'/%3E%3Cellipse cx='720' cy='320' rx='52' ry='25' transform='rotate(5,720,320)'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 800px 400px;
+}
+
+/* ============================================================
+   Navigator Mind Maps — Main Stylesheet
+   Navigator Project theme: navy / teal / sand / amber
+   Fonts: Barlow Condensed (headings/UI), Cormorant Garamond (motif)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Cormorant+Garamond:ital@1&display=swap');
+
+/* === RESET / BASE === */
+.nmm-app * { box-sizing: border-box; margin: 0; padding: 0; }
+.nmm-app { font-family: 'Barlow Condensed', 'Helvetica Neue', Helvetica, sans-serif; }
+
+/* === BREAK OUT OF ENFOLD COLUMN === */
+.nmm-app {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* === COLORS === */
+:root {
+  --nmm-navy:    #1a2e4a;
+  --nmm-teal:    #0BBFBF;
+  --nmm-teal2:   #5DCAA5;
+  --nmm-teal3:   #9FE1CB;
+  --nmm-amber:   #EF9F27;
+  --nmm-amber2:  #FAC775;
+  --nmm-indigo:  #534AB7;
+  --nmm-sand:    #e8e4db;
+  --nmm-sand2:   #f5f3ee;
+  --nmm-dark:    #111111;
+  --nmm-mid:     #555555;
+  --nmm-light:   #999999;
+  --nmm-border:  #ddd9d0;
+  --nmm-white:   #ffffff;
+}
+
+/* === HEADER (Manager + Editor) === */
+.nmm-header {
+  background: var(--nmm-navy);
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nmm-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.nmm-logo { display: flex; align-items: center; gap: 10px; }
+.nmm-logo-text {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  color: var(--nmm-white);
+}
+
+/* === EDITOR TOOLBAR === */
+.nmm-editor-toolbar {
+  background: var(--nmm-navy);
+  height: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 6px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+
+/* Offset toolbar when WP admin bar is showing */
+.admin-bar .nmm-editor-toolbar,
+.admin-bar .nmm-header,
+.admin-bar .nmm-view-header {
+  top: 32px;
+  position: sticky;
+}
+@media screen and (max-width: 782px) {
+  .admin-bar .nmm-editor-toolbar,
+  .admin-bar .nmm-header,
+  .admin-bar .nmm-view-header {
+    top: 46px;
+  }
+}
+.nmm-map-title-display {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--nmm-white);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nmm-map-title-display:hover { background: rgba(255,255,255,0.1); }
+.nmm-save-status {
+  font-size: 10px;
+  color: var(--nmm-amber);
+  white-space: nowrap;
+  margin-left: 4px;
+}
+
+/* View header */
+.nmm-view-header {
+  background: var(--nmm-navy);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nmm-view-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--nmm-white);
+  letter-spacing: 0.08em;
+  flex: 1;
+}
+.nmm-view-actions { display: flex; gap: 6px; margin-left: auto; }
+
+/* === BUTTONS === */
+.nmm-btn {
+  padding: 5px 12px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 5px;
+  background: transparent;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+  flex-shrink: 0;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.nmm-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); color: white; }
+.nmm-btn-primary { background: var(--nmm-teal) !important; border-color: var(--nmm-teal) !important; color: white !important; }
+.nmm-btn-primary:hover { background: #09aaaa !important; }
+.nmm-btn-harmony { background: var(--nmm-indigo) !important; border-color: var(--nmm-indigo) !important; color: white !important; }
+.nmm-btn-harmony:hover { background: #3C3489 !important; }
+.nmm-btn-save { background: var(--nmm-amber) !important; border-color: var(--nmm-amber) !important; color: var(--nmm-navy) !important; font-weight: 700 !important; }
+.nmm-btn-save:hover { background: #d48e1f !important; }
+.nmm-btn-danger { color: #ff6b6b !important; border-color: #ff6b6b !important; }
+.nmm-btn-danger:hover { background: rgba(255,107,107,0.1) !important; }
+.nmm-btn-island { color: var(--nmm-teal2) !important; border-color: var(--nmm-teal2) !important; }
+.nmm-btn-island:hover { background: rgba(93,202,165,0.1) !important; }
+.nmm-btn-nav { color: var(--nmm-teal) !important; border-color: var(--nmm-teal) !important; }
+.nmm-btn-sm { font-size: 10px; padding: 3px 9px; }
+.nmm-sep { width: 1px; height: 22px; background: rgba(255,255,255,0.15); flex-shrink: 0; margin: 0 2px; }
+
+/* Manager buttons override (on light bg) */
+.nmm-manager-body .nmm-btn {
+  border-color: var(--nmm-border);
+  color: var(--nmm-mid);
+  background: var(--nmm-white);
+}
+.nmm-manager-body .nmm-btn:hover { border-color: var(--nmm-teal); color: var(--nmm-teal); }
+.nmm-manager-body .nmm-btn-primary { background: var(--nmm-teal) !important; border-color: var(--nmm-teal) !important; color: white !important; }
+
+/* === MANAGER BODY === */
+.nmm-manager-body {
+  background: var(--nmm-sand);
+  min-height: calc(100vh - 60px);
+  padding: 32px 24px;
+}
+.nmm-manager-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.nmm-search-wrap { flex: 1; min-width: 200px; }
+.nmm-search {
+  width: 100%;
+  padding: 8px 14px;
+  border: 1px solid var(--nmm-border);
+  border-radius: 6px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  color: var(--nmm-dark);
+  background: var(--nmm-white);
+  outline: none;
+}
+.nmm-search:focus { border-color: var(--nmm-teal); }
+.nmm-select {
+  padding: 7px 12px;
+  border: 1px solid var(--nmm-border);
+  border-radius: 6px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  color: var(--nmm-dark);
+  background: var(--nmm-white);
+  outline: none;
+  cursor: pointer;
+}
+
+/* === MAP CARDS === */
+.nmm-maps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+.nmm-card {
+  background: var(--nmm-white);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+.nmm-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+.nmm-card-color-bar { height: 4px; }
+.nmm-card-body { padding: 16px 18px; }
+.nmm-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.nmm-card-title { font-size: 14px; font-weight: 700; color: var(--nmm-dark); letter-spacing: 0.02em; }
+.nmm-card-cat {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--nmm-sand);
+  color: var(--nmm-mid);
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nmm-card-meta { font-size: 11px; color: var(--nmm-light); }
+.nmm-card-actions {
+  display: flex;
+  gap: 6px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--nmm-sand);
+  background: var(--nmm-sand2);
+}
+
+/* === LOADING / EMPTY === */
+.nmm-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  padding: 80px 20px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  color: var(--nmm-light);
+  letter-spacing: 0.06em;
+}
+.nmm-spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--nmm-border);
+  border-top-color: var(--nmm-teal);
+  border-radius: 50%;
+  animation: nmm-spin 0.8s linear infinite;
+}
+@keyframes nmm-spin { to { transform: rotate(360deg); } }
+.nmm-empty {
+  text-align: center;
+  padding: 80px 20px;
+}
+.nmm-empty-icon { font-size: 48px; color: var(--nmm-border); margin-bottom: 16px; }
+.nmm-empty h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--nmm-mid); letter-spacing: 0.06em; margin-bottom: 8px; }
+.nmm-empty p { font-size: 13px; color: var(--nmm-light); margin-bottom: 20px; }
+
+/* Color swatches */
+.nmm-color-row { display: flex; gap: 8px; margin-top: 6px; }
+.nmm-color-swatch {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.12s;
+}
+.nmm-color-swatch.active, .nmm-color-swatch:hover { border-color: var(--nmm-dark); }
+
+/* === CANVAS === */
+.nmm-canvas-wrap {
+  position: relative;
+  height: calc(100vh - 50px);
+  overflow: auto;
+  background: var(--nmm-sand);
+}
+/* Account for WP admin bar (32px desktop) */
+.admin-bar .nmm-canvas-wrap {
+  height: calc(100vh - 82px);
+}
+.nmm-view-mode .nmm-canvas-wrap { height: calc(100vh - 56px); }
+.admin-bar .nmm-view-mode .nmm-canvas-wrap { height: calc(100vh - 88px); }
+@media screen and (max-width: 782px) {
+  .admin-bar .nmm-canvas-wrap { height: calc(100vh - 96px); }
+}
+.nmm-canvas {
+  position: relative;
+  width: 3200px;
+  height: 2800px;
+}
+#nmm-lines {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.nmm-bg-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+}
+.nmm-bg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* === NODES === */
+.nmm-node {
+  position: absolute;
+  background: rgba(255,255,255,0.97);
+  border-radius: 10px;
+  padding: 9px 13px;
+  cursor: grab;
+  z-index: 10;
+  min-width: 130px;
+  max-width: 230px;
+  transition: box-shadow 0.15s;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+  font-family: 'Barlow Condensed', sans-serif;
+}
+.nmm-node:active { cursor: grabbing; }
+.nmm-node.nmm-selected { box-shadow: 0 0 0 3px rgba(11,191,191,0.4); }
+.nmm-node.nmm-drop-target { box-shadow: 0 0 0 3px rgba(83,74,183,0.6); }
+
+/* Depth colors */
+.nmm-node[data-depth="0"] { border: 2.5px solid var(--nmm-teal); border-radius: 26px; text-align: center; min-width: 150px; }
+.nmm-node[data-depth="1"] { border: 2px solid var(--nmm-teal); }
+.nmm-node[data-depth="2"] { border: 2px solid var(--nmm-teal2); }
+.nmm-node[data-depth="3"] { border: 2px solid var(--nmm-amber); }
+.nmm-node[data-depth="4"] { border: 1.5px solid var(--nmm-amber2); }
+
+/* Linked/readonly island */
+.nmm-node.nmm-linked { border-style: dashed !important; cursor: default !important; }
+.nmm-linked-badge {
+  font-size: 9px;
+  color: var(--nmm-teal2);
+  margin-top: 4px;
+  font-weight: 600;
+}
+.nmm-linked-badge a { color: inherit; text-decoration: underline; }
+
+.nmm-node-title-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.nmm-node-title { font-size: 11.5px; font-weight: 700; color: var(--nmm-dark); line-height: 1.35; pointer-events: none; letter-spacing: 0.02em; }
+.nmm-node-sub { font-size: 9.5px; color: var(--nmm-mid); margin-top: 3px; line-height: 1.5; pointer-events: none; }
+.nmm-node-sub span { display: block; }
+.nmm-node-date { font-size: 9px; color: var(--nmm-teal); margin-top: 3px; font-weight: 600; pointer-events: none; }
+
+.nmm-node-actions { display: none; gap: 3px; margin-top: 6px; flex-wrap: wrap; }
+.nmm-node:hover .nmm-node-actions { display: flex; }
+.nmm-na-btn {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--nmm-border);
+  background: var(--nmm-white);
+  cursor: pointer;
+  color: var(--nmm-mid);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  pointer-events: all;
+}
+.nmm-na-btn:hover { border-color: var(--nmm-teal); color: var(--nmm-teal); }
+.nmm-na-red { color: #cc3333 !important; }
+.nmm-na-red:hover { border-color: #cc3333 !important; background: #fff5f5 !important; }
+
+.nmm-expander {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--nmm-teal);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 5px;
+  pointer-events: all;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.nmm-node[data-depth="2"] .nmm-expander { background: var(--nmm-teal2); }
+.nmm-node[data-depth="3"] .nmm-expander { background: var(--nmm-amber); }
+.nmm-node[data-depth="4"] .nmm-expander { background: var(--nmm-amber2); color: var(--nmm-navy); }
+
+/* === MOTIF / QUOTE ===
+   Fixed to viewport — always visible regardless of scroll.
+   White text, top-center position, subtle shadow for readability. */
+.nmm-motif {
+  position: fixed;
+  top: 62px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  text-align: center;
+  z-index: 50;
+  pointer-events: none;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 18px;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 10px rgba(26,46,74,0.4), 0 0 3px rgba(26,46,74,0.25);
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  padding: 0 40px;
+}
+
+/* Offset when WP admin bar is showing (32px desktop, 46px mobile) */
+.admin-bar .nmm-motif {
+  top: 94px;
+}
+@media screen and (max-width: 782px) {
+  .admin-bar .nmm-motif { top: 108px; }
+}
+
+/* === MODALS === */
+.nmm-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,46,74,0.4);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+.nmm-modal-overlay.open { display: flex; }
+.nmm-modal {
+  background: var(--nmm-white);
+  border-radius: 14px;
+  padding: 24px;
+  width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.nmm-modal h3 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--nmm-navy);
+  margin-bottom: 16px;
+}
+.nmm-field { margin-bottom: 12px; }
+.nmm-field label {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nmm-light);
+  margin-bottom: 4px;
+}
+.nmm-input {
+  width: 100%;
+  border: 1px solid var(--nmm-border);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  color: var(--nmm-dark);
+  outline: none;
+  resize: vertical;
+  background: var(--nmm-white);
+}
+.nmm-input:focus { border-color: var(--nmm-teal); }
+.nmm-modal-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.nmm-modal-actions .nmm-btn {
+  flex: 1;
+  min-width: 70px;
+  justify-content: center;
+  border-color: var(--nmm-border);
+  color: var(--nmm-mid);
+  background: var(--nmm-white);
+}
+.nmm-modal-actions .nmm-btn:hover { border-color: var(--nmm-teal); color: var(--nmm-teal); }
+.nmm-modal-actions .nmm-btn-primary { background: var(--nmm-teal) !important; border-color: var(--nmm-teal) !important; color: white !important; }
+.nmm-modal-actions .nmm-btn-danger { color: #cc3333 !important; border-color: #cc3333 !important; }
+.nmm-modal-actions .nmm-btn-danger:hover { background: #fff5f5 !important; }
+.nmm-modal-actions .nmm-btn-island { color: var(--nmm-teal2) !important; border-color: var(--nmm-teal2) !important; }
+
+.nmm-island-list { max-height: 300px; overflow-y: auto; }
+
+/* === EXPORT OVERLAY === */
+.nmm-export-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,46,74,0.7);
+  z-index: 3000;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: white;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .nmm-maps-grid { grid-template-columns: 1fr; }
+  .nmm-modal { width: calc(100vw - 32px); }
+  .nmm-editor-toolbar { gap: 4px; }
+}
+
+/* ============================================================
+   MOBILE MENU — hamburger button + dropdown
+   Hidden on desktop, visible on small screens
+   ============================================================ */
+
+/* Hide mobile menu button on desktop */
+.nmm-mobile-menu-btn { display: none; }
+
+/* Mobile menu dropdown */
+.nmm-mobile-menu {
+  display: none;
+  position: fixed;
+  top: 82px; /* below toolbar + admin bar */
+  right: 0;
+  background: var(--nmm-navy);
+  border-left: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0 0 0 8px;
+  z-index: 999;
+  min-width: 180px;
+  box-shadow: -4px 4px 20px rgba(0,0,0,0.3);
+}
+.nmm-mobile-menu.open { display: block; }
+.nmm-mobile-menu button {
+  display: block;
+  width: 100%;
+  padding: 12px 18px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.85);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  cursor: pointer;
+}
+.nmm-mobile-menu button:hover { background: rgba(255,255,255,0.08); }
+.nmm-mobile-menu button:last-child { border-bottom: none; }
+
+/* Undo button styling */
+.nmm-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE — canvas and toolbar
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* Show hamburger, hide most toolbar buttons */
+  .nmm-mobile-menu-btn { display: inline-flex; }
+  .nmm-editor-toolbar .nmm-sep,
+  .nmm-editor-toolbar .nmm-btn:not(.nmm-btn-nav):not(.nmm-btn-save):not(.nmm-mobile-menu-btn):not(#nmm-undo-btn) {
+    display: none;
+  }
+
+  /* Keep back, undo, save, hamburger visible */
+  .nmm-editor-toolbar .nmm-btn-nav,
+  .nmm-editor-toolbar .nmm-btn-save,
+  .nmm-editor-toolbar #nmm-undo-btn {
+    display: inline-flex;
+  }
+
+  /* Toolbar layout on mobile */
+  .nmm-editor-toolbar {
+    gap: 4px;
+    padding: 0 10px;
+  }
+  .nmm-map-title-display {
+    max-width: 120px;
+    font-size: 12px;
+  }
+
+  /* Nodes larger touch targets on mobile */
+  .nmm-node {
+    min-width: 120px;
+    padding: 10px 14px;
+  }
+  .nmm-node-title { font-size: 12px; }
+  .nmm-node-sub   { font-size: 10px; }
+
+  /* Expander button — bigger for touch */
+  .nmm-expander {
+    width: 22px;
+    height: 22px;
+    font-size: 13px;
+  }
+
+  /* Show node actions always on mobile (no hover) */
+  .nmm-node-actions { display: flex; }
+
+  /* Modal full width on mobile */
+  .nmm-modal { width: calc(100vw - 24px); padding: 18px; }
+
+  /* Mobile menu offset with admin bar */
+  .admin-bar .nmm-mobile-menu { top: 128px; }
+}
+
+@media (max-width: 480px) {
+  .nmm-map-title-display { display: none; }
+  .nmm-modal-actions { flex-wrap: wrap; }
+  .nmm-modal-actions button { min-width: calc(50% - 4px); }
+}
+
+/* ============================================================
+   NODE TAGS — Kanban status badges
+   ============================================================ */
+
+/* Tag badge shown on node */
+.nmm-node-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 8px;
+  margin-top: 4px;
+  pointer-events: none;
+}
+.nmm-tag-start  { background: #B5D4F4; color: #0C447C; }
+.nmm-tag-doing  { background: #FAC775; color: #633806; }
+.nmm-tag-sprint { background: #EF9F27; color: #412402; }
+.nmm-tag-review { background: #F4C0D1; color: #4B1528; }
+.nmm-tag-done   { background: #9FE1CB; color: #04342C; }
+
+/* Sefirot badge */
+.nmm-node-sefirot {
+  display: inline-block;
+  font-size: 8px;
+  color: var(--nmm-indigo);
+  opacity: 0.7;
+  margin-top: 2px;
+  pointer-events: none;
+  font-style: italic;
+}
+
+/* ============================================================
+   KANBAN VIEW
+   ============================================================ */
+
+.nmm-kb-body {
+  background: var(--nmm-sand);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400'%3E%3Crect width='800' height='400' fill='%23e8e4db'/%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cg stroke='%23c8c4bb' stroke-width='0.8' opacity='0.5'%3E%3Cpath d='M0,180 C60,160 120,200 180,170 C240,140 300,190 360,165 C420,140 480,185 540,160 C600,135 660,175 720,155'/%3E%3Cpath d='M0,280 C50,260 110,300 170,275 C230,250 290,285 350,265 C410,245 470,280 530,260'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 800px 400px;
+  min-height: calc(100vh - 60px);
+  padding: 24px;
+}
+
+/* Triage section */
+.nmm-kb-triage-wrap {
+  margin-bottom: 28px;
+}
+.nmm-kb-triage-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.nmm-kb-triage-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--nmm-navy);
+  letter-spacing: 0.08em;
+}
+.nmm-kb-triage-sub {
+  font-size: 11px;
+  color: var(--nmm-light);
+}
+.nmm-kb-triage-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 60px;
+  padding: 10px;
+  background: rgba(255,255,255,0.4);
+  border: 1.5px dashed var(--nmm-border);
+  border-radius: var(--border-radius-lg);
+  transition: background 0.15s;
+}
+.nmm-kb-triage-cards.nmm-kb-over { background: rgba(11,191,191,0.08); border-color: var(--nmm-teal); }
+
+/* Columns */
+.nmm-kb-columns {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+.nmm-kb-col {
+  background: rgba(255,255,255,0.5);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.nmm-kb-col-header {
+  padding: 10px 14px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.nmm-kb-start  { background: #B5D4F4; color: #0C447C; }
+.nmm-kb-doing  { background: #FAC775; color: #633806; }
+.nmm-kb-sprint { background: #EF9F27; color: #412402; }
+.nmm-kb-review { background: #F4C0D1; color: #4B1528; }
+.nmm-kb-done   { background: #9FE1CB; color: #04342C; }
+
+.nmm-kb-col-cards {
+  padding: 10px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.nmm-kb-col-cards.nmm-kb-over { background: rgba(11,191,191,0.08); }
+
+/* Kanban cards */
+.nmm-kb-card {
+  background: white;
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  cursor: grab;
+  transition: box-shadow 0.15s, transform 0.1s;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+.nmm-kb-card:active { cursor: grabbing; }
+.nmm-kb-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-1px); }
+.nmm-kb-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+.nmm-kb-card-title { font-size: 12px; font-weight: 700; color: var(--nmm-dark); line-height: 1.3; }
+.nmm-kb-badge { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
+.nmm-kb-sefirot-badge { font-size: 9px; color: var(--nmm-indigo); opacity: 0.7; font-style: italic; }
+.nmm-kb-subs { font-size: 10px; color: var(--nmm-mid); margin-bottom: 4px; }
+.nmm-kb-date { font-size: 9px; color: var(--nmm-teal); font-weight: 600; margin-bottom: 3px; }
+.nmm-kb-map-label { font-size: 9px; color: var(--nmm-light); }
+
+@media (max-width: 900px) {
+  .nmm-kb-columns { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .nmm-kb-columns { grid-template-columns: 1fr 1fr; }
+}
+
+/* ============================================================
+   LANDING PAGE
+   ============================================================ */
+
+.nmm-landing {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nmm-landing-bg {
+  position: fixed;
+  inset: 0;
+  background: var(--nmm-sand);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400'%3E%3Crect width='800' height='400' fill='%23e8e4db'/%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cg stroke='%23c8c4bb' stroke-width='0.8' opacity='0.5'%3E%3Cpath d='M0,180 C60,160 120,200 180,170 C240,140 300,190 360,165 C420,140 480,185 540,160 C600,135 660,175 720,155'/%3E%3Cpath d='M0,280 C50,260 110,300 170,275 C230,250 290,285 350,265 C410,245 470,280 530,260'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 800px 400px;
+  z-index: 0;
+}
+.nmm-landing-overlay { position: fixed; inset: 0; background: rgba(232,228,219,0.3); z-index: 1; pointer-events: none; }
+.nmm-landing-content { position: relative; z-index: 2; width: 100%; max-width: 960px; padding: 40px 24px; }
+
+.nmm-landing-hero { text-align: center; margin-bottom: 40px; }
+.nmm-landing-logo { margin-bottom: 16px; }
+.nmm-landing-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--nmm-navy);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+/* Landing page motif — white text so it reads on the topo background */
+.nmm-landing-motif {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 18px;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 8px rgba(26,46,74,0.4);
+}
+
+.nmm-landing-cols {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 24px;
+  align-items: start;
+}
+.nmm-landing-card {
+  background: rgba(255,255,255,0.92);
+  border-radius: var(--border-radius-lg);
+  padding: 28px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+.nmm-landing-card h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--nmm-navy);
+  letter-spacing: 0.06em;
+  margin-bottom: 18px;
+}
+.nmm-landing-instructions {
+  font-size: 12px;
+  color: var(--nmm-mid);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.nmm-login-error {
+  background: #fff5f5;
+  border: 1px solid #f4c0c0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #cc3333;
+  margin-bottom: 12px;
+}
+
+/* Template radio options */
+.nmm-template-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.nmm-template-opt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--nmm-dark);
+  cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.nmm-template-opt input { cursor: pointer; }
+
+/* Tree of Life hint */
+.nmm-tol-hint {
+  background: rgba(83,74,183,0.06);
+  border-left: 3px solid var(--nmm-indigo);
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--nmm-indigo);
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+  .nmm-landing-cols { grid-template-columns: 1fr; }
+  .nmm-landing-title { font-size: 28px; }
+}
+
+/* ============================================================
+   OUTLINE IMPORT MODAL
+   ============================================================ */
+
+.nmm-outline-preview {
+  background: var(--nmm-sand2);
+  border: 1px solid var(--nmm-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--nmm-dark);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 8px;
+  line-height: 1.8;
+}
+.nmm-outline-preview .level-0 { font-weight: 700; color: var(--nmm-navy); }
+.nmm-outline-preview .level-1 { padding-left: 16px; color: var(--nmm-teal); }
+.nmm-outline-preview .level-2 { padding-left: 32px; color: #EF9F27; }
+.nmm-outline-preview .level-3 { padding-left: 48px; color: var(--nmm-mid); }
+
+/* GCal export modal node list */
+.nmm-gcal-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--nmm-border);
+  border-radius: 6px;
+  padding: 4px 0;
+}
+.nmm-gcal-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--nmm-sand);
+  font-size: 12px;
+}
+.nmm-gcal-item:last-child { border-bottom: none; }
+.nmm-gcal-item label { flex: 1; cursor: pointer; color: var(--nmm-dark); }
+.nmm-gcal-item .nmm-gcal-date { font-size: 10px; color: var(--nmm-teal); font-weight: 600; }
+
+/* ============================================================
+   MOTIF FIX — z-index above all layers, top center with padding
+   ============================================================ */
+
+/* Motif — fixed below Enfold site header + NMM toolbar
+   Enfold header ~60px + NMM toolbar 50px + 20px padding = 130px
+   With admin bar: add 32px = 162px */
+.nmm-motif {
+  position: fixed !important;
+  top: 130px !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  text-align: center !important;
+  z-index: 200 !important;
+  pointer-events: none;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 18px;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 12px rgba(26,46,74,0.5), 0 0 4px rgba(26,46,74,0.3);
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  padding: 0 40px;
+}
+.admin-bar .nmm-motif { top: 162px !important; }
+
+/* ============================================================
+   LANDING PAGE — updated styles
+   ============================================================ */
+
+/* Copy section between hero and columns */
+.nmm-landing-copy {
+  background: rgba(26,46,74,0.85);
+  padding: 28px 40px;
+  text-align: center;
+}
+.nmm-landing-copy p {
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.85;
+  max-width: 680px;
+  margin: 0 auto 10px;
+}
+.nmm-landing-copy p:last-child { margin-bottom: 0; }
+
+/* Motif line in copy section — white */
+.nmm-landing-motif {
+  font-family: 'Cormorant Garamond', Georgia, serif !important;
+  font-style: italic;
+  font-size: 17px !important;
+  color: rgba(255,255,255,0.95) !important;
+  text-shadow: none !important;
+  margin-top: 14px;
+}
+
+/* Landing bar */
+.nmm-landing-bar {
+  background: var(--nmm-navy);
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+}
+
+/* Section label inside landing card */
+.nmm-landing-section-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--nmm-light);
+  margin-bottom: 12px;
+}
+
+/* Divider between login and signup */
+.nmm-landing-divider {
+  height: 0.5px;
+  background: var(--nmm-border);
+  margin: 18px 0;
+}
+
+/* Landing section padding */
+.nmm-landing-section { }
+
+/* Full width button */
+.nmm-btn-full {
+  width: 100%;
+  justify-content: center;
+  padding: 10px !important;
+}
+.nmm-btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--nmm-teal);
+  color: var(--nmm-teal);
+}
+.nmm-btn-outline:hover { background: rgba(11,191,191,0.08); }
+
+/* Kanban link in editor toolbar */
+.nmm-btn-kanban {
+  color: rgba(255,255,255,0.7);
+  border-color: rgba(255,255,255,0.2);
+}
+.nmm-btn-kanban:hover { color: white; background: rgba(255,255,255,0.08); }
+
+/* ============================================================
+   LANDING PAGE — full width Enfold escape
+   Same selectors as nmm-app but for nmm-landing
+   ============================================================ */
+body:has(.nmm-landing) #top.avia-blank {
+  display: block !important;
+  table-layout: unset !important;
+  width: 100% !important;
+}
+body:has(.nmm-landing) #wrap_all,
+body:has(.nmm-landing) #main,
+body:has(.nmm-landing) .container_wrap,
+body:has(.nmm-landing) .container_wrap.fullsize,
+body:has(.nmm-landing) .main_color,
+body:has(.nmm-landing) .container {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+body:has(.nmm-landing) .entry-content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* ============================================================
+   LANDING PAGE — layout
+   ============================================================ */
+
+.nmm-landing { background: var(--nmm-sand); min-height: 100vh; }
+
+/* Copy band */
+.nmm-landing-copy {
+  background: rgba(26,46,74,0.88);
+  padding: 28px 40px;
+  text-align: center;
+}
+.nmm-landing-copy p {
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.85;
+  max-width: 700px;
+  margin: 0 auto 10px;
+}
+.nmm-landing-motif {
+  font-family: 'Cormorant Garamond', Georgia, serif !important;
+  font-style: italic;
+  font-size: 18px !important;
+  color: rgba(255,255,255,0.95) !important;
+  text-shadow: none !important;
+  margin-top: 10px;
+}
+
+/* Two column cards */
+.nmm-landing-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 28px 40px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.nmm-landing-card {
+  background: rgba(255,255,255,0.95);
+  border-radius: var(--border-radius-lg);
+  padding: 28px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+}
+.nmm-landing-section-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--nmm-light);
+  margin-bottom: 14px;
+}
+.nmm-landing-divider {
+  height: 0.5px;
+  background: var(--nmm-border);
+  margin: 20px 0;
+}
+.nmm-login-error {
+  background: #fff5f5;
+  border: 1px solid #f4c0c0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #cc3333;
+  margin-bottom: 12px;
+}
+.nmm-btn-full {
+  width: 100%;
+  justify-content: center;
+  padding: 10px !important;
+}
+.nmm-btn-outline {
+  background: transparent !important;
+  border: 1.5px solid var(--nmm-teal) !important;
+  color: var(--nmm-teal) !important;
+}
+
+@media (max-width: 640px) {
+  .nmm-landing-cols { grid-template-columns: 1fr; padding: 16px; }
+  .nmm-landing-copy { padding: 20px; }
+}
+
+/* ============================================================
+   MANAGER — search bar
+   ============================================================ */
+.nmm-manager-search-bar {
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px;
+  background: rgba(255,255,255,0.6);
+  border-bottom: 0.5px solid var(--nmm-border);
+}
+.nmm-search-input {
+  flex: 1;
+  border: 1px solid var(--nmm-border);
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-family: 'Barlow Condensed', sans-serif;
+  background: white;
+  color: var(--nmm-dark);
+}
+.nmm-search-input:focus { outline: none; border-color: var(--nmm-teal); }
+
+/* ============================================================
+   KANBAN — filter panel (multi-select)
+   ============================================================ */
+.nmm-kb-filter-wrap {
+  position: relative;
+}
+.nmm-kb-filter-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: var(--nmm-navy);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  min-width: 220px;
+  z-index: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  padding: 8px 0;
+}
+.nmm-kb-filter-actions {
+  display: flex;
+  gap: 8px;
+  padding: 6px 12px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.nmm-kb-filter-actions button {
+  flex: 1;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 4px;
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.04em;
+}
+.nmm-kb-filter-actions button:hover { background: rgba(255,255,255,0.18); color: white; }
+.nmm-kb-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+.nmm-kb-filter-row:hover { background: rgba(255,255,255,0.07); }
+.nmm-kb-filter-row input { cursor: pointer; }
+
+/* ============================================================
+   MANAGER — tol hint in new map modal
+   ============================================================ */
+.nmm-tol-hint {
+  background: rgba(83,74,183,0.06);
+  border-left: 2px solid var(--nmm-indigo);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--nmm-indigo);
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
