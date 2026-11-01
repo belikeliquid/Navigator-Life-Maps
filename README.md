@@ -2,7 +2,7 @@
 
 A visual mind mapping plugin for WordPress, built for Navigator Leadership Group.
 
-**Version:** 1.5.3  
+**Version:** 1.5.6  
 **Requires:** WordPress 5.8+, PHP 7.4+  
 **Author:** Liquid Media / Navigator Leadership Group
 
@@ -43,10 +43,26 @@ All pages should use the **Blank - No Header, No Footer** template in Enfold.
 
 This plugin checks this GitHub repo for new releases. When a new version is tagged and released, WordPress will show an update notification in WP Admin → Plugins.
 
+The updater (`includes/plugin-update-checker/update-checker.php`) reads the **latest** release, strips a leading `v` from its tag, and offers an update when that is higher than `NMM_VERSION`. It installs the release's `.zip` asset, or the tag's source zip if there is none. Results are cached for 6 hours.
+
 To release an update:
-1. Upload the new plugin zip as a GitHub Release asset
-2. Tag it as `v1.5.4` (matching the plugin version number)
-3. WordPress sites with this plugin installed will see the update notification
+1. Bump the version in **both** places in `navigator-mindmaps.php`: the `Version:` header and `define( 'NMM_VERSION', ... )`.
+2. Commit and push to `main`. Main must always hold the code that is released.
+3. Tag the commit `vX.Y.Z`, exactly. A tag like `v.1.5.5` is read as `.1.5.5` and breaks the version comparison.
+   ```bash
+   git tag -a v1.5.7 -m "v1.5.7" && git push origin v1.5.7
+   ```
+4. Build the zip from the tag, with a top-level `navigator-mindmaps/` folder:
+   ```bash
+   git archive --format=zip --prefix=navigator-mindmaps/ -o navigator-mindmaps.zip v1.5.7 -- . ':!.gitignore'
+   ```
+5. Publish the release with the zip attached:
+   ```bash
+   gh release create v1.5.7 navigator-mindmaps.zip --title v1.5.7 --latest --notes "..."
+   ```
+6. In WP Admin → Plugins, the site shows the update within 6 hours. Take a database export before you install it.
+
+Never edit the plugin directly on the server. The next release would overwrite the change.
 
 ## Changelog
 
