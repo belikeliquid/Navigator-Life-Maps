@@ -177,6 +177,10 @@ let nonce    = NMM.nonce;
 let nodes = [], settings = {}, mapTitle = '', linkedIslands = [];
 let selectedId = null, editingId = null, dragState = null;
 let quoteIdx = 0, saveTimer = null, isDirty = false;
+// mapRev: server revision this editor is based on. changeSeq counts edits so a
+// save only clears isDirty if nothing changed while it was in flight.
+let mapRev = 0, changeSeq = 0, saving = false, saveQueued = false;
+const DRAFT_KEY = 'nmm_draft_' + MAP_ID;
 
 // Undo stack — max 10 steps
 let undoStack = [];
@@ -253,6 +257,31 @@ async function loadMap() {
   autoCenter();
 }
 
+// A draft is kept in this browser until the server confirms the save.
+// Returns true if unsaved work from a previous visit was restored.
+function restoreDraft(map) {
+  let draft;
+  try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch(e) { return false; }
+  if (!draft || !draft.body) return false;
+  const b = draft.body;
+  const same = b.title === map.title && JSON.stringify(b.nodes) === JSON.stringify(map.nodes || []) &&
+               JSON.stringify(b.settings) === JSON.stringify(map.settings || {});
+  if (same) { clearDraft(); return false; }
+  const when = new Date(draft.at).toLocaleString();
+  const msg = draft.rev === mapRev
+    ? 'Unsaved changes to this map from ' + when + ' were found in this browser. Restore them?'
+    : 'Unsaved changes to this map from ' + when + ' were found in this browser, but the map has been saved somewhere else since then.\n\nOK = restore your unsaved version (replaces the newer one)\nCancel = discard it and keep the saved map';
+  if (!confirm(msg)) { clearDraft(); return false; }
+  nodes = b.nodes; settings = b.settings || {}; mapTitle = b.title || mapTitle; linkedIslands = b.islands || [];
+  return true;
+}
+function saveDraft(body) {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ rev: mapRev, at: Date.now(), body: body })); } catch(e) {}
+}
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+}
+
 function getDefaultNodes() {
   return [{ id:'c', x:800, y:400, title:mapTitle||'New Map', subs:['Click to edit'], parent:null, collapsed:false, date:'' }];
 }
@@ -285,10 +314,14 @@ function autoCenter() {
 // ============================================================
 // SAVE
 // ============================================================
+function saveBody() {
+  return { title:mapTitle, nodes:nodes.filter(function(n){return !n._readonly;}), settings:settings, islands:linkedIslands };
+}
 function markDirty() {
-  isDirty = true; setStatus('Unsaved changes');
+  isDirty = true; changeSeq++; setStatus('Unsaved changes');
+  saveDraft(saveBody());
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(nmmSave, 30000);
+  saveTimer = setTimeout(nmmSave, 2000);
 }
 function setStatus(msg, ok) {
   const el = document.getElementById('nmm-save-status');
@@ -297,6 +330,10 @@ function setStatus(msg, ok) {
 }
 window.nmmSave = async function(isRetry) {
   if (!MAP_ID) return;
+  if (saving) { saveQueued = true; return; }
+  clearTimeout(saveTimer);
+  saving = true;
+  const seq = changeSeq;
   setStatus('Saving...');
   try {
     // On retry, always fetch a fresh nonce first — stale nonce is the most common save failure
@@ -309,17 +346,51 @@ window.nmmSave = async function(isRetry) {
     const r = await fetch(REST + 'maps/' + MAP_ID, {
       method: 'PUT',
       headers: { 'Content-Type':'application/json', 'X-WP-Nonce':nonce },
-      body: JSON.stringify({ title:mapTitle, nodes:nodes.filter(function(n){return !n._readonly;}), settings:settings, islands:linkedIslands })
+      body: JSON.stringify(Object.assign(saveBody(), { base_rev: mapRev }))
     });
     const data = await r.json();
-    if (data.id) { isDirty=false; setStatus('Saved ✓',true); setTimeout(function(){setStatus('');},3000); }
-    else throw new Error('bad response');
+    saving = false;
+    if (r.status === 409) { resolveConflict(data); return; }
+    if (!data.id) throw new Error('bad response');
+    mapRev = data.rev;
+    if (seq === changeSeq) { isDirty=false; clearDraft(); setStatus('Saved ✓',true); setTimeout(function(){ if(!isDirty) setStatus(''); },3000); }
+    else saveDraft(saveBody()); // edits made during the save: keep the draft current for the next save
+    if (saveQueued || seq !== changeSeq) { saveQueued = false; nmmSave(); }
   } catch(e) {
+    saving = false;
     setStatus('Save failed — retrying...');
     // Pass isRetry=true so next attempt fetches fresh nonce
-    setTimeout(function(){ nmmSave(true); }, 5000);
+    saveTimer = setTimeout(function(){ nmmSave(true); }, 5000);
   }
 };
+
+function resolveConflict(data) {
+  const keepMine = confirm('This map was changed somewhere else (another tab, the Kanban board or the maps list) since you opened it.\n\nOK = save your version over it\nCancel = discard your unsaved changes and load the newer version');
+  if (keepMine) {
+    mapRev = (data.data && data.data.rev) || 0;
+    nmmSave();
+  } else {
+    isDirty = false; clearDraft(); location.reload();
+  }
+}
+
+// Leaving the page: send any unsaved changes with keepalive so the request
+// survives the unload. The local draft covers the case where it doesn't arrive.
+function saveOnLeave() {
+  if (!isDirty || !MAP_ID || saving) return;
+  try {
+    fetch(REST + 'maps/' + MAP_ID, {
+      method: 'PUT', keepalive: true,
+      headers: { 'Content-Type':'application/json', 'X-WP-Nonce':nonce },
+      body: JSON.stringify(Object.assign(saveBody(), { base_rev: mapRev }))
+    });
+  } catch(e) {}
+}
+window.addEventListener('pagehide', saveOnLeave);
+// Back/forward cache: the keepalive save may have moved the revision on, so reload.
+window.addEventListener('pageshow', function(e){ if (e.persisted) location.reload(); });
+// Switching tabs or apps: the page is still alive, so save normally right away.
+document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden' && isDirty) nmmSave(); });
 
 // ============================================================
 // DEPTH + VISIBILITY
@@ -1005,6 +1076,8 @@ async function loadMapWithBadges() {
   settings      = map.settings || {};
   mapTitle      = map.title    || 'Untitled';
   linkedIslands = map.islands  || [];
+  mapRev        = map.rev      || 0;
+  const restored = restoreDraft(map);
 
   const titleEl = document.getElementById('nmm-map-title-display');
   titleEl.textContent = mapTitle;
@@ -1024,6 +1097,7 @@ async function loadMapWithBadges() {
   }
   renderWithBadges();
   autoCenter();
+  if (restored) markDirty();
 }
 
 loadMapWithBadges();

@@ -124,6 +124,12 @@ class NMM_REST_API {
         if ( ! $post || $post->post_type !== 'nmm_mindmap' )
             return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
         $params = $request->get_json_params();
+        // The editor sends the revision it loaded; refuse the save if another
+        // tab or page (kanban, maps list) saved this map since then.
+        $rev = (int) get_post_meta( $post->ID, 'nmm_rev', true );
+        if ( isset( $params['base_rev'] ) && (int) $params['base_rev'] !== $rev )
+            return new WP_Error( 'conflict', 'This map was changed somewhere else since it was opened.', [ 'status' => 409, 'rev' => $rev ] );
+        update_post_meta( $post->ID, 'nmm_rev', $rev + 1 );
         if ( isset( $params['title'] ) )    wp_update_post([ 'ID' => $post->ID, 'post_title' => sanitize_text_field( $params['title'] ) ]);
         if ( isset( $params['nodes'] ) )    update_post_meta( $post->ID, 'nmm_nodes',    wp_slash( json_encode( $params['nodes'] ) ) );
         if ( isset( $params['settings'] ) ) update_post_meta( $post->ID, 'nmm_settings', wp_slash( json_encode( $params['settings'] ) ) );
@@ -422,13 +428,15 @@ Return JSON array only. Start with [ end with ].';
             'id'        => $post->ID,
             'title'     => $post->post_title,
             'modified'  => $post->post_modified,
+            'rev'       => (int) get_post_meta( $post->ID, 'nmm_rev', true ),
             'category'  => get_post_meta( $post->ID, 'nmm_category', true ),
             'color'     => get_post_meta( $post->ID, 'nmm_color', true ) ?: '#0BBFBF',
             'share_key' => get_post_meta( $post->ID, 'nmm_share_key', true ),
         ];
         if ( $include_data ) {
             $map['nodes']    = json_decode( get_post_meta( $post->ID, 'nmm_nodes',    true ) ?: '[]', true );
-            $map['settings'] = json_decode( get_post_meta( $post->ID, 'nmm_settings', true ) ?: '{}', true );
+            // Cast so empty settings go out as {} rather than [], which the editor can't add keys to
+            $map['settings'] = (object) json_decode( get_post_meta( $post->ID, 'nmm_settings', true ) ?: '{}', true );
             $map['islands']  = json_decode( get_post_meta( $post->ID, 'nmm_islands',  true ) ?: '[]', true );
         }
         return $map;

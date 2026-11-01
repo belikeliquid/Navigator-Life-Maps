@@ -264,6 +264,14 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.5.8 — Editor saves reliably <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Autosave runs 2 seconds after a change (was 30), when you switch tabs, and when you leave the page.<br>
+                        Unsaved work is kept in the browser until the server confirms it, and offered back if a save never arrived.<br>
+                        The editor won't silently overwrite a map changed elsewhere (another tab, Kanban, the maps list); it asks first.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.5.7 — Clear AI error messages <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         AI organize and Analyze notes now show Anthropic's actual error (e.g. invalid API key, retired model) instead of a generic failure.<br>
