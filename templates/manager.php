@@ -17,7 +17,7 @@
     <span class="nmm-sep"></span>
     <a href="<?php echo home_url('/kanban/'); ?>" class="nmm-btn nmm-btn-kanban">⬡ Kanban</a>
     <span style="flex:1"></span>
-    <?php if ( current_user_can('nmm_edit_maps') || current_user_can('edit_posts') ) : ?>
+    <?php if ( current_user_can('nmm_edit_maps') || current_user_can('edit_posts') || current_user_can('manage_options') ) : ?>
     <button class="nmm-btn nmm-btn-primary" id="nmm-new-map-btn">+ New Map</button>
     <?php endif; ?>
     <?php if ( is_user_logged_in() ) : ?>
@@ -44,7 +44,7 @@
     <div id="nmm-empty" class="nmm-empty-state" style="display:none">
       <div class="nmm-empty-icon">⬡</div>
       <p>No maps yet. Create your first map to get started.</p>
-      <?php if ( current_user_can('nmm_edit_maps') || current_user_can('edit_posts') ) : ?>
+      <?php if ( current_user_can('nmm_edit_maps') || current_user_can('edit_posts') || current_user_can('manage_options') ) : ?>
       <button class="nmm-btn nmm-btn-primary" id="nmm-empty-new-btn">+ Create your first map</button>
       <?php endif; ?>
     </div>

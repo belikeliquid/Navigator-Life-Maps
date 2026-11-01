@@ -51,7 +51,7 @@ class NMM_REST_API {
 
     public static function auth() {
         // Accept nmm_edit_maps (subscribers via Navigator signup) OR edit_posts (editors/admins)
-        return current_user_can( 'nmm_edit_maps' ) || current_user_can( 'edit_posts' );
+        return current_user_can( 'nmm_edit_maps' ) || current_user_can( 'edit_posts' ) || current_user_can( 'manage_options' );
     }
 
     public static function get_maps( $request ) {

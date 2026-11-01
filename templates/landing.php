@@ -1,5 +1,5 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
-<div id="nmm-landing" class="nmm-app nmm-landing">
+<div id="nmm-landing" class="nmm-landing-page">
 
   <!-- Full width header bar — matches editor/kanban -->
   <div class="nmm-editor-toolbar nmm-landing-toolbar">
