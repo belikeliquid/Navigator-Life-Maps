@@ -9,3 +9,6 @@ npm-debug.log
 
 # Build artifacts
 *.zip
+
+# Generated on the server by SiteGround Speed Optimizer
+*.min.css
