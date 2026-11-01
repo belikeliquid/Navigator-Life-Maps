@@ -264,6 +264,14 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.6.1 — Harmony that tidies instead of tangling <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Harmony now lays the whole map out in one press with no overlapping cards: each card centred over its children, children kept in your left-to-right order, leaf cards stacked in a column. Pressing it again changes nothing.<br>
+                        Tree of Life maps: each sefirot is a slot in the three-pillar shape, cards sharing a slot sit side by side with their branches beneath, and rows grow to fit.<br>
+                        Collapsed branches keep their space, so expanding them later doesn't cause overlaps. Undo reverses a Harmony press.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.6.0 — Cleanup, map ↔ Kanban switching <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         Kanban and Timeline open on the map you came from, with a ◈ Mind Map button back to it. The URL keeps the selection (?map_id=…).<br>

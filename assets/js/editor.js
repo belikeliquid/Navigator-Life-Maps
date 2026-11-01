@@ -303,45 +303,154 @@ window.nmmCollapseAll = function() { pushUndo(); nodes.forEach(function(n) { if 
 window.nmmCenter      = function() { C.autoCenter(); };
 
 // ============================================================
-// HARMONY — nudges cards toward a tidy layout; Tree of Life mode when sefirot are set
+// HARMONY — lays the map out so nothing overlaps
 // ============================================================
-const SEFIROT_POSITIONS = {
-  kether: { x: 900, y: 120 }, chochma: { x: 580, y: 280 }, binah: { x: 1220, y: 280 },
-  chesed: { x: 580, y: 520 }, geburah: { x: 1220, y: 520 }, tiphereth: { x: 900, y: 660 },
-  netzach: { x: 580, y: 860 }, hod: { x: 1220, y: 860 }, yesod: { x: 900, y: 1020 }, malkuth: { x: 900, y: 1220 }
-};
-window.nmmHarmony = function() {
-  pushUndo();
-  if (nodes.some(function(n) { return n.sefirot && !n._readonly; })) {
-    nodes.forEach(function(n) {
-      const pos = !n._readonly && SEFIROT_POSITIONS[n.sefirot];
-      if (!pos) return;
-      n.x += (pos.x - n.x) * 0.3; // 30% of the way each press
-      n.y += (pos.y - n.y) * 0.3;
-    });
-  } else {
-    const T = 0.20, M = 200;
-    const center = nodes.find(function(n) { return !n.parent; }); if (!center) return;
-    const spineX = center.x + 80, rc = nodes.filter(function(n) { return n.parent === center.id; });
-    const spine = rc.filter(function(n) { return Math.abs((n.x + 90) - spineX) < 150; });
-    const left  = rc.filter(function(n) { return !spine.includes(n) && n.x < center.x; });
-    const right = rc.filter(function(n) { return !spine.includes(n) && n.x >= center.x; });
-    const nudge = function(n, tx, ty) { n.x += Math.max(-M, Math.min(M, (tx - n.x) * T)); n.y += Math.max(-M, Math.min(M, (ty - n.y) * T)); };
-    const kids = function(pid, dir, lv) {
-      const p = find(pid), ch = nodes.filter(function(n) { return n.parent === pid && !n._readonly; });
-      ch.forEach(function(n, i) {
-        let tx, ty;
-        if (dir === 0) { const s = (i % 2 === 0) ? -1 : 1; tx = p.x + s * (180 + lv * 20); ty = p.y + Math.floor(i / 2) * 140; }
-        else { tx = p.x + dir * (180 + lv * 30); ty = p.y + (i - (ch.length - 1) / 2) * 130; }
-        nudge(n, tx, ty); kids(n.id, dir, lv + 1);
-      });
-    };
-    const vs = 170, ho = 340;
-    spine.forEach(function(n, i) { nudge(n, spineX - 90, center.y + 100 + i * vs); kids(n.id, 0, 1); });
-    left.forEach(function(n, i) { nudge(n, spineX - ho - 140, center.y - (left.length - 1) * vs / 2 + i * vs); kids(n.id, -1, 1); });
-    right.forEach(function(n, i) { nudge(n, spineX + ho, center.y - (right.length - 1) * vs / 2 + i * vs); kids(n.id, 1, 1); });
+// Tidy mode: each card sits centred above its children, which keep their
+// current left-to-right order. A card whose children are all leaves gets them
+// in one stacked column; with mixed children, 3+ leaves share one stacked
+// column and each branch gets its own column. Card sizes are measured.
+// Tree of Life mode (any card has a sefirot): each sefirot is a slot in the
+// three-pillar shape; cards sharing a slot sit side by side, each with its own
+// branch laid out beneath it; rows of the tree grow to fit what they hold.
+const LAYOUT = { gapX: 40, gapY: 70, stackGap: 22, islandGap: 140, margin: 40, pillarGap: 40 };
+const SEFIROT_ROWS = [
+  [['kether', 'mid']],
+  [['chochma', 'left'], ['binah', 'right']],
+  [['chesed', 'left'], ['geburah', 'right']],
+  [['tiphereth', 'mid']],
+  [['netzach', 'left'], ['hod', 'right']],
+  [['yesod', 'mid']],
+  [['malkuth', 'mid']]
+];
+
+// Measures and places subtrees. `stop(c)` marks children that start their own
+// group elsewhere (Tree of Life slots) and are left out of their parent's subtree.
+function treeEngine(live, stop) {
+  // Collapsed branches get space too, so expanding them later never causes overlaps.
+  // Render everything expanded once to measure every card, then restore.
+  const collapsed = live.filter(function(n) { return n.collapsed; });
+  collapsed.forEach(function(n) { n.collapsed = false; });
+  C.render();
+  const sizes = {};
+  live.forEach(function(n) { const el = C.getEl(n.id); sizes[n.id] = { w: el ? el.offsetWidth : 180, h: el ? el.offsetHeight : 50 }; });
+  collapsed.forEach(function(n) { n.collapsed = true; });
+
+  // By centre, then top: stacked cards share a centre, so they keep their top-to-bottom order
+  function centre(c) { return c.x + sizes[c.id].w / 2; }
+  function byPosition(a, b) { const d = centre(a) - centre(b); return Math.abs(d) > 20 ? d : a.y - b.y; }
+  function kids(n) {
+    return live.filter(function(c) { return c.parent === n.id && !(stop && stop(c)); }).sort(byPosition);
   }
-  markDirty(); C.render();
+  function isLeaf(n) { return !kids(n).length; }
+
+  const box = {};
+  function measure(n) {
+    const s = sizes[n.id], ch = kids(n);
+    const b = box[n.id] = { w: s.w, h: s.h, nodeW: s.w, nodeH: s.h, cols: [] };
+    if (!ch.length) return b;
+    ch.forEach(measure);
+    const leaves = ch.filter(isLeaf);
+    const stackAll = leaves.length === ch.length && ch.length > 1;
+    const stackLeaves = !stackAll && leaves.length > 2;
+    let stack = null;
+    ch.forEach(function(c) {
+      if (stackAll || (stackLeaves && isLeaf(c))) {
+        if (!stack) { stack = { items: [] }; b.cols.push(stack); }
+        stack.items.push(c);
+      } else {
+        b.cols.push({ items: [c] });
+      }
+    });
+    let rowW = 0, rowH = 0;
+    b.cols.forEach(function(col) {
+      col.w = Math.max.apply(null, col.items.map(function(c) { return box[c.id].w; }));
+      col.h = col.items.reduce(function(sum, c) { return sum + box[c.id].h; }, 0) + LAYOUT.stackGap * (col.items.length - 1);
+      rowW += col.w; rowH = Math.max(rowH, col.h);
+    });
+    b.rowW = rowW + LAYOUT.gapX * (b.cols.length - 1);
+    b.w = Math.max(s.w, b.rowW);
+    b.h = s.h + LAYOUT.gapY + rowH;
+    return b;
+  }
+
+  // cx = centre line of the subtree, top = its top edge
+  function place(n, cx, top) {
+    const b = box[n.id];
+    n.x = cx - b.nodeW / 2; n.y = top;
+    let left = cx - (b.rowW || 0) / 2;
+    const y0 = top + b.nodeH + LAYOUT.gapY;
+    b.cols.forEach(function(col) {
+      const colCx = left + col.w / 2;
+      let y = y0;
+      col.items.forEach(function(c) { place(c, colCx, y); y += box[c.id].h + LAYOUT.stackGap; });
+      left += col.w + LAYOUT.gapX;
+    });
+  }
+
+  // Lays several subtrees side by side; returns the row's width and height.
+  function row(list) {
+    list.forEach(measure);
+    const w = list.reduce(function(s, n) { return s + box[n.id].w; }, 0) + LAYOUT.gapX * 2 * Math.max(0, list.length - 1);
+    const h = Math.max.apply(null, [0].concat(list.map(function(n) { return box[n.id].h; })));
+    return { w: w, h: h, place: function(left, top) {
+      list.forEach(function(n) { place(n, left + box[n.id].w / 2, top); left += box[n.id].w + LAYOUT.gapX * 2; });
+    } };
+  }
+
+  return { box: box, kids: kids, measure: measure, place: place, row: row, byPosition: byPosition };
+}
+
+function isRoot(n) { return !n.parent || !find(n.parent); }
+
+function tidyLayout(live) {
+  const T = treeEngine(live);
+  const roots = live.filter(isRoot);
+  if (!roots.length) return;
+  // The root with the most cards stays where it is; other islands go in a row underneath
+  function count(n) { return 1 + T.kids(n).reduce(function(s, c) { return s + count(c); }, 0); }
+  roots.forEach(T.measure);
+  const main = roots.slice().sort(function(a, b) { return count(b) - count(a); })[0];
+  const mb = T.box[main.id], cx = main.x + mb.nodeW / 2;
+  T.place(main, cx, main.y);
+  const others = T.row(roots.filter(function(r) { return r !== main; }).sort(T.byPosition));
+  others.place(cx - mb.w / 2, main.y + mb.h + LAYOUT.islandGap);
+}
+
+function treeOfLifeLayout(live) {
+  const isSlotted = function(n) { return !!NMMCore.SEFIROT_LABELS[n.sefirot]; };
+  const T = treeEngine(live, isSlotted);
+  // Root cards without a sefirot (usually the map's centre) go in a row above Kether
+  const loose = live.filter(function(n) { return isRoot(n) && !isSlotted(n); });
+  const cx = 900;
+  let top = LAYOUT.margin;
+  const looseRow = T.row(loose.sort(T.byPosition));
+  if (loose.length) { looseRow.place(cx - looseRow.w / 2, top); top += looseRow.h + LAYOUT.gapY * 1.5; }
+
+  SEFIROT_ROWS.forEach(function(slots) {
+    const groups = slots.map(function(s) {
+      return { side: s[1], g: T.row(live.filter(function(n) { return n.sefirot === s[0]; }).sort(T.byPosition)) };
+    }).filter(function(x) { return x.g.w > 0; });
+    if (!groups.length) return;
+    groups.forEach(function(x) {
+      const left = x.side === 'left' ? cx - LAYOUT.pillarGap - x.g.w : x.side === 'right' ? cx + LAYOUT.pillarGap : cx - x.g.w / 2;
+      x.g.place(left, top);
+    });
+    top += Math.max.apply(null, groups.map(function(x) { return x.g.h; })) + LAYOUT.gapY * 1.5;
+  });
+}
+
+window.nmmHarmony = function() {
+  const live = nodes.filter(function(n) { return !n._readonly; });
+  if (!live.length) return;
+  pushUndo();
+  if (live.some(function(n) { return NMMCore.SEFIROT_LABELS[n.sefirot]; })) treeOfLifeLayout(live);
+  else tidyLayout(live);
+  // Keep everything on the canvas (it can't scroll to negative positions)
+  const minX = Math.min.apply(null, nodes.map(function(n) { return n.x; }));
+  const minY = Math.min.apply(null, nodes.map(function(n) { return n.y; }));
+  const sx = Math.max(0, LAYOUT.margin - minX), sy = Math.max(0, LAYOUT.margin - minY);
+  nodes.forEach(function(n) { n.x = Math.round(n.x + sx); n.y = Math.round(n.y + sy); });
+  markDirty(); C.render(); C.autoCenter();
 };
 
 // ============================================================
