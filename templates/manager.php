@@ -364,6 +364,8 @@ function analyzeNotes(notesId, btnId, listId, wrapId, questionsVar) {
       if (questionsVar === 'ai') aiQuestions = data.questions;
       else tolQuestions = data.questions;
       buildQuestionsUI(data.questions, listId, wrapId);
+    } else if (data.message) {
+      alert('Could not analyze notes. ' + data.message);
     }
   }).catch(function() {
     btn.textContent = 'Analyze notes →'; btn.disabled = false;
@@ -411,7 +413,7 @@ document.getElementById('nmm-new-confirm').addEventListener('click', async funct
     try {
       var aiResp = await api('POST', 'ai/organize', { title: title, notes: notes, answers: answers, mode: currentMode });
       document.getElementById(statusId).style.display = 'none';
-      if (!aiResp || !aiResp.nodes) { throw new Error('No nodes returned'); }
+      if (!aiResp || !aiResp.nodes) { throw new Error((aiResp && aiResp.message) || 'No nodes returned'); }
       var map = await api('POST', 'maps', {
         title: title, category: category, color: selectedColor,
         nodes: aiResp.nodes, settings: { motif: '', template: 'treeoflife' }
@@ -422,7 +424,7 @@ document.getElementById('nmm-new-confirm').addEventListener('click', async funct
     } catch(e) {
       document.getElementById(statusId).style.display = 'none';
       btn.textContent = 'Create Map →'; btn.disabled = false;
-      alert('AI organize failed. Please try again or use Outline mode.');
+      alert('AI organize failed: ' + e.message + '\n\nPlease try again or use Outline mode.');
     }
     return;
   }

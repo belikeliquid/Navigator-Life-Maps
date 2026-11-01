@@ -229,9 +229,8 @@ Return the JSON array only.';
             ]),
         ]);
 
-        if ( is_wp_error( $response ) ) {
-            return new WP_Error( 'api_error', 'AI request failed', [ 'status' => 500 ] );
-        }
+        $error = self::anthropic_error( $response );
+        if ( $error ) return $error;
 
         $body  = json_decode( wp_remote_retrieve_body( $response ), true );
         $text  = $body['content'][0]['text'] ?? '[]';
@@ -243,6 +242,21 @@ Return the JSON array only.';
         }
 
         return rest_ensure_response( [ 'questions' => $questions ] );
+    }
+
+    // Turns a failed Anthropic call (connection error or non-200) into a WP_Error
+    // that carries the API's own message, e.g. an invalid key or a retired model.
+    private static function anthropic_error( $response ) {
+        if ( is_wp_error( $response ) ) {
+            $msg = $response->get_error_message();
+        } else {
+            $code = wp_remote_retrieve_response_code( $response );
+            if ( $code === 200 ) return null;
+            $body = json_decode( wp_remote_retrieve_body( $response ), true );
+            $msg  = $body['error']['message'] ?? 'HTTP ' . $code;
+        }
+        error_log( 'Navigator Mind Maps: Anthropic request failed: ' . $msg );
+        return new WP_Error( 'api_error', 'AI request failed: ' . $msg, [ 'status' => 502 ] );
     }
 
     public static function ai_test( $request ) {
@@ -376,9 +390,8 @@ Return JSON array only. Start with [ end with ].';
             ]),
         ]);
 
-        if ( is_wp_error( $response ) ) {
-            return new WP_Error( 'api_error', 'AI request failed', [ 'status' => 500 ] );
-        }
+        $error = self::anthropic_error( $response );
+        if ( $error ) return $error;
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
         $text = $body['content'][0]['text'] ?? '';

@@ -264,6 +264,13 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.5.7 — Clear AI error messages <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        AI organize and Analyze notes now show Anthropic's actual error (e.g. invalid API key, retired model) instead of a generic failure.<br>
+                        Failed AI requests are written to the PHP error log.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.5.3 — Auth, Kanban, landing page <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         Two-column login/signup landing page with Cloudflare Turnstile support.<br>
