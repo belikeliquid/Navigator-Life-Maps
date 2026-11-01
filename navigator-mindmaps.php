@@ -3,13 +3,13 @@
  * Plugin Name: Navigator Mind Maps
  * Plugin URI: https://navigatorproject.org
  * Description: Visual mind mapping tool for Navigator Leadership Group. Multi-map manager, Kanban view, Tree of Life template, outline import, and WordPress user auth.
- * Version: 1.5.8
+ * Version: 1.6.0
  * Author: Liquid Media / Navigator Leadership Group
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'NMM_VERSION', '1.5.8' );
+define( 'NMM_VERSION', '1.6.0' );
 define( 'NMM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NMM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -56,16 +56,19 @@ class Navigator_MindMaps {
         }
     }
 
+    // True on pages that hold one of the app's shortcodes
+    private static function is_app_page() {
+        global $post;
+        if ( ! is_a( $post, 'WP_Post' ) ) return false;
+        foreach ( [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban', 'navigator_timeline' ] as $sc ) {
+            if ( has_shortcode( $post->post_content, $sc ) ) return true;
+        }
+        return false;
+    }
+
     // Inline NMM JS config in <head> — bypasses Enfold/SG script loading issues
     public function inline_nmm_config() {
-        global $post;
-        if ( ! is_a( $post, 'WP_Post' ) ) return;
-        $shortcodes = [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban', 'navigator_timeline' ];
-        $has_shortcode = false;
-        foreach ( $shortcodes as $sc ) {
-            if ( has_shortcode( $post->post_content, $sc ) ) { $has_shortcode = true; break; }
-        }
-        if ( ! $has_shortcode ) return;
+        if ( ! self::is_app_page() ) return;
         ?>
         <script>
         var NMM = {
@@ -76,9 +79,16 @@ class Navigator_MindMaps {
             homeUrl:     '<?php echo esc_js( home_url() ); ?>',
             isAdmin:     <?php echo current_user_can( 'manage_options' ) ? 'true' : 'false'; ?>,
             isLoggedIn:  <?php echo is_user_logged_in() ? 'true' : 'false'; ?>,
+            mapsUrl:     '<?php echo esc_js( home_url( "/maps/" ) ); ?>',
             editorUrl:   '<?php echo esc_js( home_url( "/map-editor/" ) ); ?>',
             kanbanUrl:   '<?php echo esc_js( home_url( "/kanban/" ) ); ?>',
+            timelineUrl: '<?php echo esc_js( home_url( "/timeline/" ) ); ?>',
             shareUrl:    '<?php echo esc_js( home_url( "/map-share/" ) ); ?>',
+            logoutUrl:   '<?php echo esc_js( wp_logout_url( home_url( "/maps/" ) ) ); ?>',
+            defaults:    {
+                motif:  '<?php echo esc_js( NMM_Settings::get( "default_motif", "In the ocean of life, you are the navigator" ) ); ?>',
+                quotes: '<?php echo esc_js( NMM_Settings::get( "default_quotes", "Navigate by stars not by fear,Roots run deep branches reach far" ) ); ?>'
+            },
             bgMode:      '<?php echo esc_js( NMM_Settings::get( "default_bg_mode", "repeat" ) ); ?>',
             bgUrl:       '<?php echo esc_js( NMM_Settings::get( "default_bg_url", "" ) ); ?>'
         };
@@ -88,13 +98,7 @@ class Navigator_MindMaps {
 
     // Output custom CSS from settings — after core CSS so it always wins
     public function output_custom_css() {
-        global $post;
-        if ( ! is_a( $post, 'WP_Post' ) ) return;
-        $has = false;
-        foreach ( [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban', 'navigator_timeline' ] as $sc ) {
-            if ( has_shortcode( $post->post_content, $sc ) ) { $has = true; break; }
-        }
-        if ( ! $has ) return;
+        if ( ! self::is_app_page() ) return;
 
         $custom_css = get_option( 'nmm_custom_css', NMM_Settings::default_enfold_css() );
         if ( $custom_css ) {
@@ -108,17 +112,25 @@ class Navigator_MindMaps {
         }
     }
 
-    public function enqueue_scripts() {
-        global $post;
-        if ( ! is_a( $post, 'WP_Post' ) ) return;
-        $has = false;
-        foreach ( [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban', 'navigator_timeline' ] as $sc ) {
-            if ( has_shortcode( $post->post_content, $sc ) ) { $has = true; break; }
-        }
-        if ( ! $has ) return;
+    // Page scripts are registered here and enqueued by the shortcode that renders the page
+    // (NMM_Shortcodes::render), so each page loads only its own. html2canvas loads on demand.
+    const PAGE_SCRIPTS = [
+        'nmm-canvas'   => [ 'canvas.js',   [ 'nmm-core' ] ],
+        'nmm-editor'   => [ 'editor.js',   [ 'nmm-canvas' ] ],
+        'nmm-view'     => [ 'view.js',     [ 'nmm-canvas' ] ],
+        'nmm-kanban'   => [ 'kanban.js',   [ 'nmm-core' ] ],
+        'nmm-timeline' => [ 'timeline.js', [ 'nmm-core' ] ],
+        'nmm-manager'  => [ 'manager.js',  [ 'nmm-core' ] ],
+        'nmm-landing'  => [ 'landing.js',  [ 'nmm-core' ] ],
+    ];
 
-        wp_enqueue_script( 'html2canvas', NMM_URL . 'assets/html2canvas.min.js', [], '1.4.1', true );
-        wp_enqueue_script( 'nmm-app', NMM_URL . 'assets/mindmaps.js', [ 'html2canvas' ], NMM_VERSION, true );
+    public function enqueue_scripts() {
+        if ( ! self::is_app_page() ) return;
+
+        wp_register_script( 'nmm-core', NMM_URL . 'assets/js/core.js', [], NMM_VERSION, true );
+        foreach ( self::PAGE_SCRIPTS as $handle => $def ) {
+            wp_register_script( $handle, NMM_URL . 'assets/js/' . $def[0], $def[1], NMM_VERSION, true );
+        }
         wp_enqueue_style( 'nmm-styles', NMM_URL . 'assets/mindmaps.css', [], NMM_VERSION );
         wp_enqueue_style( 'nmm-fonts',
             'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Montserrat:wght@400;500;600&family=Cormorant+Garamond:ital@1&display=swap',
@@ -130,7 +142,7 @@ class Navigator_MindMaps {
         if ( strpos( $file, 'navigator-mindmaps' ) !== false ) return true;
         return $skip;
     }
-    public function sg_optimizer_exclude( $list ) { $list[] = 'html2canvas'; $list[] = 'nmm-app'; return $list; }
+    public function sg_optimizer_exclude( $list ) { return array_merge( $list, [ 'nmm-core' ], array_keys( self::PAGE_SCRIPTS ) ); }
     public function sg_optimizer_exclude_css( $list ) { $list[] = 'nmm-styles'; return $list; }
     public function purge_sg_cache() { if ( function_exists( 'sg_cachepress_purge_cache' ) ) sg_cachepress_purge_cache(); }
 

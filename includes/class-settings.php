@@ -264,6 +264,15 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.6.0 — Cleanup, map ↔ Kanban switching <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Kanban and Timeline open on the map you came from, with a ◈ Mind Map button back to it. The URL keeps the selection (?map_id=…).<br>
+                        Kanban cards show where they sit in the map (e.g. Work › Divination); click a card to edit it. Only the selected maps are loaded.<br>
+                        Fixed: share links from the maps list showed "No map ID specified"; Outline mode ignored the outline; new Blank / Tree of Life maps opened empty; Edit on the maps list wiped the motif; tag badges disappeared after dragging; Undo wasn't saved; the Center button did nothing; the editor's category setting wasn't saved.<br>
+                        Code: scripts moved out of the templates into assets/js (one per page plus shared core and canvas); PNG export library loads only when used.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.5.8 — Editor saves reliably <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         Autosave runs 2 seconds after a change (was 30), when you switch tabs, and when you leave the page.<br>

@@ -2,7 +2,7 @@
 
 A visual mind mapping plugin for WordPress, built for Navigator Leadership Group.
 
-**Version:** 1.5.8  
+**Version:** 1.6.0  
 **Requires:** WordPress 5.8+, PHP 7.4+  
 **Author:** Liquid Media / Navigator Leadership Group
 
@@ -50,15 +50,15 @@ To release an update:
 2. Commit and push to `main`. Main must always hold the code that is released.
 3. Tag the commit `vX.Y.Z`, exactly. A tag like `v.1.5.5` is read as `.1.5.5` and breaks the version comparison.
    ```bash
-   git tag -a v1.5.7 -m "v1.5.7" && git push origin v1.5.7
+   git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z
    ```
 4. Build the zip from the tag, with a top-level `navigator-mindmaps/` folder:
    ```bash
-   git archive --format=zip --prefix=navigator-mindmaps/ -o navigator-mindmaps.zip v1.5.7 -- . ':!.gitignore'
+   git archive --format=zip --prefix=navigator-mindmaps/ -o navigator-mindmaps.zip vX.Y.Z -- . ':!.gitignore' ':!CLAUDE.md'
    ```
 5. Publish the release with the zip attached:
    ```bash
-   gh release create v1.5.7 navigator-mindmaps.zip --title v1.5.7 --latest --notes "..."
+   gh release create vX.Y.Z navigator-mindmaps.zip --title vX.Y.Z --latest --notes "..."
    ```
 6. In WP Admin → Plugins, the site shows the update within 6 hours. Take a database export before you install it.
 

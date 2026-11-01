@@ -1,0 +1,45 @@
+# Navigator Mind Maps — notes for Claude
+
+WordPress plugin `navigator-mindmaps`, live on navigatorproject.org. Mind maps, a Kanban board and a timeline over the same data. Read this before exploring; it should save you most of the searching.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `navigator-mindmaps.php` | Bootstrap: `NMM_VERSION`, the inline `NMM` JS config in `<head>`, script registration (`PAGE_SCRIPTS`) |
+| `includes/class-rest-api.php` | REST API `nmm/v1`: maps, islands, share, AI (Anthropic), nonce |
+| `includes/class-shortcodes.php` | Shortcodes → `render($name)`: includes `templates/<name>.php` and enqueues `assets/js/<name>.js` |
+| `includes/class-auth.php` | Login / signup endpoints, Turnstile, `nmm_edit_maps` capability |
+| `includes/class-settings.php` | WP Admin settings page, **changelog** (add an entry each release) |
+| `includes/class-post-types.php` | `nmm_mindmap`, `nmm_island` post types |
+| `templates/*.php` | Markup only. No inline scripts |
+| `assets/js/core.js` | `NMMCore`: `api()`, `patchNode()`, nonce refresh, map-filter dropdown, `esc()`, tag colors, lazy html2canvas |
+| `assets/js/canvas.js` | `NMMCanvas.create()`: map rendering shared by the editor and the share view (nodes, lines, motif, PNG export) |
+| `assets/js/editor.js` | Editor: save/draft/conflict logic, drag, modals, outline import, .ics export |
+| `assets/js/{view,kanban,timeline,manager,landing}.js` | One script per page |
+| `assets/mindmaps.css` | All styles |
+
+Pages (Enfold "Blank" template): `/maps` (manager or landing), `/map-editor/?map_id=N`, `/map-share/?share=KEY`, `/kanban/?map_id=N`, `/timeline/?map_id=N`. Kanban and timeline take one or more ids (`?map_id=1,2`); no id means all maps.
+
+## Data
+
+A map is an `nmm_mindmap` post. Its whole content is JSON in post meta: `nmm_nodes` (array), `nmm_settings` (motif, quotes, template), `nmm_islands` (linked island ids), plus `nmm_category`, `nmm_color`, `nmm_share_key`, `nmm_rev`.
+
+Node: `{id, x, y, title, subs[], parent, collapsed, date, tag, sefirot}`. `parent: null` = island (root card). `x, y` = top-left on the canvas. `tag` ∈ start/doing/sprint/review/done or "" (Triage).
+
+**Saving.** Every write sends the whole node array. `nmm_rev` increments on each save. The editor sends `base_rev` and gets a 409 if the map changed since it loaded; Kanban/timeline/maps list use `NMMCore.patchNode()` (fresh GET, then PUT, no `base_rev`). The editor autosaves 2 s after a change and keeps a localStorage draft (`nmm_draft_<id>`) until the save is confirmed.
+
+## Gotchas
+
+- Enfold restyles `<button>`; app CSS targets `.nmm-app`.
+- Speed Optimizer: bump `NMM_VERSION` on any CSS/JS change, then `wp sg purge`. Plugin scripts are excluded from combining.
+- AI model ids are hard-coded in `class-rest-api.php` (`/ai/questions`, `/ai/organize`).
+- Titles are user text: always build HTML with `NMMCore.esc()`.
+
+## Testing
+
+No staging site yet. There's no build step. Check JS with `node --check assets/js/*.js` and PHP with `php -l` on the server. To exercise pages without logging in, render a template on the server with `wp eval-file` and serve it locally against a mock of the REST API (see git history around v1.6.0 for the approach).
+
+## Releasing
+
+See README → Auto-Updates. In short: bump the version in both places in `navigator-mindmaps.php`, add a changelog entry in `class-settings.php`, commit, tag `vX.Y.Z`, publish a GitHub release with `navigator-mindmaps.zip`, then `wp plugin update navigator-mindmaps` on the server after a DB export.
