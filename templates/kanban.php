@@ -200,11 +200,19 @@ window.nmmKbSelectNone = function() {
   updateFilterBtn(); renderBoard();
 };
 
-// Toggle filter panel
+// Toggle filter panel — fixed position escapes toolbar overflow clip
 document.getElementById('nmm-kb-filter-btn').addEventListener('click', function(e) {
   e.stopPropagation();
   const panel = document.getElementById('nmm-kb-filter-panel');
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'none') {
+    const rect = this.getBoundingClientRect();
+    panel.style.position = 'fixed';
+    panel.style.top  = rect.bottom + 4 + 'px';
+    panel.style.left = rect.left + 'px';
+    panel.style.display = 'block';
+  } else {
+    panel.style.display = 'none';
+  }
 });
 document.addEventListener('click', function() {
   document.getElementById('nmm-kb-filter-panel').style.display = 'none';

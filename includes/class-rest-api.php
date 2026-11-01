@@ -39,6 +39,27 @@ class NMM_REST_API {
             'permission_callback' => '__return_true',
         ]);
 
+        // AI test — verifies Anthropic API key is working
+        register_rest_route( $namespace, '/ai/test', [
+            'methods'             => 'POST',
+            'callback'            => [ __CLASS__, 'ai_test' ],
+            'permission_callback' => function() { return current_user_can( 'manage_options' ); },
+        ]);
+
+        // AI questions — reads notes and returns smart clarifying questions
+        register_rest_route( $namespace, '/ai/questions', [
+            'methods'             => 'POST',
+            'callback'            => [ __CLASS__, 'ai_questions' ],
+            'permission_callback' => [ __CLASS__, 'auth' ],
+        ]);
+
+        // AI organize — reads notes and returns structured nodes
+        register_rest_route( $namespace, '/ai/organize', [
+            'methods'             => 'POST',
+            'callback'            => [ __CLASS__, 'ai_organize' ],
+            'permission_callback' => [ __CLASS__, 'auth' ],
+        ]);
+
         // Nonce refresh
         register_rest_route( $namespace, '/nonce', [
             'methods'             => 'GET',
@@ -165,6 +186,222 @@ class NMM_REST_API {
         $posts = get_posts([ 'post_type' => 'nmm_mindmap', 'meta_key' => 'nmm_share_key', 'meta_value' => $key, 'numberposts' => 1 ]);
         if ( empty( $posts ) ) return new WP_Error( 'not_found', 'Shared map not found', [ 'status' => 404 ] );
         return rest_ensure_response( self::format_map( $posts[0], true ) );
+    }
+
+    public static function ai_questions( $request ) {
+        $params = $request->get_json_params();
+        $title  = sanitize_text_field( $params['title'] ?? '' );
+        $notes  = sanitize_textarea_field( $params['notes'] ?? '' );
+
+        if ( ! $notes ) {
+            return new WP_Error( 'no_notes', 'No notes provided', [ 'status' => 400 ] );
+        }
+
+        $api_key = get_option( 'nmm_anthropic_key', '' );
+        if ( ! $api_key ) {
+            return new WP_Error( 'no_key', 'Anthropic API key not configured', [ 'status' => 500 ] );
+        }
+
+        $today  = date('Y-m-d');
+        $prompt = 'You are helping a user build a mind map from their notes. Today is ' . $today . '. Read their notes carefully and generate 3 to 5 short clarifying questions that will help you better organize their content. Focus on: timeframes and deadlines, urgency and priority, what needs to happen first, key people or relationships involved, and what success looks like.
+
+Map title: ' . $title . '
+
+Notes:
+' . $notes . '
+
+Return ONLY a JSON array of question strings. No explanation. No markdown. Example format:
+["What is the overall deadline for this project?", "Which item is most urgent right now?"]
+
+Return the JSON array only.';
+
+        $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
+            'timeout' => 20,
+            'headers' => [
+                'Content-Type'      => 'application/json',
+                'x-api-key'         => $api_key,
+                'anthropic-version' => '2023-06-01',
+            ],
+            'body' => json_encode([
+                'model'      => 'claude-haiku-4-5-20251001',
+                'max_tokens' => 500,
+                'messages'   => [ [ 'role' => 'user', 'content' => $prompt ] ],
+            ]),
+        ]);
+
+        if ( is_wp_error( $response ) ) {
+            return new WP_Error( 'api_error', 'AI request failed', [ 'status' => 500 ] );
+        }
+
+        $body  = json_decode( wp_remote_retrieve_body( $response ), true );
+        $text  = $body['content'][0]['text'] ?? '[]';
+        $text  = preg_replace('/```json|```/', '', $text);
+        $questions = json_decode( trim($text), true );
+
+        if ( ! is_array( $questions ) ) {
+            return new WP_Error( 'parse_error', 'Could not parse questions', [ 'status' => 500 ] );
+        }
+
+        return rest_ensure_response( [ 'questions' => $questions ] );
+    }
+
+    public static function ai_test( $request ) {
+        $api_key = get_option( 'nmm_anthropic_key', '' );
+        if ( ! $api_key ) {
+            return rest_ensure_response([ 'success' => false, 'message' => 'No API key saved in settings.' ]);
+        }
+        $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
+            'timeout' => 15,
+            'headers' => [
+                'Content-Type'      => 'application/json',
+                'x-api-key'         => $api_key,
+                'anthropic-version' => '2023-06-01',
+            ],
+            'body' => json_encode([
+                'model'      => 'claude-haiku-4-5-20251001',
+                'max_tokens' => 10,
+                'messages'   => [ [ 'role' => 'user', 'content' => 'Hi' ] ],
+            ]),
+        ]);
+        if ( is_wp_error( $response ) ) {
+            return rest_ensure_response([ 'success' => false, 'message' => $response->get_error_message() ]);
+        }
+        $code = wp_remote_retrieve_response_code( $response );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        if ( $code === 200 ) {
+            return rest_ensure_response([ 'success' => true, 'model' => $body['model'] ?? 'connected' ]);
+        }
+        $error = $body['error']['message'] ?? 'HTTP ' . $code;
+        return rest_ensure_response([ 'success' => false, 'message' => $error ]);
+    }
+
+    public static function ai_organize( $request ) {
+        $params = $request->get_json_params();
+        $title  = sanitize_text_field( $params['title'] ?? 'My Map' );
+        $notes   = sanitize_textarea_field( $params['notes'] ?? '' );
+        $answers = $params['answers'] ?? [];
+        $mode    = sanitize_text_field( $params['mode'] ?? 'ai' );
+
+        if ( ! $notes ) {
+            return new WP_Error( 'no_notes', 'No notes provided', [ 'status' => 400 ] );
+        }
+
+        $api_key = get_option( 'nmm_anthropic_key', '' );
+        if ( ! $api_key ) {
+            return new WP_Error( 'no_key', 'Anthropic API key not configured', [ 'status' => 500 ] );
+        }
+
+        $answers_text = '';
+        if ( ! empty( $answers ) ) {
+            $answers_text = "
+
+User answers to clarifying questions:
+";
+            foreach ( $answers as $qa ) {
+                $q = sanitize_text_field( $qa['question'] ?? '' );
+                $a = sanitize_text_field( $qa['answer'] ?? '' );
+                if ( $q && $a ) $answers_text .= "Q: $q
+A: $a
+";
+            }
+        }
+
+        $today  = date('Y-m-d');
+        $prompt = 'You are organizing content for a mind map based on the Kabbalistic Tree of Life.
+
+Today is ' . $today . '. Use this as the reference for all dates. All dates must be on or after today.
+
+Map title: ' . $title . '
+
+Notes:
+' . $notes . $answers_text . '
+
+Assign each key topic to the most appropriate Sefirot position. Use the answers to set Kanban tags (start/doing/sprint/review/done) based on urgency and priority, and add dates in YYYY-MM-DD format where mentioned or implied.
+
+Sefirot guide:
+- kether: vision, purpose, highest aspiration
+- chochma: wisdom, insight, strategy
+- binah: understanding, structure, planning
+- chesed: love, relationships, heart work
+- geburah: discipline, challenges, boundaries
+- tiphereth: beauty, center, core self (use for main theme)
+- netzach: victory, goals, achievement
+- hod: communication, expression, details
+- yesod: foundation, daily practice, habits
+- malkuth: material, practical, physical reality
+
+Kanban tag guide — assign based on urgency from answers:
+- sprint: must happen immediately, highest urgency
+- doing: currently in progress
+- start: needs to begin soon
+- review: waiting on something or needs checking
+- done: completed
+
+Return ONLY a JSON array of nodes. No explanation. No markdown.
+
+Each node must have:
+- id: short unique string like "n1"
+- x: number (sefirot position)
+- y: number (sefirot position)
+- title: short topic title (under 6 words)
+- subs: array of subtitle strings (key points, max 4)
+- parent: "c" for all nodes
+- sefirot: sefirot name
+- collapsed: false
+- date: "YYYY-MM-DD" if date mentioned, otherwise ""
+- tag: one of start/doing/sprint/review/done or ""
+
+Include center node: id "c", sefirot "tiphereth", x 1100, y 550, title = map title, parent null, tag "", date "".
+
+Sefirot x,y positions:
+kether: 1100,100 — chochma: 800,250 — binah: 1400,250
+chesed: 800,450 — geburah: 1400,450 — tiphereth: 1100,550
+netzach: 800,750 — hod: 1400,750 — yesod: 1100,900 — malkuth: 1100,1100
+
+Return JSON array only. Start with [ end with ].';
+
+        $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
+            'timeout' => 30,
+            'headers' => [
+                'Content-Type'      => 'application/json',
+                'x-api-key'         => $api_key,
+                'anthropic-version' => '2023-06-01',
+            ],
+            'body' => json_encode([
+                'model'      => 'claude-opus-4-6',
+                'max_tokens' => 2000,
+                'messages'   => [
+                    [ 'role' => 'user', 'content' => $prompt ]
+                ],
+            ]),
+        ]);
+
+        if ( is_wp_error( $response ) ) {
+            return new WP_Error( 'api_error', 'AI request failed', [ 'status' => 500 ] );
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $text = $body['content'][0]['text'] ?? '';
+
+        // Clean up any markdown code fences
+        $text = preg_replace('/```json|```/', '', $text );
+        $text = trim( $text );
+
+        // Extract JSON array if wrapped in extra text
+        if ( strpos( $text, '[' ) !== false ) {
+            $start = strpos( $text, '[' );
+            $end   = strrpos( $text, ']' );
+            if ( $end !== false ) {
+                $text = substr( $text, $start, $end - $start + 1 );
+            }
+        }
+
+        $nodes = json_decode( $text, true );
+        if ( ! is_array( $nodes ) ) {
+            return new WP_Error( 'parse_error', 'Could not parse AI response: ' . substr( $text, 0, 200 ), [ 'status' => 500 ] );
+        }
+
+        return rest_ensure_response( [ 'nodes' => $nodes ] );
     }
 
     private static function format_map( $post, $include_data = false ) {

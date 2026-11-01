@@ -6,6 +6,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
   <div id="nmm-editor-toolbar" class="nmm-editor-toolbar">
     <a href="<?php echo home_url('/maps/'); ?>" class="nmm-btn nmm-btn-nav">← Maps</a>
     <a href="<?php echo home_url('/kanban/'); ?>" class="nmm-btn nmm-btn-kanban">⬡ Kanban</a>
+    <a href="<?php echo home_url('/timeline/'); ?>" class="nmm-btn nmm-btn-kanban">◷ Timeline</a>
     <span class="nmm-sep"></span>
     <span id="nmm-map-title-display" class="nmm-map-title-display" title="Click to rename"></span>
     <span class="nmm-sep"></span>
@@ -18,7 +19,6 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button class="nmm-btn" onclick="nmmCollapseAll()">Collapse</button>
     <span class="nmm-sep"></span>
     <button class="nmm-btn" onclick="nmmOpenSettings()">Settings</button>
-    <button class="nmm-btn" onclick="nmmAddLinkedIsland()">⛓ Link Island</button>
     <button class="nmm-btn" onclick="nmmOpenOutlineImport()">📋 Import outline</button>
     <button class="nmm-btn" onclick="nmmOpenGCalModal()">→ GCal</button>
     <button class="nmm-btn" onclick="nmmExportPNG()">Export PNG</button>
@@ -110,21 +110,6 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
           <option value="project">Project</option>
           <option value="team">Team</option>
         </select>
-      </div>
-      <div class="nmm-field"><label>Background image URL (leave blank for default topo pattern)</label><input type="text" id="nms-bg" class="nmm-input" placeholder="https://..." /></div>
-      <div class="nmm-field" id="nms-bg-options">
-        <label>Background display mode</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
-          <label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="radio" name="nms-bg-mode" value="cover" /> Cover (fill)</label>
-          <label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="radio" name="nms-bg-mode" value="repeat" checked /> Repeat tile</label>
-          <label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="radio" name="nms-bg-mode" value="contain" /> Centered</label>
-        </div>
-        <label style="margin-top:8px">Position</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
-          <label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="radio" name="nms-bg-pos" value="left" /> Left</label>
-          <label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="radio" name="nms-bg-pos" value="center" checked /> Center</label>
-          <label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="radio" name="nms-bg-pos" value="right" /> Right</label>
-        </div>
       </div>
       <div class="nmm-field"><label>Motif (always shown)</label><input type="text" id="nms-motif" class="nmm-input" /></div>
       <div class="nmm-field"><label>Random quotes (comma separated)</label><textarea id="nms-quotes" rows="2" class="nmm-input"></textarea></div>
@@ -656,7 +641,6 @@ window.nmmCloseIslandModal = function(){document.getElementById('nmm-island-moda
 window.nmmOpenSettings = function(){
   document.getElementById('nms-title').value=mapTitle;
   document.getElementById('nms-category').value=settings.category||'';
-  document.getElementById('nms-bg').value=settings.bgUrl||'';
   document.getElementById('nms-motif').value=settings.motif||'';
   document.getElementById('nms-quotes').value=settings.quotes||'';
   document.getElementById('nmm-settings-modal').classList.add('open');
@@ -666,17 +650,14 @@ window.nmmSaveSettings = function(){
   mapTitle=document.getElementById('nms-title').value.trim()||mapTitle;
   document.getElementById('nmm-map-title-display').textContent=mapTitle;
   settings.category=document.getElementById('nms-category').value;
-  settings.bgUrl=document.getElementById('nms-bg').value.trim();
   settings.motif=document.getElementById('nms-motif').value.trim();
   settings.quotes=document.getElementById('nms-quotes').value.trim();
   nmmCloseSettings();markDirty();render();autoCenter();
 };
 
 function applyBackground(){
-  const bg=document.getElementById('nmm-bg-layer'),overlay=document.getElementById('nmm-bg-overlay');
-  const bgUrl=settings.bgUrl||pluginDefaults.bgUrl;
-  if(bgUrl){bg.style.backgroundImage='url("'+bgUrl+'")';overlay.style.background='rgba(232,228,219,0.5)';}
-  else{bg.style.backgroundImage='none';overlay.style.background='none';}
+  // Background is handled entirely by CSS on .nmm-app and .nmm-landing-page
+  // No per-map background overrides
 }
 function renderMotif(){
   const el=document.getElementById('nmm-motif');

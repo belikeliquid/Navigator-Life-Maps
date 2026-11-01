@@ -27,7 +27,7 @@ class NMM_Settings {
     public static function save_settings() {
         if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorized' );
         check_admin_referer( 'nmm_settings' );
-        $fields = [ 'default_bg_url', 'default_motif', 'default_quotes', 'editor_page_slug', 'share_page_slug', 'theme_css' ];
+        $fields = [ 'default_bg_url', 'default_bg_mode', 'default_motif', 'default_quotes', 'editor_page_slug', 'share_page_slug', 'theme_css' ];
         // Cloudflare Turnstile keys
         if ( isset( $_POST['turnstile_site_key'] ) ) {
             update_option( 'nmm_turnstile_site_key', sanitize_text_field( wp_unslash( $_POST['turnstile_site_key'] ) ) );
@@ -60,7 +60,8 @@ class NMM_Settings {
             'manager' => [ 'title' => 'Maps',       'slug' => 'maps',       'content' => '[navigator_maps]' ],
             'editor'  => [ 'title' => 'Map Editor',  'slug' => 'map-editor', 'content' => '[navigator_mindmap id="0"]' ],
             'share'   => [ 'title' => 'Map View',    'slug' => 'map-share',  'content' => '[navigator_mindmap id="0" readonly="true"]' ],
-            'kanban'  => [ 'title' => 'Kanban',      'slug' => 'kanban',     'content' => '[navigator_kanban]' ],
+            'kanban'   => [ 'title' => 'Kanban',     'slug' => 'kanban',     'content' => '[navigator_kanban]' ],
+            'timeline' => [ 'title' => 'Timeline',  'slug' => 'timeline',   'content' => '[navigator_timeline]' ],
         ];
         if ( isset( $pages[ $type ] ) ) {
             $p = $pages[ $type ];
@@ -97,6 +98,7 @@ class NMM_Settings {
         $created = isset( $_GET['created'] );
 
         $default_bg     = self::get( 'default_bg_url', '' );
+        $default_bg_mode = self::get( 'default_bg_mode', 'repeat' );
         $default_motif  = self::get( 'default_motif', 'In the ocean of life, you are the navigator' );
         $default_quotes = self::get( 'default_quotes', 'Navigate by stars not by fear,Roots run deep branches reach far,What you tend to grows' );
         $theme_css      = self::get( 'theme_css', self::default_theme_css() );
@@ -108,7 +110,8 @@ class NMM_Settings {
             'manager' => [ 'label' => 'Maps manager',  'slug' => 'maps',       'shortcode' => '[navigator_maps]',                          'type' => 'manager' ],
             'editor'  => [ 'label' => 'Map editor',    'slug' => 'map-editor', 'shortcode' => '[navigator_mindmap id="0"]',                'type' => 'editor' ],
             'share'   => [ 'label' => 'Public share',  'slug' => 'map-share',  'shortcode' => '[navigator_mindmap id="0" readonly="true"]', 'type' => 'share' ],
-            'kanban'  => [ 'label' => 'Kanban board',  'slug' => 'kanban',     'shortcode' => '[navigator_kanban]',                        'type' => 'kanban' ],
+            'kanban'   => [ 'label' => 'Kanban board',  'slug' => 'kanban',     'shortcode' => '[navigator_kanban]',       'type' => 'kanban' ],
+            'timeline' => [ 'label' => 'Timeline',      'slug' => 'timeline',   'shortcode' => '[navigator_timeline]',     'type' => 'timeline' ],
         ];
 
         // REST checks
@@ -233,11 +236,7 @@ class NMM_Settings {
           <!-- Default Map Settings -->
           <div class="nmm-settings-card" style="margin-bottom:20px">
             <h2>🗺 Default Map Settings</h2>
-            <div class="nmm-field">
-                <label>Default background image URL</label>
-                <input type="text" name="default_bg_url" value="<?php echo esc_attr( $default_bg ); ?>" placeholder="Leave blank to use built-in topo pattern" />
-                <p style="font-size:11px;color:#888;margin-top:4px">Enter a URL from your media library, or leave blank to use the default topographic SVG pattern. Individual maps can override this in their Settings panel.</p>
-            </div>
+            <p style="font-size:11px;color:#888;margin-bottom:8px">Background uses the built-in topographic SVG pattern. Individual maps can set a custom background image in their Settings panel inside the editor.</p>
             <div class="nmm-field">
                 <label>Default motif (always shown)</label>
                 <input type="text" name="default_motif" value="<?php echo esc_attr( $default_motif ); ?>" />
@@ -363,12 +362,44 @@ class NMM_Settings {
             </p>
             <div class="nmm-field">
               <label>Anthropic API Key</label>
-              <input type="password" name="anthropic_key" value="<?php echo $anthropic_key ? '••••••••••••' : ''; ?>" placeholder="sk-ant-..." style="font-family:monospace" />
+              <input type="password" name="anthropic_key" value="" placeholder="<?php echo $anthropic_key ? 'Paste new key to replace' : 'sk-ant-...'; ?>" style="font-family:monospace" />
               <?php if ( $anthropic_key ) : ?>
-                <p style="font-size:11px;color:#0f6e56;margin-top:4px">✓ API key is saved</p>
+                <p style="font-size:11px;color:#0f6e56;margin-top:4px">✓ API key is saved. Paste a new key above to replace it.</p>
+              <?php else : ?>
+                <p style="font-size:11px;color:#cc3333;margin-top:4px">No API key saved yet.</p>
               <?php endif; ?>
             </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+              <button type="button" id="nmm-test-api-btn" class="nmm-btn-small">Test API connection</button>
+              <span id="nmm-test-api-result" style="font-size:12px"></span>
+            </div>
           </div>
+
+          <script>
+          document.getElementById('nmm-test-api-btn').addEventListener('click', function() {
+            var btn = this;
+            var result = document.getElementById('nmm-test-api-result');
+            btn.textContent = 'Testing...'; btn.disabled = true;
+            result.textContent = ''; result.style.color = '#888';
+            fetch('<?php echo esc_js( rest_url("nmm/v1/ai/test") ); ?>', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': '<?php echo esc_js( wp_create_nonce("wp_rest") ); ?>' }
+            }).then(function(r){ return r.json(); }).then(function(data) {
+              btn.textContent = 'Test API connection'; btn.disabled = false;
+              if (data.success) {
+                result.textContent = '✓ Connected — ' + (data.model || 'API responding');
+                result.style.color = '#0f6e56';
+              } else {
+                result.textContent = '✗ ' + (data.message || 'Connection failed');
+                result.style.color = '#cc3333';
+              }
+            }).catch(function(e) {
+              btn.textContent = 'Test API connection'; btn.disabled = false;
+              result.textContent = '✗ Request error';
+              result.style.color = '#cc3333';
+            });
+          });
+          </script>
 
         </div>
 

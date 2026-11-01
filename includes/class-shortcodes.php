@@ -6,7 +6,8 @@ class NMM_Shortcodes {
     public static function register() {
         add_shortcode( 'navigator_maps',    [ __CLASS__, 'maps_manager' ] );
         add_shortcode( 'navigator_mindmap', [ __CLASS__, 'single_map' ] );
-        add_shortcode( 'navigator_kanban',  [ __CLASS__, 'kanban' ] );
+        add_shortcode( 'navigator_kanban',    [ __CLASS__, 'kanban' ] );
+        add_shortcode( 'navigator_timeline',  [ __CLASS__, 'timeline' ] );
     }
 
     // [navigator_maps] — landing if logged out, manager if logged in
@@ -53,6 +54,17 @@ class NMM_Shortcodes {
         } else {
             include NMM_PATH . 'templates/editor.php';
         }
+        return ob_get_clean();
+    }
+
+    // [navigator_timeline]
+    public static function timeline( $atts ) {
+        if ( ! is_user_logged_in() ) {
+            wp_redirect( home_url( '/maps/?from=timeline' ) );
+            exit;
+        }
+        ob_start();
+        include NMM_PATH . 'templates/timeline.php';
         return ob_get_clean();
     }
 

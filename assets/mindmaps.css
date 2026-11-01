@@ -49,13 +49,19 @@ body:has(.nmm-app) .entry-content > *:first-child {
    TOPOGRAPHIC BACKGROUND — inline SVG tile
    ============================================================ */
 
-/* Applied to canvas background and manager body */
+/* Background on plugin divs directly — not on body to avoid Enfold conflicts */
+.nmm-app,
+.nmm-landing-page {
+    background-color: #e8e4db !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400'%3E%3Crect width='800' height='400' fill='%23e8e4db'/%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23c8c4bb' stroke-width='0.8' opacity='0.5'%3E%3Cpath d='M0,180 C60,160 120,200 180,170 C240,140 300,190 360,165 C420,140 480,185 540,160 C600,135 660,175 720,155 C760,142 800,160 800,160'/%3E%3Cpath d='M0,280 C50,260 110,300 170,275 C230,250 290,285 350,265 C410,245 470,280 530,260 C590,240 650,275 710,255 C760,240 800,260 800,258'/%3E%3Cpath d='M0,80 C70,65 130,95 190,75 C250,55 310,85 370,68 C430,51 490,78 550,62 C610,46 670,70 730,55 C770,44 800,58 800,56'/%3E%3Cpath d='M0,340 C55,325 115,355 175,335 C235,315 295,345 355,328 C415,311 475,338 535,322 C595,306 655,330 715,315 C758,304 800,318 800,316'/%3E%3Cpath d='M100,0 C90,40 110,80 95,120 C80,160 100,200 88,240 C76,280 95,320 82,360'/%3E%3Cpath d='M500,0 C515,45 495,90 510,135 C525,180 505,220 518,265 C531,310 512,350 525,390'/%3E%3Cpath d='M250,0 C240,50 260,95 248,140 C236,185 255,225 244,270 C233,315 250,355 240,395'/%3E%3Cpath d='M700,0 C712,42 695,85 708,128 C721,171 705,212 716,255 C727,298 712,338 722,378'/%3E%3C/g%3E%3Cg stroke='%23b8b4ab' stroke-width='0.6' opacity='0.4'%3E%3Cpath d='M0,130 C80,115 140,145 200,128 C260,111 320,138 380,122 C440,106 500,130 560,116 C620,102 680,124 740,110 C775,100 800,112 800,110'/%3E%3Cpath d='M0,230 C65,218 125,238 185,222 C245,206 305,228 365,214 C425,200 485,220 545,207 C605,194 665,215 725,202 C765,192 800,205 800,203'/%3E%3Cpath d='M150,0 C138,55 158,105 145,155 C132,205 150,250 138,300 C126,350 143,380 135,400'/%3E%3Cpath d='M400,0 C412,48 395,98 408,148 C421,198 405,242 417,292 C429,342 414,375 425,400'/%3E%3C/g%3E%3Cg stroke='%230BBFBF' stroke-width='0.5' opacity='0.15'%3E%3Cpath d='M0,200 C90,185 150,215 210,198 C270,181 330,208 390,192 C450,176 510,200 570,186 C630,172 690,194 750,180 C778,172 800,182 800,180'/%3E%3Cpath d='M300,0 C288,58 308,112 296,166 C284,220 302,268 291,322'/%3E%3C/g%3E%3Cg stroke='%23c0bcb3' stroke-width='0.7' opacity='0.4'%3E%3Cellipse cx='180' cy='150' rx='55' ry='30' transform='rotate(-15,180,150)'/%3E%3Cellipse cx='180' cy='150' rx='35' ry='18' transform='rotate(-15,180,150)'/%3E%3Cellipse cx='380' cy='80' rx='48' ry='22' transform='rotate(-8,380,80)'/%3E%3Cellipse cx='720' cy='320' rx='52' ry='25' transform='rotate(5,720,320)'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") !important;
+    background-repeat: repeat !important;
+    background-size: 800px 400px !important;
+    background-attachment: scroll;
+}
 .nmm-canvas-wrap,
 .nmm-manager-body {
-    background-color: #e8e4db;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400'%3E%3Crect width='800' height='400' fill='%23e8e4db'/%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23c8c4bb' stroke-width='0.8' opacity='0.5'%3E%3Cpath d='M0,180 C60,160 120,200 180,170 C240,140 300,190 360,165 C420,140 480,185 540,160 C600,135 660,175 720,155 C760,142 800,160 800,160'/%3E%3Cpath d='M0,280 C50,260 110,300 170,275 C230,250 290,285 350,265 C410,245 470,280 530,260 C590,240 650,275 710,255 C760,240 800,260 800,258'/%3E%3Cpath d='M0,80 C70,65 130,95 190,75 C250,55 310,85 370,68 C430,51 490,78 550,62 C610,46 670,70 730,55 C770,44 800,58 800,56'/%3E%3Cpath d='M0,340 C55,325 115,355 175,335 C235,315 295,345 355,328 C415,311 475,338 535,322 C595,306 655,330 715,315 C758,304 800,318 800,316'/%3E%3Cpath d='M100,0 C90,40 110,80 95,120 C80,160 100,200 88,240 C76,280 95,320 82,360'/%3E%3Cpath d='M500,0 C515,45 495,90 510,135 C525,180 505,220 518,265 C531,310 512,350 525,390'/%3E%3Cpath d='M250,0 C240,50 260,95 248,140 C236,185 255,225 244,270 C233,315 250,355 240,395'/%3E%3Cpath d='M700,0 C712,42 695,85 708,128 C721,171 705,212 716,255 C727,298 712,338 722,378'/%3E%3C/g%3E%3Cg stroke='%23b8b4ab' stroke-width='0.6' opacity='0.4'%3E%3Cpath d='M0,130 C80,115 140,145 200,128 C260,111 320,138 380,122 C440,106 500,130 560,116 C620,102 680,124 740,110 C775,100 800,112 800,110'/%3E%3Cpath d='M0,230 C65,218 125,238 185,222 C245,206 305,228 365,214 C425,200 485,220 545,207 C605,194 665,215 725,202 C765,192 800,205 800,203'/%3E%3Cpath d='M150,0 C138,55 158,105 145,155 C132,205 150,250 138,300 C126,350 143,380 135,400'/%3E%3Cpath d='M400,0 C412,48 395,98 408,148 C421,198 405,242 417,292 C429,342 414,375 425,400'/%3E%3C/g%3E%3Cg stroke='%230BBFBF' stroke-width='0.5' opacity='0.15'%3E%3Cpath d='M0,200 C90,185 150,215 210,198 C270,181 330,208 390,192 C450,176 510,200 570,186 C630,172 690,194 750,180 C778,172 800,182 800,180'/%3E%3Cpath d='M300,0 C288,58 308,112 296,166 C284,220 302,268 291,322'/%3E%3C/g%3E%3Cg stroke='%23c0bcb3' stroke-width='0.7' opacity='0.4'%3E%3Cellipse cx='180' cy='150' rx='55' ry='30' transform='rotate(-15,180,150)'/%3E%3Cellipse cx='180' cy='150' rx='35' ry='18' transform='rotate(-15,180,150)'/%3E%3Cellipse cx='580' cy='250' rx='65' ry='28' transform='rotate(10,580,250)'/%3E%3Cellipse cx='580' cy='250' rx='42' ry='17' transform='rotate(10,580,250)'/%3E%3Cellipse cx='380' cy='80' rx='48' ry='22' transform='rotate(-8,380,80)'/%3E%3Cellipse cx='720' cy='320' rx='52' ry='25' transform='rotate(5,720,320)'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 800px 400px;
+    background-color: transparent;
+    background-image: none;
 }
 
 /* ============================================================
@@ -77,6 +83,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   max-width: 100%;
   margin: 0;
   padding: 0;
+  min-height: 100vh;
 }
 
 /* === COLORS === */
@@ -229,6 +236,8 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-btn-island { color: var(--nmm-teal2) !important; border-color: var(--nmm-teal2) !important; }
 .nmm-btn-island:hover { background: rgba(93,202,165,0.1) !important; }
 .nmm-btn-nav { color: var(--nmm-teal) !important; border-color: var(--nmm-teal) !important; }
+.nmm-btn-kanban { background: transparent !important; border-color: rgba(255,255,255,0.25) !important; color: rgba(255,255,255,0.85) !important; }
+.nmm-btn-kanban:hover { background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.5) !important; color: white !important; }
 .nmm-btn-sm { font-size: 10px; padding: 3px 9px; }
 .nmm-sep { width: 1px; height: 22px; background: rgba(255,255,255,0.15); flex-shrink: 0; margin: 0 2px; }
 
@@ -243,7 +252,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
 
 /* === MANAGER BODY === */
 .nmm-manager-body {
-  background: var(--nmm-sand);
+  background: transparent;
   min-height: calc(100vh - 60px);
   padding: 32px 24px;
 }
@@ -339,13 +348,14 @@ body:has(.nmm-app) .entry-content > *:first-child {
   animation: nmm-spin 0.8s linear infinite;
 }
 @keyframes nmm-spin { to { transform: rotate(360deg); } }
-.nmm-empty {
+.nmm-empty,
+.nmm-empty-state {
   text-align: center;
   padding: 80px 20px;
 }
 .nmm-empty-icon { font-size: 48px; color: var(--nmm-border); margin-bottom: 16px; }
-.nmm-empty h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--nmm-mid); letter-spacing: 0.06em; margin-bottom: 8px; }
-.nmm-empty p { font-size: 13px; color: var(--nmm-light); margin-bottom: 20px; }
+.nmm-empty h2, .nmm-empty-state h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--nmm-mid); letter-spacing: 0.06em; margin-bottom: 8px; }
+.nmm-empty p, .nmm-empty-state p { font-size: 13px; color: var(--nmm-light); margin-bottom: 20px; }
 
 /* Color swatches */
 .nmm-color-row { display: flex; gap: 8px; margin-top: 6px; }
@@ -1343,6 +1353,14 @@ body:has(.nmm-landing-page) .entry-content {
   margin: 0 !important;
 }
 
+/* Hide Enfold page title on NMM pages */
+body:has(.nmm-landing-page) .entry-title,
+body:has(.nmm-landing-page) .page-title,
+body:has(.nmm-app) .entry-title,
+body:has(.nmm-app) .page-title {
+  display: none !important;
+}
+
 .nmm-landing-page {
   background: var(--nmm-sand);
   min-height: 100vh;
@@ -1467,4 +1485,40 @@ body:has(.nmm-landing-page) .entry-content {
     padding: 16px;
   }
   .nmm-landing-page .nmm-landing-copy { padding: 20px; }
+}
+
+/* ============================================================
+   NEW MAP MODAL — mode tabs
+   ============================================================ */
+.nmm-mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+.nmm-mode-tab {
+  border: 1px solid var(--nmm-border);
+  border-radius: 6px;
+  padding: 8px 6px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--nmm-light);
+  letter-spacing: 0.04em;
+  background: white;
+  font-family: 'Barlow Condensed', sans-serif;
+  transition: all 0.12s;
+}
+.nmm-mode-tab:hover { border-color: var(--nmm-teal); color: var(--nmm-teal); }
+.nmm-mode-tab.active { border-color: var(--nmm-teal); background: rgba(11,191,191,0.06); color: var(--nmm-teal); }
+.nmm-mode-section { margin-top: 4px; }
+
+/* Color swatches — horizontal row */
+.nmm-color-swatches {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
 }

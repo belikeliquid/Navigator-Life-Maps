@@ -3,13 +3,13 @@
  * Plugin Name: Navigator Mind Maps
  * Plugin URI: https://navigatorproject.org
  * Description: Visual mind mapping tool for Navigator Leadership Group. Multi-map manager, Kanban view, Tree of Life template, outline import, and WordPress user auth.
- * Version: 1.5.5
+ * Version: 1.5.6
  * Author: Liquid Media / Navigator Leadership Group
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'NMM_VERSION', '1.5.5' );
+define( 'NMM_VERSION', '1.5.6' );
 define( 'NMM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NMM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -60,7 +60,7 @@ class Navigator_MindMaps {
     public function inline_nmm_config() {
         global $post;
         if ( ! is_a( $post, 'WP_Post' ) ) return;
-        $shortcodes = [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban' ];
+        $shortcodes = [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban', 'navigator_timeline' ];
         $has_shortcode = false;
         foreach ( $shortcodes as $sc ) {
             if ( has_shortcode( $post->post_content, $sc ) ) { $has_shortcode = true; break; }
@@ -78,7 +78,9 @@ class Navigator_MindMaps {
             isLoggedIn:  <?php echo is_user_logged_in() ? 'true' : 'false'; ?>,
             editorUrl:   '<?php echo esc_js( home_url( "/map-editor/" ) ); ?>',
             kanbanUrl:   '<?php echo esc_js( home_url( "/kanban/" ) ); ?>',
-            shareUrl:    '<?php echo esc_js( home_url( "/map-share/" ) ); ?>'
+            shareUrl:    '<?php echo esc_js( home_url( "/map-share/" ) ); ?>',
+            bgMode:      '<?php echo esc_js( NMM_Settings::get( "default_bg_mode", "repeat" ) ); ?>',
+            bgUrl:       '<?php echo esc_js( NMM_Settings::get( "default_bg_url", "" ) ); ?>'
         };
         </script>
         <?php
@@ -89,10 +91,11 @@ class Navigator_MindMaps {
         global $post;
         if ( ! is_a( $post, 'WP_Post' ) ) return;
         $has = false;
-        foreach ( [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban' ] as $sc ) {
+        foreach ( [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban', 'navigator_timeline' ] as $sc ) {
             if ( has_shortcode( $post->post_content, $sc ) ) { $has = true; break; }
         }
         if ( ! $has ) return;
+
         $custom_css = get_option( 'nmm_custom_css', NMM_Settings::default_enfold_css() );
         if ( $custom_css ) {
             echo '<style id="nmm-custom-css">' . wp_strip_all_tags( $custom_css ) . '</style>';
@@ -109,7 +112,7 @@ class Navigator_MindMaps {
         global $post;
         if ( ! is_a( $post, 'WP_Post' ) ) return;
         $has = false;
-        foreach ( [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban' ] as $sc ) {
+        foreach ( [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban', 'navigator_timeline' ] as $sc ) {
             if ( has_shortcode( $post->post_content, $sc ) ) { $has = true; break; }
         }
         if ( ! $has ) return;
@@ -118,7 +121,7 @@ class Navigator_MindMaps {
         wp_enqueue_script( 'nmm-app', NMM_URL . 'assets/mindmaps.js', [ 'html2canvas' ], NMM_VERSION, true );
         wp_enqueue_style( 'nmm-styles', NMM_URL . 'assets/mindmaps.css', [], NMM_VERSION );
         wp_enqueue_style( 'nmm-fonts',
-            'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Cormorant+Garamond:ital@1&display=swap',
+            'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Montserrat:wght@400;500;600&family=Cormorant+Garamond:ital@1&display=swap',
             [], null );
     }
 
