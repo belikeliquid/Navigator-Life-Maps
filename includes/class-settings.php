@@ -264,6 +264,12 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.6.4 — Softer background <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        The watermap contour background is faded so it reads as a light texture behind the maps list, sign-in page and Kanban.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.6.3 — Zoom, new background <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         Zoom the map in and out with Ctrl + scroll (⌘ + scroll on a Mac), a trackpad pinch, or two fingers on a phone or tablet. The new buttons at the bottom left zoom out, back to 100%, in, or fit the whole map on screen. Works in the editor and on shared maps; dragging cards stays accurate at any zoom, and PNG export is always full size.<br>

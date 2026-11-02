@@ -47,13 +47,14 @@ body:has(.nmm-app) .entry-content > *:first-child {
 
 /* ============================================================
    TOPOGRAPHIC BACKGROUND — watermap-1.png from the media library
+   (a 60% sand wash over it keeps the contours faint)
    ============================================================ */
 
 /* Background on plugin divs directly — not on body to avoid Enfold conflicts */
 .nmm-app,
 .nmm-landing-page {
     background-color: #e8e4db !important;
-    background-image: url('/wp-content/uploads/2021/06/watermap-1.png') !important;
+    background-image: linear-gradient(rgba(232,228,219,0.6), rgba(232,228,219,0.6)), url('/wp-content/uploads/2021/06/watermap-1.png') !important;
     background-repeat: no-repeat !important;
     background-size: cover !important;
     background-position: center !important;
@@ -836,7 +837,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
 
 .nmm-kb-body {
   background: var(--nmm-sand);
-  background-image: url('/wp-content/uploads/2021/06/watermap-1.png');
+  background-image: linear-gradient(rgba(232,228,219,0.6), rgba(232,228,219,0.6)), url('/wp-content/uploads/2021/06/watermap-1.png');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -957,7 +958,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   position: fixed;
   inset: 0;
   background: var(--nmm-sand);
-  background-image: url('/wp-content/uploads/2021/06/watermap-1.png');
+  background-image: linear-gradient(rgba(232,228,219,0.6), rgba(232,228,219,0.6)), url('/wp-content/uploads/2021/06/watermap-1.png');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
