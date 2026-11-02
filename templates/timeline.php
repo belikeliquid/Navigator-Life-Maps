@@ -53,7 +53,7 @@
         <div id="nmm-tl-nodes" class="nmm-tl-nodes"></div>
       </div>
     </div>
-    <div id="nmm-tl-empty" style="display:none;text-align:center;padding:80px 20px;font-family:Barlow Condensed,sans-serif;color:#aaa">
+    <div id="nmm-tl-empty" style="display:none;text-align:center;padding:80px 20px;color:#aaa">
       <div style="font-size:48px;margin-bottom:16px">⬡</div>
       <p style="font-size:18px;font-weight:600;color:#888">No nodes to display</p>
       <p style="font-size:14px">Set a date range and select maps to see your timeline.</p>

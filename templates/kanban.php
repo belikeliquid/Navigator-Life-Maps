@@ -70,10 +70,10 @@
     </div>
 
     <!-- Empty state -->
-    <div id="nmm-kb-empty" style="display:none;text-align:center;padding:80px 20px;font-family:Barlow Condensed,sans-serif;color:#aaa">
+    <div id="nmm-kb-empty" style="display:none;text-align:center;padding:80px 20px;color:#aaa">
       <div style="font-size:48px;margin-bottom:16px">⬡</div>
-      <p style="font-size:18px;font-weight:600;color:#888">No nodes yet</p>
-      <p style="font-size:14px">Open a mind map, add tags to your nodes, and they will appear here.</p>
+      <p style="font-size:18px;font-weight:600;color:#4b5563">No Kanban tasks yet</p>
+      <p style="font-size:15px;color:#6b7280">In a mind map, edit a card and tick <strong>Kanban task</strong>. It will appear here.</p>
       <a href="<?php echo home_url('/maps/'); ?>" class="nmm-btn nmm-btn-primary" style="margin-top:16px;display:inline-block">← Go to Mind Maps</a>
     </div>
   </div>
@@ -85,6 +85,7 @@
       <div class="nmm-field"><label>Title</label><input type="text" id="nmm-kb-title" class="nmm-input" /></div>
       <div class="nmm-field"><label>Subtitle lines (one per line)</label><textarea id="nmm-kb-sub" rows="2" class="nmm-input"></textarea></div>
       <div class="nmm-field"><label>Date</label><input type="date" id="nmm-kb-date" class="nmm-input" /></div>
+      <label class="nmm-check"><input type="checkbox" id="nmm-kb-task" /> Kanban task <small>Untick to take this card off the board</small></label>
       <div class="nmm-field"><label>Kanban tag</label>
         <select id="nmm-kb-tag" class="nmm-input">
           <option value="">No tag (Triage)</option>

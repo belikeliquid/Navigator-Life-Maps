@@ -264,6 +264,14 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.6.2 — Navigator look, layout styles, Kanban tasks <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        The app now uses the site's font (Fira Sans) and navy, with larger, easier-to-read text and rounded buttons on the maps list, toolbars, Kanban, timeline and dialogs. Map cards keep their font so saved layouts don't shift.<br>
+                        A layout menu next to Harmony picks the style: Flow Chart (top to bottom), Mind Map (from the centre out, branches left and right) or Tree of Life. The choice is saved with the map.<br>
+                        New "Kanban task" checkbox on each card, off by default: only ticked cards appear on the Kanban board. Cards that already had a Kanban tag count as ticked.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.6.1 — Harmony that tidies instead of tangling <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         Harmony now lays the whole map out in one press with no overlapping cards: each card centred over its children, children kept in your left-to-right order, leaf cards stacked in a column. Pressing it again changes nothing.<br>

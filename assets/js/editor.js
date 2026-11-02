@@ -74,6 +74,7 @@ async function loadMap() {
   };
 
   C.setSettings(settings);
+  showLayoutStyle();
   await C.loadLinkedIslands(linkedIslands, nodes);
   C.render();
   C.autoCenter();
@@ -81,7 +82,7 @@ async function loadMap() {
 }
 
 function renderEmpty() {
-  $('nmm-canvas').innerHTML = '<div style="padding:60px;text-align:center;color:#999;font-family:Barlow Condensed,sans-serif;font-size:18px;">Map not found. <a href="' + NMM.mapsUrl + '">Return to maps</a>.</div>';
+  $('nmm-canvas').innerHTML = '<div style="padding:60px;text-align:center;color:#999;font-size:18px;">Map not found. <a href="' + NMM.mapsUrl + '">Return to maps</a>.</div>';
 }
 
 // A draft is kept in this browser until the server confirms the save.
@@ -305,14 +306,20 @@ window.nmmCenter      = function() { C.autoCenter(); };
 // ============================================================
 // HARMONY — lays the map out so nothing overlaps
 // ============================================================
-// Tidy mode: each card sits centred above its children, which keep their
+// The layout style is picked from the menu next to Harmony and saved in the
+// map's settings (settings.layout). Without one, a map with Tree of Life
+// positions uses Tree of Life and any other map uses Flow Chart.
+// Flow Chart (tidy): each card sits centred above its children, which keep their
 // current left-to-right order. A card whose children are all leaves gets them
 // in one stacked column; with mixed children, 3+ leaves share one stacked
 // column and each branch gets its own column. Card sizes are measured.
-// Tree of Life mode (any card has a sefirot): each sefirot is a slot in the
+// Mind Map: the main card sits in the middle and its branches grow out to the
+// left and right; each card is centred beside its children, which stack top
+// to bottom in their current order.
+// Tree of Life: each sefirot is a slot in the
 // three-pillar shape; cards sharing a slot sit side by side, each with its own
 // branch laid out beneath it; rows of the tree grow to fit what they hold.
-const LAYOUT = { gapX: 40, gapY: 70, stackGap: 22, islandGap: 140, margin: 40, pillarGap: 40 };
+const LAYOUT = { gapX: 40, gapY: 70, stackGap: 22, islandGap: 140, margin: 40, pillarGap: 40, sideGap: 60 };
 const SEFIROT_ROWS = [
   [['kether', 'mid']],
   [['chochma', 'left'], ['binah', 'right']],
@@ -325,15 +332,20 @@ const SEFIROT_ROWS = [
 
 // Measures and places subtrees. `stop(c)` marks children that start their own
 // group elsewhere (Tree of Life slots) and are left out of their parent's subtree.
-function treeEngine(live, stop) {
-  // Collapsed branches get space too, so expanding them later never causes overlaps.
-  // Render everything expanded once to measure every card, then restore.
+// Collapsed branches get space too, so expanding them later never causes overlaps.
+// Render everything expanded once to measure every card, then restore.
+function measureSizes(live) {
   const collapsed = live.filter(function(n) { return n.collapsed; });
   collapsed.forEach(function(n) { n.collapsed = false; });
   C.render();
   const sizes = {};
   live.forEach(function(n) { const el = C.getEl(n.id); sizes[n.id] = { w: el ? el.offsetWidth : 180, h: el ? el.offsetHeight : 50 }; });
   collapsed.forEach(function(n) { n.collapsed = true; });
+  return sizes;
+}
+
+function treeEngine(live, stop) {
+  const sizes = measureSizes(live);
 
   // By centre, then top: stacked cards share a centre, so they keep their top-to-bottom order
   function centre(c) { return c.x + sizes[c.id].w / 2; }
@@ -416,6 +428,70 @@ function tidyLayout(live) {
   others.place(cx - mb.w / 2, main.y + mb.h + LAYOUT.islandGap);
 }
 
+function mindMapLayout(live) {
+  const sizes = measureSizes(live);
+  function kids(n) { return live.filter(function(c) { return c.parent === n.id; }); }
+  function byTop(a, b) { return a.y - b.y || a.x - b.x; }
+  function centreX(n) { return n.x + sizes[n.id].w / 2; }
+  // Height of a branch growing sideways: its children stacked, or the card itself
+  const H = {};
+  function height(n) {
+    const ch = kids(n);
+    const stacked = ch.reduce(function(sum, c) { return sum + height(c); }, 0) + LAYOUT.stackGap * Math.max(0, ch.length - 1);
+    return (H[n.id] = Math.max(sizes[n.id].h, stacked));
+  }
+  function stackHeight(list) { return list.reduce(function(sum, c) { return sum + H[c.id]; }, 0) + LAYOUT.stackGap * Math.max(0, list.length - 1); }
+  // Places a branch: side 1 grows right from `edge`, side -1 grows left; cy = its vertical centre
+  function place(n, edge, cy, side) {
+    const sz = sizes[n.id];
+    // Whole pixels, so pressing Harmony again reproduces exactly the same positions
+    n.x = Math.round(side > 0 ? edge : edge - sz.w); n.y = Math.round(cy - sz.h / 2);
+    placeStack(kids(n).sort(byTop), side > 0 ? n.x + sz.w + LAYOUT.sideGap : n.x - LAYOUT.sideGap, cy, side);
+  }
+  function placeStack(list, edge, cy, side) {
+    let y = cy - stackHeight(list) / 2;
+    list.forEach(function(c) { place(c, edge, y + H[c.id] / 2, side); y += H[c.id] + LAYOUT.stackGap; });
+  }
+  // One island: its root stays put; branches already on the left stay on the left
+  function layoutIsland(r) {
+    height(r);
+    const sz = sizes[r.id], rcx = centreX(r), cy = r.y + sz.h / 2;
+    const ch = kids(r);
+    let right = ch.filter(function(c) { return centreX(c) >= rcx; }), left = ch.filter(function(c) { return centreX(c) < rcx; });
+    if (ch.length > 1 && (!right.length || !left.length)) {
+      // Everything on one side (e.g. coming from Flow Chart): split in order, balancing the heights
+      const ordered = ch.slice().sort(function(a, b) { return a.x - b.x || a.y - b.y; });
+      const half = stackHeight(ordered) / 2;
+      right = []; left = [];
+      let acc = 0;
+      ordered.forEach(function(c) { (acc < half ? right : left).push(c); acc += H[c.id] + LAYOUT.stackGap; });
+    }
+    placeStack(right.sort(byTop), r.x + sz.w + LAYOUT.sideGap, cy, 1);
+    placeStack(left.sort(byTop), r.x - LAYOUT.sideGap, cy, -1);
+  }
+  function islandNodes(r) { return live.filter(function(n) { return n === r || C.isDescendant(n.id, r.id); }); }
+  function bounds(list) {
+    return {
+      x0: Math.min.apply(null, list.map(function(n) { return n.x; })), y0: Math.min.apply(null, list.map(function(n) { return n.y; })),
+      x1: Math.max.apply(null, list.map(function(n) { return n.x + sizes[n.id].w; })), y1: Math.max.apply(null, list.map(function(n) { return n.y + sizes[n.id].h; }))
+    };
+  }
+
+  const roots = live.filter(isRoot);
+  if (!roots.length) return;
+  // The root with the most cards stays where it is; other islands go in a row underneath
+  const main = roots.slice().sort(function(a, b) { return islandNodes(b).length - islandNodes(a).length; })[0];
+  layoutIsland(main);
+  const mb = bounds(islandNodes(main));
+  let x = mb.x0;
+  roots.filter(function(r) { return r !== main; }).sort(function(a, b) { return a.x - b.x || a.y - b.y; }).forEach(function(r) {
+    layoutIsland(r);
+    const list = islandNodes(r), b = bounds(list), dx = x - b.x0, dy = mb.y1 + LAYOUT.islandGap - b.y0;
+    list.forEach(function(n) { n.x += dx; n.y += dy; });
+    x += b.x1 - b.x0 + LAYOUT.gapX * 2;
+  });
+}
+
 function treeOfLifeLayout(live) {
   const isSlotted = function(n) { return !!NMMCore.SEFIROT_LABELS[n.sefirot]; };
   const T = treeEngine(live, isSlotted);
@@ -439,12 +515,22 @@ function treeOfLifeLayout(live) {
   });
 }
 
+function hasSefirot() { return nodes.some(function(n) { return !n._readonly && NMMCore.SEFIROT_LABELS[n.sefirot]; }); }
+function layoutStyle() {
+  return LAYOUT_STYLES[settings.layout] ? settings.layout : hasSefirot() ? 'tol' : 'flow';
+}
+const LAYOUT_STYLES = { flow: tidyLayout, mind: mindMapLayout, tol: treeOfLifeLayout };
+
 window.nmmHarmony = function() {
   const live = nodes.filter(function(n) { return !n._readonly; });
   if (!live.length) return;
+  const style = layoutStyle();
+  if (style === 'tol' && !hasSefirot()) {
+    alert('No cards have a Tree of Life position yet. Edit a card and pick its position, then try again.');
+    return;
+  }
   pushUndo();
-  if (live.some(function(n) { return NMMCore.SEFIROT_LABELS[n.sefirot]; })) treeOfLifeLayout(live);
-  else tidyLayout(live);
+  LAYOUT_STYLES[style](live);
   // Keep everything on the canvas (it can't scroll to negative positions)
   const minX = Math.min.apply(null, nodes.map(function(n) { return n.x; }));
   const minY = Math.min.apply(null, nodes.map(function(n) { return n.y; }));
@@ -452,6 +538,37 @@ window.nmmHarmony = function() {
   nodes.forEach(function(n) { n.x = Math.round(n.x + sx); n.y = Math.round(n.y + sy); });
   markDirty(); C.render(); C.autoCenter();
 };
+
+// Layout style menu next to Harmony. Picking a style saves it with the map and applies it.
+const layoutMenu = $('nmm-layout-menu');
+function showLayoutStyle() {
+  const style = layoutStyle(), opt = layoutMenu.querySelector('[data-layout="' + style + '"]');
+  $('nmm-layout-icon').innerHTML = opt.querySelector('svg').outerHTML;
+  $('nmm-layout-btn').title = 'Layout: ' + opt.querySelector('strong').textContent;
+  layoutMenu.querySelectorAll('[data-layout]').forEach(function(b) { b.classList.toggle('active', b === opt); });
+}
+window.nmmToggleLayoutMenu = function(e) {
+  e.stopPropagation();
+  if (layoutMenu.classList.toggle('open')) {
+    const r = $('nmm-layout-btn').getBoundingClientRect();
+    layoutMenu.style.left = Math.min(r.left, innerWidth - layoutMenu.offsetWidth - 8) + 'px';
+    layoutMenu.style.top = (r.bottom + 6) + 'px';
+  }
+};
+layoutMenu.querySelectorAll('[data-layout]').forEach(function(b) {
+  b.addEventListener('click', function() {
+    layoutMenu.classList.remove('open');
+    if (b.dataset.layout === 'tol' && !hasSefirot()) {
+      alert('No cards have a Tree of Life position yet. Edit a card and pick its position, then choose Tree of Life again.');
+      return;
+    }
+    settings.layout = b.dataset.layout;
+    C.setSettings(settings); showLayoutStyle();
+    window.nmmHarmony();
+    markDirty(); // the style is saved even when the layout itself didn't change
+  });
+});
+document.addEventListener('click', function(e) { if (!layoutMenu.contains(e.target)) layoutMenu.classList.remove('open'); });
 
 // ============================================================
 // NODE MODAL
@@ -478,12 +595,16 @@ window.nmmOpenNodeModal = function(id) {
   $('nme-sub').value     = (n.subs || []).join('\n');
   $('nme-date').value    = n.date || '';
   $('nme-tag').value     = n.tag || '';
+  $('nme-task').checked  = NMMCore.isTask(n);
+  showTagField();
   $('nme-sefirot').value = n.sefirot || '';
   buildParentDropdown(id);
   $('nme-parent').value = n.parent || '';
   $('nmm-node-modal').classList.add('open');
   setTimeout(function() { $('nme-title').focus(); }, 50);
 };
+function showTagField() { $('nme-tag-field').style.display = $('nme-task').checked ? '' : 'none'; }
+$('nme-task').addEventListener('change', showTagField);
 window.nmmCloseNodeModal = function() { $('nmm-node-modal').classList.remove('open'); editingId = null; };
 window.nmmSaveNode = function() {
   const n = find(editingId);
@@ -493,7 +614,8 @@ window.nmmSaveNode = function() {
   const sub = $('nme-sub').value.trim();
   n.subs    = sub ? sub.split('\n').filter(function(s) { return s.trim(); }) : [];
   n.date    = $('nme-date').value || '';
-  n.tag     = $('nme-tag').value || '';
+  n.task    = $('nme-task').checked;
+  n.tag     = n.task ? $('nme-tag').value || '' : '';
   n.sefirot = $('nme-sefirot').value || '';
   n.parent  = $('nme-parent').value || null;
   nmmCloseNodeModal(); markDirty(); C.render();

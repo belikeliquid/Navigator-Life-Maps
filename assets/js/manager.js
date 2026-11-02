@@ -17,7 +17,7 @@ function loadMaps() {
     allMaps = maps || [];
     renderMaps(allMaps);
   }).catch(function() {
-    loading.innerHTML = '<p style="color:#cc3333;font-family:Barlow Condensed,sans-serif">Failed to load maps. Please refresh.</p>';
+    loading.innerHTML = '<p style="color:#cc3333;font-family:inherit">Failed to load maps. Please refresh.</p>';
   });
 }
 

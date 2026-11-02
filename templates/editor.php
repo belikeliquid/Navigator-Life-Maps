@@ -10,7 +10,10 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <span class="nmm-sep"></span>
     <span id="nmm-map-title-display" class="nmm-map-title-display" title="Click to rename"></span>
     <span class="nmm-sep"></span>
-    <button class="nmm-btn nmm-btn-harmony" onclick="nmmHarmony()">✦ Harmony</button>
+    <span class="nmm-harmony-group">
+      <button class="nmm-btn nmm-btn-harmony" onclick="nmmHarmony()" title="Tidy the map in the chosen layout style">✦ Harmony</button>
+      <button class="nmm-btn nmm-btn-harmony nmm-btn-layout" id="nmm-layout-btn" onclick="nmmToggleLayoutMenu(event)" aria-haspopup="true" title="Layout style"><span id="nmm-layout-icon"></span>▾</button>
+    </span>
     <button class="nmm-btn" id="nmm-undo-btn" onclick="nmmUndo()" title="Undo (Ctrl+Z)" disabled>↩ Undo</button>
     <span class="nmm-sep"></span>
     <button class="nmm-btn nmm-btn-primary" onclick="nmmAddRoot()">+ Island</button>
@@ -25,6 +28,22 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button class="nmm-btn nmm-btn-save" id="nmm-save-btn" onclick="nmmSave()">Save</button>
     <span id="nmm-save-status" class="nmm-save-status"></span>
     <button class="nmm-btn nmm-mobile-menu-btn" id="nmm-mobile-menu-btn" onclick="nmmToggleMobileMenu()">☰</button>
+  </div>
+
+  <!-- Layout style menu (opened from the ▾ next to Harmony; outside the toolbar so it isn't clipped) -->
+  <div id="nmm-layout-menu" class="nmm-layout-menu" role="menu">
+    <button type="button" data-layout="flow" role="menuitem">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="8.5" y="2.5" width="7" height="5" rx="1.2" fill="currentColor"/><path d="M12 7.5v4M4.5 11.5h15M4.5 11.5v4M12 11.5v4M19.5 11.5v4"/><rect x="1.5" y="15.5" width="6" height="5" rx="1.2" fill="currentColor"/><rect x="9" y="15.5" width="6" height="5" rx="1.2" fill="currentColor"/><rect x="16.5" y="15.5" width="6" height="5" rx="1.2" fill="currentColor"/></svg>
+      <span><strong>Flow Chart</strong><small>Top to bottom</small></span>
+    </button>
+    <button type="button" data-layout="mind" role="menuitem">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><rect x="8" y="9.5" width="8" height="5" rx="2"/><rect x="1" y="2" width="5" height="4" rx="1.2"/><rect x="18" y="2" width="5" height="4" rx="1.2"/><rect x="1" y="10" width="5" height="4" rx="1.2"/><rect x="18" y="10" width="5" height="4" rx="1.2"/><rect x="1" y="18" width="5" height="4" rx="1.2"/><rect x="18" y="18" width="5" height="4" rx="1.2"/><path d="M8 12H6M16 12h2M9.5 9.5V4H6M14.5 9.5V4H18M9.5 14.5V20H6M14.5 14.5V20H18"/></svg>
+      <span><strong>Mind Map</strong><small>From the centre out</small></span>
+    </button>
+    <button type="button" data-layout="tol" role="menuitem">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 2.5v19M6 6.5h12M6 11.5h12M6 16.5h12M6 6.5v10M18 6.5v10M12 2.5L6 6.5M12 2.5l6 4M6 6.5l6 3.5 6-3.5M6 11.5l6 3 6-3M6 16.5l6 2 6-2"/><g fill="currentColor" stroke="none"><circle cx="12" cy="2.5" r="1.8"/><circle cx="6" cy="6.5" r="1.8"/><circle cx="18" cy="6.5" r="1.8"/><circle cx="12" cy="9.5" r="1.8"/><circle cx="6" cy="11.5" r="1.8"/><circle cx="18" cy="11.5" r="1.8"/><circle cx="12" cy="14.5" r="1.8"/><circle cx="6" cy="16.5" r="1.8"/><circle cx="18" cy="16.5" r="1.8"/><circle cx="12" cy="18.5" r="1.8"/><circle cx="12" cy="21.5" r="1.8"/></g></svg>
+      <span><strong>Tree of Life</strong><small>Cards by their Tree of Life position</small></span>
+    </button>
   </div>
 
   <div id="nmm-mobile-menu" class="nmm-mobile-menu">
@@ -61,7 +80,8 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
         <label>Parent node</label>
         <select id="nme-parent" class="nmm-input"></select>
       </div>
-      <div class="nmm-field">
+      <label class="nmm-check"><input type="checkbox" id="nme-task" /> Kanban task <small>Show this card on the Kanban board</small></label>
+      <div class="nmm-field" id="nme-tag-field">
         <label>Kanban tag</label>
         <select id="nme-tag" class="nmm-input">
           <option value="">No tag (Triage)</option>

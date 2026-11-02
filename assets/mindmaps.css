@@ -67,14 +67,16 @@ body:has(.nmm-app) .entry-content > *:first-child {
 /* ============================================================
    Navigator Mind Maps — Main Stylesheet
    Navigator Project theme: navy / teal / sand / amber
-   Fonts: Barlow Condensed (headings/UI), Cormorant Garamond (motif)
+   Fonts: Fira Sans (app UI, as on navigatorproject.org),
+   Barlow Condensed (map cards only: their size drives saved layouts),
+   Cormorant Garamond (motif)
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Cormorant+Garamond:ital@1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@400;600;700&family=Cormorant+Garamond:ital@1&display=swap');
 
 /* === RESET / BASE === */
 .nmm-app * { box-sizing: border-box; margin: 0; padding: 0; }
-.nmm-app { font-family: 'Barlow Condensed', 'Helvetica Neue', Helvetica, sans-serif; }
+.nmm-app { font-family: var(--nmm-font); }
 
 /* === BREAK OUT OF ENFOLD COLUMN === */
 .nmm-app {
@@ -88,7 +90,9 @@ body:has(.nmm-app) .entry-content > *:first-child {
 
 /* === COLORS === */
 :root {
-  --nmm-navy:    #1a2e4a;
+  --nmm-font:    'Fira Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --nmm-navy:    #011c2f;
+  --nmm-navy2:   #0a2d47;
   --nmm-teal:    #0BBFBF;
   --nmm-teal2:   #5DCAA5;
   --nmm-teal3:   #9FE1CB;
@@ -97,9 +101,9 @@ body:has(.nmm-app) .entry-content > *:first-child {
   --nmm-indigo:  #534AB7;
   --nmm-sand:    #e8e4db;
   --nmm-sand2:   #f5f3ee;
-  --nmm-dark:    #111111;
-  --nmm-mid:     #555555;
-  --nmm-light:   #999999;
+  --nmm-dark:    #1f2933;
+  --nmm-mid:     #4b5563;
+  --nmm-light:   #6b7280;
   --nmm-border:  #ddd9d0;
   --nmm-white:   #ffffff;
 }
@@ -125,20 +129,20 @@ body:has(.nmm-app) .entry-content > *:first-child {
 }
 .nmm-logo { display: flex; align-items: center; gap: 10px; }
 .nmm-logo-text {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 16px;
-  letter-spacing: 0.12em;
+  font-family: var(--nmm-font);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.14em;
   color: var(--nmm-white);
 }
 
 /* === EDITOR TOOLBAR === */
 .nmm-editor-toolbar {
   background: var(--nmm-navy);
-  height: 50px;
+  height: 60px;
   display: flex;
   align-items: center;
-  padding: 0 14px;
+  padding: 0 16px;
   gap: 6px;
   position: sticky;
   top: 0;
@@ -162,22 +166,24 @@ body:has(.nmm-app) .entry-content > *:first-child {
   }
 }
 .nmm-map-title-display {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
+  font-family: var(--nmm-font);
+  font-size: 15px;
+  font-weight: 500;
   color: var(--nmm-white);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   white-space: nowrap;
-  max-width: 200px;
+  max-width: 240px;
+  min-width: 110px;
+  flex-shrink: 1;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .nmm-map-title-display:hover { background: rgba(255,255,255,0.1); }
 .nmm-save-status {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--nmm-amber);
   white-space: nowrap;
   margin-left: 4px;
@@ -196,26 +202,28 @@ body:has(.nmm-app) .entry-content > *:first-child {
   z-index: 100;
 }
 .nmm-view-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
+  font-family: var(--nmm-font);
+  font-size: 16px;
+  font-weight: 500;
   color: var(--nmm-white);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   flex: 1;
 }
 .nmm-view-actions { display: flex; gap: 6px; margin-left: auto; }
 
 /* === BUTTONS === */
 .nmm-btn {
-  padding: 5px 12px;
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 5px;
+  padding: 7px 15px;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 999px;
   background: transparent;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.85);
+  font-family: var(--nmm-font);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  gap: 6px;
+  color: rgba(255,255,255,0.92);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.12s;
@@ -227,6 +235,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); color: white; }
 .nmm-btn-primary { background: var(--nmm-teal) !important; border-color: var(--nmm-teal) !important; color: white !important; }
 .nmm-btn-primary:hover { background: #09aaaa !important; }
+.nmm-editor-toolbar .nmm-btn { padding: 6px 10px; font-size: 12.5px; }
 .nmm-btn-harmony { background: var(--nmm-indigo) !important; border-color: var(--nmm-indigo) !important; color: white !important; }
 .nmm-btn-harmony:hover { background: #3C3489 !important; }
 .nmm-btn-save { background: var(--nmm-amber) !important; border-color: var(--nmm-amber) !important; color: var(--nmm-navy) !important; font-weight: 700 !important; }
@@ -238,16 +247,18 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-btn-nav { color: var(--nmm-teal) !important; border-color: var(--nmm-teal) !important; }
 .nmm-btn-kanban { background: transparent !important; border-color: rgba(255,255,255,0.25) !important; color: rgba(255,255,255,0.85) !important; }
 .nmm-btn-kanban:hover { background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.5) !important; color: white !important; }
-.nmm-btn-sm { font-size: 10px; padding: 3px 9px; }
-.nmm-sep { width: 1px; height: 22px; background: rgba(255,255,255,0.15); flex-shrink: 0; margin: 0 2px; }
+.nmm-btn-sm { font-size: 12px; padding: 4px 11px; }
+.nmm-sep { width: 1px; height: 26px; background: rgba(255,255,255,0.15); flex-shrink: 0; margin: 0 2px; }
 
 /* Manager buttons override (on light bg) */
-.nmm-manager-body .nmm-btn {
+.nmm-manager-body .nmm-btn,
+.nmm-card-actions .nmm-btn {
   border-color: var(--nmm-border);
   color: var(--nmm-mid);
   background: var(--nmm-white);
 }
-.nmm-manager-body .nmm-btn:hover { border-color: var(--nmm-teal); color: var(--nmm-teal); }
+.nmm-manager-body .nmm-btn:hover,
+.nmm-card-actions .nmm-btn:hover { border-color: var(--nmm-navy); color: var(--nmm-navy); background: var(--nmm-white); }
 .nmm-manager-body .nmm-btn-primary { background: var(--nmm-teal) !important; border-color: var(--nmm-teal) !important; color: white !important; }
 
 /* === MANAGER BODY === */
@@ -269,7 +280,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   padding: 8px 14px;
   border: 1px solid var(--nmm-border);
   border-radius: 6px;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-size: 13px;
   color: var(--nmm-dark);
   background: var(--nmm-white);
@@ -277,11 +288,18 @@ body:has(.nmm-app) .entry-content > *:first-child {
 }
 .nmm-search:focus { border-color: var(--nmm-teal); }
 .nmm-select {
-  padding: 7px 12px;
-  border: 1px solid var(--nmm-border);
-  border-radius: 6px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px;
+  padding: 9px 36px 9px 16px !important;
+  border: 1px solid var(--nmm-border) !important;
+  border-radius: 999px !important;
+  font-family: var(--nmm-font);
+  font-size: 14px;
+  height: auto !important;
+  width: auto !important;
+  min-width: 190px;
+  margin: 0 !important;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--nmm-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%234b5563' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 15px center !important;
   color: var(--nmm-dark);
   background: var(--nmm-white);
   outline: none;
@@ -291,39 +309,42 @@ body:has(.nmm-app) .entry-content > *:first-child {
 /* === MAP CARDS === */
 .nmm-maps-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
 }
 .nmm-card {
   background: var(--nmm-white);
-  border-radius: 12px;
+  border: 1px solid var(--nmm-border);
+  border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   transition: transform 0.15s, box-shadow 0.15s;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
 }
 .nmm-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
 .nmm-card-color-bar { height: 4px; }
-.nmm-card-body { padding: 16px 18px; }
-.nmm-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-.nmm-card-title { font-size: 14px; font-weight: 700; color: var(--nmm-dark); letter-spacing: 0.02em; }
+.nmm-card-body { padding: 20px 22px 18px; flex: 1; }
+.nmm-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.nmm-card-title { font-size: 18px; font-weight: 600; color: var(--nmm-navy); line-height: 1.3; letter-spacing: 0; }
 .nmm-card-cat {
-  font-size: 9px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  background: var(--nmm-sand);
-  color: var(--nmm-mid);
-  padding: 2px 7px;
-  border-radius: 10px;
+  background: var(--nmm-sand2);
+  color: var(--nmm-navy);
+  padding: 3px 10px;
+  border-radius: 999px;
   white-space: nowrap;
   flex-shrink: 0;
 }
-.nmm-card-meta { font-size: 11px; color: var(--nmm-light); }
+.nmm-card-meta { font-size: 14px; color: var(--nmm-light); }
 .nmm-card-actions {
   display: flex;
-  gap: 6px;
-  padding: 12px 18px;
+  gap: 8px;
+  padding: 14px 22px;
   border-top: 1px solid var(--nmm-sand);
   background: var(--nmm-sand2);
 }
@@ -335,7 +356,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   gap: 12px;
   justify-content: center;
   padding: 80px 20px;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-size: 14px;
   color: var(--nmm-light);
   letter-spacing: 0.06em;
@@ -354,8 +375,8 @@ body:has(.nmm-app) .entry-content > *:first-child {
   padding: 80px 20px;
 }
 .nmm-empty-icon { font-size: 48px; color: var(--nmm-border); margin-bottom: 16px; }
-.nmm-empty h2, .nmm-empty-state h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--nmm-mid); letter-spacing: 0.06em; margin-bottom: 8px; }
-.nmm-empty p, .nmm-empty-state p { font-size: 13px; color: var(--nmm-light); margin-bottom: 20px; }
+.nmm-empty h2, .nmm-empty-state h2 { font-family: var(--nmm-font); font-size: 22px; font-weight: 700; color: var(--nmm-mid); letter-spacing: 0.06em; margin-bottom: 8px; }
+.nmm-empty p, .nmm-empty-state p { font-size: 15px; color: var(--nmm-light); margin-bottom: 20px; }
 
 /* Color swatches */
 .nmm-color-row { display: flex; gap: 8px; margin-top: 6px; }
@@ -541,7 +562,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   overflow-y: auto;
 }
 .nmm-modal h3 {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -549,10 +570,24 @@ body:has(.nmm-app) .entry-content > *:first-child {
   margin-bottom: 16px;
 }
 .nmm-field { margin-bottom: 12px; }
+.nmm-check {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 2px 0 14px;
+  font-family: var(--nmm-font);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--nmm-navy);
+  cursor: pointer;
+}
+.nmm-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--nmm-teal); cursor: pointer; }
+.nmm-check small { flex-basis: 100%; padding-left: 26px; font-size: 12px; font-weight: 400; color: var(--nmm-light); }
 .nmm-field label {
   display: block;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 10px;
+  font-family: var(--nmm-font);
+  font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -564,7 +599,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   border: 1px solid var(--nmm-border);
   border-radius: 7px;
   padding: 7px 10px;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-size: 13px;
   color: var(--nmm-dark);
   outline: none;
@@ -603,7 +638,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   z-index: 3000;
   align-items: center;
   justify-content: center;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -647,11 +682,11 @@ body:has(.nmm-app) .entry-content > *:first-child {
   background: transparent;
   border: none;
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.85);
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.9);
+  font-family: var(--nmm-font);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   text-align: left;
   cursor: pointer;
 }
@@ -781,14 +816,14 @@ body:has(.nmm-app) .entry-content > *:first-child {
   margin-bottom: 12px;
 }
 .nmm-kb-triage-label {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--nmm-font);
+  font-size: 15px;
+  font-weight: 600;
   color: var(--nmm-navy);
   letter-spacing: 0.08em;
 }
 .nmm-kb-triage-sub {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--nmm-light);
 }
 .nmm-kb-triage-cards {
@@ -817,10 +852,10 @@ body:has(.nmm-app) .entry-content > *:first-child {
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .nmm-kb-col-header {
-  padding: 10px 14px;
-  font-family: 'Barlow Condensed', sans-serif;
+  padding: 11px 14px;
+  font-family: var(--nmm-font);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -848,17 +883,17 @@ body:has(.nmm-app) .entry-content > *:first-child {
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   cursor: grab;
   transition: box-shadow 0.15s, transform 0.1s;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
 }
 .nmm-kb-card:active { cursor: grabbing; }
 .nmm-kb-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-1px); }
 .nmm-kb-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
-.nmm-kb-card-title { font-size: 12px; font-weight: 700; color: var(--nmm-dark); line-height: 1.3; }
-.nmm-kb-badge { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
-.nmm-kb-sefirot-badge { font-size: 9px; color: var(--nmm-indigo); opacity: 0.7; font-style: italic; }
-.nmm-kb-subs { font-size: 10px; color: var(--nmm-mid); margin-bottom: 4px; }
-.nmm-kb-date { font-size: 9px; color: var(--nmm-teal); font-weight: 600; margin-bottom: 3px; }
-.nmm-kb-map-label { font-size: 9px; color: var(--nmm-light); }
+.nmm-kb-card-title { font-size: 14px; font-weight: 600; color: var(--nmm-navy); line-height: 1.35; }
+.nmm-kb-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+.nmm-kb-sefirot-badge { font-size: 11px; color: var(--nmm-indigo); opacity: 0.8; font-style: italic; }
+.nmm-kb-subs { font-size: 12.5px; color: var(--nmm-mid); line-height: 1.45; margin-bottom: 4px; }
+.nmm-kb-date { font-size: 11.5px; color: #078f8f; font-weight: 600; margin-bottom: 3px; }
+.nmm-kb-map-label { font-size: 11.5px; color: var(--nmm-light); }
 
 @media (max-width: 900px) {
   .nmm-kb-columns { grid-template-columns: repeat(3, 1fr); }
@@ -893,7 +928,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-landing-hero { text-align: center; margin-bottom: 40px; }
 .nmm-landing-logo { margin-bottom: 16px; }
 .nmm-landing-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-size: 38px;
   font-weight: 700;
   color: var(--nmm-navy);
@@ -923,7 +958,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);
 }
 .nmm-landing-card h2 {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-size: 18px;
   font-weight: 700;
   color: var(--nmm-navy);
@@ -960,7 +995,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   font-size: 12px;
   color: var(--nmm-dark);
   cursor: pointer;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-weight: 600;
   letter-spacing: 0.04em;
 }
@@ -1091,7 +1126,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
 
 /* Section label inside landing card */
 .nmm-landing-section-label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.09em;
@@ -1201,7 +1236,7 @@ body:has(.nmm-landing) .entry-content {
   box-shadow: 0 4px 24px rgba(0,0,0,0.07);
 }
 .nmm-landing-section-label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.09em;
@@ -1244,18 +1279,21 @@ body:has(.nmm-landing) .entry-content {
    ============================================================ */
 .nmm-manager-search-bar {
   display: flex;
-  gap: 10px;
-  padding: 12px 20px;
+  gap: 12px;
+  padding: 16px 24px;
+  align-items: center;
   background: rgba(255,255,255,0.6);
   border-bottom: 0.5px solid var(--nmm-border);
 }
 .nmm-search-input {
   flex: 1;
-  border: 1px solid var(--nmm-border);
-  border-radius: 6px;
-  padding: 7px 12px;
-  font-size: 13px;
-  font-family: 'Barlow Condensed', sans-serif;
+  min-width: 0;
+  border: 1px solid var(--nmm-border) !important;
+  border-radius: 999px !important;
+  padding: 9px 18px !important;
+  margin: 0 !important;
+  font-size: 14px;
+  font-family: var(--nmm-font);
   background: white;
   color: var(--nmm-dark);
 }
@@ -1290,11 +1328,11 @@ body:has(.nmm-landing) .entry-content {
   background: rgba(255,255,255,0.1);
   border: none;
   border-radius: 4px;
-  color: rgba(255,255,255,0.7);
-  font-size: 11px;
-  padding: 4px 8px;
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+  padding: 5px 8px;
   cursor: pointer;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   letter-spacing: 0.04em;
 }
 .nmm-kb-filter-actions button:hover { background: rgba(255,255,255,0.18); color: white; }
@@ -1302,11 +1340,11 @@ body:has(.nmm-landing) .entry-content {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 14px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.8);
+  padding: 8px 14px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.88);
   cursor: pointer;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
 }
 .nmm-kb-filter-row:hover { background: rgba(255,255,255,0.07); }
 .nmm-kb-filter-row input { cursor: pointer; }
@@ -1367,7 +1405,7 @@ body:has(.nmm-app) .page-title {
   display: flex;
   flex-direction: column;
   width: 100%;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
 }
 
 /* Landing toolbar — full width navy bar */
@@ -1418,7 +1456,7 @@ body:has(.nmm-app) .page-title {
   box-shadow: 0 4px 24px rgba(0,0,0,0.07);
 }
 .nmm-landing-page .nmm-landing-section-label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.09em;
@@ -1444,7 +1482,7 @@ body:has(.nmm-app) .page-title {
   border-radius: 6px;
   padding: 8px 10px;
   font-size: 13px;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   color: #111;
   outline: none;
   background: white;
@@ -1507,7 +1545,7 @@ body:has(.nmm-app) .page-title {
   color: var(--nmm-light);
   letter-spacing: 0.04em;
   background: white;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--nmm-font);
   transition: all 0.12s;
 }
 .nmm-mode-tab:hover { border-color: var(--nmm-teal); color: var(--nmm-teal); }
@@ -1522,3 +1560,50 @@ body:has(.nmm-app) .page-title {
   flex-wrap: wrap;
   margin-top: 6px;
 }
+
+/* ============================================================
+   HARMONY — layout style menu
+   ============================================================ */
+.nmm-harmony-group { display: inline-flex; flex-shrink: 0; }
+.nmm-harmony-group .nmm-btn-harmony:first-child { border-radius: 999px 0 0 999px; }
+.nmm-editor-toolbar .nmm-btn-layout {
+  border-radius: 0 999px 999px 0;
+  border-left: 1px solid rgba(255,255,255,0.3) !important;
+  padding: 4px 10px 4px 8px;
+  gap: 4px;
+  font-size: 10px;
+}
+#nmm-layout-icon { display: inline-flex; }
+#nmm-layout-icon svg { width: 18px; height: 18px; }
+.nmm-layout-menu {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  background: var(--nmm-white);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(1,28,47,0.22);
+  padding: 6px;
+  min-width: 250px;
+  font-family: var(--nmm-font);
+}
+.nmm-layout-menu.open { display: block; }
+.nmm-layout-menu button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--nmm-navy);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+.nmm-layout-menu button:hover { background: var(--nmm-sand2); }
+.nmm-layout-menu button.active { background: rgba(83,74,183,0.1); color: var(--nmm-indigo); }
+.nmm-layout-menu svg { flex-shrink: 0; width: 26px; height: 26px; }
+.nmm-layout-menu strong { display: block; font-size: 14px; font-weight: 600; }
+.nmm-layout-menu small { display: block; font-size: 12px; color: var(--nmm-light); margin-top: 1px; }

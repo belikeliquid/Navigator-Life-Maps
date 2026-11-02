@@ -22,7 +22,7 @@
     <button class="nmm-btn nmm-btn-primary" id="nmm-new-map-btn">+ New Map</button>
     <?php endif; ?>
     <?php if ( is_user_logged_in() ) : ?>
-    <button class="nmm-btn" id="nmm-logout-btn" style="font-size:11px;opacity:0.7">Log out</button>
+    <button class="nmm-btn" id="nmm-logout-btn" style="opacity:0.8">Log out</button>
     <?php endif; ?>
   </div>
 

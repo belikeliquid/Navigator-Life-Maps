@@ -108,7 +108,7 @@ function renderTimeline() {
     const mk = document.createElement('div');
     mk.style.cssText = 'position:absolute;left:' + (PAD_L + frac * usable) + 'px;top:' + (SPINE_Y + yOff - 8) + 'px;transform:translateX(-50%);';
     mk.innerHTML = '<div style="width:1px;height:16px;background:rgba(11,191,191,0.3);margin:0 auto"></div>' +
-      '<div style="font-size:9px;font-family:Barlow Condensed,sans-serif;color:#aaa;white-space:nowrap;text-align:center;margin-top:2px">' +
+      '<div style="font-size:10.5px;color:#6b7280;white-space:nowrap;text-align:center;margin-top:2px">' +
       d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</div>';
     markers.appendChild(mk);
   }
@@ -120,11 +120,11 @@ function renderTimeline() {
     el.style.cssText = 'position:absolute;left:' + n._x + 'px;top:' + (n._y + yOff) + 'px;width:' + NODE_W + 'px;min-height:' + NODE_H + 'px;';
     el.style.borderColor = n._map_color;
     el.innerHTML =
-      '<div style="font-size:11px;font-weight:600;font-family:Montserrat,sans-serif;color:#111;line-height:1.3">' + esc(n.title) + '</div>' +
-      (n.subs && n.subs.length ? '<div style="font-size:9px;color:#777;margin-top:2px;font-family:Montserrat,sans-serif">' + esc(n.subs.slice(0, 2).join(' · ')) + '</div>' : '') +
-      (n.date ? '<div data-date style="font-size:9px;color:var(--nmm-teal);margin-top:2px;font-weight:600">📅 ' + esc(n.date) + '</div>' : '') +
-      (tc ? '<span style="display:inline-block;background:' + tc.bg + ';color:' + tc.text + ';font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;letter-spacing:0.05em;text-transform:uppercase;margin-top:3px">' + tc.label + '</span>' : '') +
-      '<div style="font-size:8px;color:#bbb;margin-top:3px">' + esc(n._map_title) + '</div>';
+      '<div style="font-size:12.5px;font-weight:600;color:#011c2f;line-height:1.3">' + esc(n.title) + '</div>' +
+      (n.subs && n.subs.length ? '<div style="font-size:11px;color:#4b5563;margin-top:2px">' + esc(n.subs.slice(0, 2).join(' · ')) + '</div>' : '') +
+      (n.date ? '<div data-date style="font-size:10.5px;color:#078f8f;margin-top:2px;font-weight:600">📅 ' + esc(n.date) + '</div>' : '') +
+      (tc ? '<span style="display:inline-block;background:' + tc.bg + ';color:' + tc.text + ';font-size:9.5px;font-weight:600;padding:1px 6px;border-radius:3px;letter-spacing:0.05em;text-transform:uppercase;margin-top:3px">' + tc.label + '</span>' : '') +
+      '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + esc(n._map_title) + '</div>';
 
     const conn = document.createElement('div');
     const bottom = n._above ? n._y + yOff + NODE_H : n._y + yOff, spineTop = SPINE_Y + yOff;

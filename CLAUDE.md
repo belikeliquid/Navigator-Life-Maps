@@ -17,7 +17,7 @@ WordPress plugin `navigator-mindmaps`, live on navigatorproject.org. Mind maps, 
 | `assets/js/canvas.js` | `NMMCanvas.create()`: map rendering shared by the editor and the share view (nodes, lines, motif, PNG export) |
 | `assets/js/editor.js` | Editor: save/draft/conflict logic, drag, modals, outline import, .ics export |
 | `assets/js/{view,kanban,timeline,manager,landing}.js` | One script per page |
-| `assets/mindmaps.css` | All styles |
+| `assets/mindmaps.css` | All styles. App UI uses `--nmm-font` (Fira Sans); map cards stay Barlow Condensed because their size drives saved layouts |
 
 Pages (Enfold "Blank" template): `/maps` (manager or landing), `/map-editor/?map_id=N`, `/map-share/?share=KEY`, `/kanban/?map_id=N`, `/timeline/?map_id=N`. Kanban and timeline take one or more ids (`?map_id=1,2`); no id means all maps.
 
@@ -25,7 +25,7 @@ Pages (Enfold "Blank" template): `/maps` (manager or landing), `/map-editor/?map
 
 A map is an `nmm_mindmap` post. Its whole content is JSON in post meta: `nmm_nodes` (array), `nmm_settings` (motif, quotes, template), `nmm_islands` (linked island ids), plus `nmm_category`, `nmm_color`, `nmm_share_key`, `nmm_rev`.
 
-Node: `{id, x, y, title, subs[], parent, collapsed, date, tag, sefirot}`. `parent: null` = island (root card). `x, y` = top-left on the canvas. `tag` ∈ start/doing/sprint/review/done or "" (Triage).
+Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. `parent: null` = island (root card). `x, y` = top-left on the canvas. `tag` ∈ start/doing/sprint/review/done or "" (Triage). Only Kanban tasks show on the board: `NMMCore.isTask(n)` (a node without `task` counts as one if it has a tag). `nmm_settings.layout` ∈ flow/mind/tol picks the Harmony style; `mind` also switches the canvas to sideways connectors.
 
 **Saving.** Every write sends the whole node array. `nmm_rev` increments on each save. The editor sends `base_rev` and gets a 409 if the map changed since it loaded; Kanban/timeline/maps list use `NMMCore.patchNode()` (fresh GET, then PUT, no `base_rev`). The editor autosaves 2 s after a change and keeps a localStorage draft (`nmm_draft_<id>`) until the save is confirmed.
 

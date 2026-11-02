@@ -41,7 +41,7 @@ class NMM_Shortcodes {
         }
 
         if ( ! $atts['id'] && empty( $_GET['share'] ) ) {
-            return '<p style="padding:2rem;text-align:center;color:#999;font-family:Barlow Condensed,sans-serif;">No map ID specified. <a href="' . esc_url( home_url( '/maps/' ) ) . '">Return to maps</a>.</p>';
+            return '<p style="padding:2rem;text-align:center;color:#999;">No map ID specified. <a href="' . esc_url( home_url( '/maps/' ) ) . '">Return to maps</a>.</p>';
         }
 
         $readonly = filter_var( $atts['readonly'], FILTER_VALIDATE_BOOLEAN );

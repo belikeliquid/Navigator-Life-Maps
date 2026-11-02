@@ -33,7 +33,7 @@ async function loadMap() {
 }
 
 function showError() {
-  document.getElementById('nmm-canvas').innerHTML = '<div style="padding:60px;text-align:center;color:#999;font-family:Barlow Condensed,sans-serif;font-size:18px;">Map not found or no longer available.</div>';
+  document.getElementById('nmm-canvas').innerHTML = '<div style="padding:60px;text-align:center;color:#999;font-size:18px;">Map not found or no longer available.</div>';
 }
 
 window.nmmViewExpandAll   = function() { nodes.forEach(function(n) { n.collapsed = false; }); C.render(); };

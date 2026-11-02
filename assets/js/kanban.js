@@ -1,6 +1,6 @@
 /* Navigator Mind Maps — Kanban board (/kanban/, /kanban/?map_id=N). Markup: templates/kanban.php
- * Every card in the selected maps appears: islands, parents and children alike.
- * Untagged cards sit in Triage; the tag decides the column. */
+ * Cards marked as Kanban tasks (NMMCore.isTask) appear: islands, parents and children alike.
+ * Untagged tasks sit in Triage; the tag decides the column. */
 (function() {
 const root = document.getElementById('nmm-kanban');
 if (!root) return;
@@ -52,7 +52,7 @@ function updateLinks() {
 }
 
 function selectedNodes() {
-  return selectedMapIds.reduce(function(acc, id) { return acc.concat(mapNodes[id] || []); }, []);
+  return selectedMapIds.reduce(function(acc, id) { return acc.concat((mapNodes[id] || []).filter(NMMCore.isTask)); }, []);
 }
 
 // "Work › Divination" — where the card sits in its map
@@ -141,6 +141,7 @@ function openKbEdit(n) {
   $('nmm-kb-sub').value     = (n.subs || []).join('\n');
   $('nmm-kb-date').value    = n.date || '';
   $('nmm-kb-tag').value     = n.tag || '';
+  $('nmm-kb-task').checked  = true;
   $('nmm-kb-sefirot').value = n.sefirot || '';
   $('nmm-kb-open-map').href = NMM.editorUrl + '?map_id=' + n._map_id;
   $('nmm-kb-edit-modal').classList.add('open');
@@ -153,7 +154,8 @@ window.nmmKbSaveEdit = async function() {
     title:   $('nmm-kb-title').value.trim() || n.title,
     subs:    $('nmm-kb-sub').value.trim().split('\n').filter(function(s) { return s.trim(); }),
     date:    $('nmm-kb-date').value || '',
-    tag:     $('nmm-kb-tag').value || '',
+    task:    $('nmm-kb-task').checked,
+    tag:     $('nmm-kb-task').checked ? $('nmm-kb-tag').value || '' : '',
     sefirot: $('nmm-kb-sefirot').value || ''
   };
   btn.textContent = 'Saving...'; btn.disabled = true;

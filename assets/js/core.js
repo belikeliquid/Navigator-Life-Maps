@@ -67,6 +67,10 @@
     return h2cPromise;
   }
 
+  // Only cards marked as Kanban tasks appear on the board. Cards saved before the
+  // checkbox existed have no `task` field: a tag made them a task.
+  function isTask(n) { return n.task === undefined ? !!n.tag : !!n.task; }
+
   const TAG_COLORS = {
     start:  { bg: '#B5D4F4', text: '#0C447C', label: 'Start'  },
     doing:  { bg: '#FAC775', text: '#633806', label: 'Doing'  },
@@ -137,6 +141,6 @@
     api: api, refreshNonce: refreshNonce, patchNode: patchNode,
     mapIdsFromUrl: mapIdsFromUrl, pageUrl: pageUrl, esc: esc,
     loadHtml2Canvas: loadHtml2Canvas, mapFilter: mapFilter,
-    TAG_COLORS: TAG_COLORS, SEFIROT_LABELS: SEFIROT_LABELS
+    TAG_COLORS: TAG_COLORS, SEFIROT_LABELS: SEFIROT_LABELS, isTask: isTask
   };
 })();
