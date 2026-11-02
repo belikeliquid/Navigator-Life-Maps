@@ -3,7 +3,10 @@
  *   opts.getNodes()        current node array
  *   opts.editable          show Edit / + Child / Delete buttons
  *   opts.decorate(el, n)   called for each rendered node element (event wiring)
- *   opts.selectedId()      id to highlight (optional) */
+ *   opts.selectedId()      id to highlight (optional)
+ * Zoom: Ctrl/⌘ + scroll (and trackpad pinch), two-finger pinch on touch screens,
+ * and the − / % / + / Fit buttons. Node x, y stay in unzoomed canvas pixels;
+ * toCanvas() turns a pointer position into those. */
 (function() {
   const esc = NMMCore.esc;
   const LINE_STYLES = [
@@ -134,27 +137,116 @@
     }
 
     function autoCenter() {
-      setTimeout(function() {
-        const b = bounds();
-        if (!b || !wrap) return;
-        wrap.scrollLeft = Math.max(0, (b.minX + b.maxX) / 2 - wrap.clientWidth / 2);
-        wrap.scrollTop  = Math.max(0, (b.minY + b.maxY) / 2 - wrap.clientHeight / 2);
-      }, 300);
+      setTimeout(centerNow, 300);
     }
+    function centerNow() {
+      const b = bounds();
+      if (!b || !wrap) return;
+      wrap.scrollLeft = Math.max(0, (b.minX + b.maxX) / 2 * zoom - wrap.clientWidth / 2);
+      wrap.scrollTop  = Math.max(0, (b.minY + b.maxY) / 2 * zoom - wrap.clientHeight / 2);
+    }
+
+    // ---- Zoom ----
+    // The canvas is scaled with a CSS transform inside a sizer that takes the
+    // scaled size, so the scroll area always matches what you see.
+    const ZOOM_MIN = 0.25, ZOOM_MAX = 2;
+    let zoom = 1, sizer = null, zoomLabel = null;
+    function setupZoom() {
+      if (!canvas || !wrap) return;
+      sizer = document.createElement('div');
+      sizer.className = 'nmm-canvas-sizer';
+      canvas.parentNode.insertBefore(sizer, canvas);
+      sizer.appendChild(canvas);
+      // The motif is fixed to the screen; a scaled parent would pin it to the canvas instead
+      if (motif) wrap.parentNode.insertBefore(motif, wrap);
+
+      const bar = document.createElement('div');
+      bar.className = 'nmm-zoom';
+      bar.innerHTML = '<button type="button" data-zoom="out" title="Zoom out (Ctrl + scroll)">−</button>' +
+        '<button type="button" data-zoom="reset" class="nmm-zoom-pct" title="Back to 100%">100%</button>' +
+        '<button type="button" data-zoom="in" title="Zoom in (Ctrl + scroll)">+</button>' +
+        '<button type="button" data-zoom="fit" title="Fit the whole map on screen">Fit</button>';
+      wrap.parentNode.insertBefore(bar, wrap.nextSibling);
+      zoomLabel = bar.querySelector('.nmm-zoom-pct');
+      bar.addEventListener('click', function(e) {
+        const b = e.target.closest('[data-zoom]'); if (!b) return;
+        const a = b.dataset.zoom;
+        if (a === 'fit') zoomToFit();
+        else setZoom(a === 'in' ? zoom * 1.2 : a === 'out' ? zoom / 1.2 : 1);
+      });
+      applyZoom();
+
+      // Ctrl/⌘ + wheel. Trackpad pinch arrives as a wheel event with ctrlKey set.
+      wrap.addEventListener('wheel', function(e) {
+        if (!e.ctrlKey && !e.metaKey) return;
+        e.preventDefault();
+        setZoom(zoom * Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.002)), e.clientX, e.clientY);
+      }, { passive: false });
+
+      // Two-finger pinch on touch screens
+      let pinch = null;
+      function dist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+      wrap.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) pinch = { d: dist(e.touches), z: zoom };
+      }, { passive: true });
+      wrap.addEventListener('touchmove', function(e) {
+        if (!pinch || e.touches.length !== 2) return;
+        e.preventDefault();
+        setZoom(pinch.z * dist(e.touches) / pinch.d,
+          (e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2);
+      }, { passive: false });
+      wrap.addEventListener('touchend', function(e) { if (e.touches.length < 2) pinch = null; });
+    }
+    function applyZoom() {
+      if (!sizer) return;
+      canvas.style.transform = zoom === 1 ? '' : 'scale(' + zoom + ')';
+      sizer.style.width  = canvas.offsetWidth * zoom + 'px';
+      sizer.style.height = canvas.offsetHeight * zoom + 'px';
+      zoomLabel.textContent = Math.round(zoom * 100) + '%';
+    }
+    // Zooms keeping the canvas point under (cx, cy) still; defaults to the middle of the view
+    function setZoom(z, cx, cy) {
+      if (!sizer) return;
+      z = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+      if (Math.abs(z - 1) < 0.03) z = 1;
+      const wr = wrap.getBoundingClientRect();
+      if (cx === undefined) { cx = wr.left + wrap.clientWidth / 2; cy = wr.top + wrap.clientHeight / 2; }
+      const p = toCanvas(cx, cy);
+      zoom = z; applyZoom();
+      const r = canvas.getBoundingClientRect();
+      wrap.scrollLeft += r.left + p.x * zoom - cx;
+      wrap.scrollTop  += r.top  + p.y * zoom - cy;
+    }
+    function zoomToFit() {
+      const b = bounds(); if (!b || !sizer) return;
+      const pad = 60;
+      zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.min(
+        wrap.clientWidth / (b.maxX - b.minX + pad * 2), wrap.clientHeight / (b.maxY - b.minY + pad * 2), 1)));
+      applyZoom(); centerNow();
+    }
+    // Pointer position → unzoomed canvas coordinates (what node x, y use)
+    function toCanvas(clientX, clientY) {
+      const r = canvas.getBoundingClientRect();
+      return { x: (clientX - r.left) / zoom, y: (clientY - r.top) / zoom };
+    }
+    setupZoom();
 
     function exportPNG(filename) {
       const overlay = document.getElementById('nmm-export-overlay');
       overlay.style.display = 'flex';
+      canvas.style.transform = ''; // export at full size whatever the zoom
       NMMCore.loadHtml2Canvas().then(function(h2c) {
         const b = bounds(), pad = 80;
         if (!b) throw new Error('Nothing to export');
         return h2c(canvas, { backgroundColor: '#e8e4db', x: b.minX - pad, y: b.minY - pad,
           width: b.maxX - b.minX + pad * 2, height: b.maxY - b.minY + pad * 2, scale: 2, logging: false });
       }).then(function(c) {
+        applyZoom();
         overlay.style.display = 'none';
         const a = document.createElement('a');
         a.download = filename; a.href = c.toDataURL('image/png'); a.click();
       }).catch(function(e) {
+        applyZoom();
         overlay.style.display = 'none';
         alert('PNG export failed: ' + e.message);
       });
@@ -175,7 +267,8 @@
     return {
       find: find, depth: depth, isVisible: isVisible, hasChildren: hasChildren, isDescendant: isDescendant,
       getEl: getEl, render: render, drawLines: drawLines, setSettings: setSettings, renderMotif: renderMotif,
-      autoCenter: autoCenter, exportPNG: exportPNG, loadLinkedIslands: loadLinkedIslands
+      autoCenter: autoCenter, exportPNG: exportPNG, loadLinkedIslands: loadLinkedIslands,
+      toCanvas: toCanvas, setZoom: setZoom, zoomToFit: zoomToFit
     };
   }
 

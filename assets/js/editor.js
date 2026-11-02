@@ -215,27 +215,30 @@ const wrap = $('nmm-canvas-wrap');
 function startDrag(e, id) {
   e.preventDefault(); pushUndo();
   const n = find(id);
-  dragState = { id: id, moved: false, startMX: e.clientX + wrap.scrollLeft, startMY: e.clientY + wrap.scrollTop, startNX: n.x, startNY: n.y };
+  const p = C.toCanvas(e.clientX, e.clientY);
+  dragState = { id: id, moved: false, startMX: p.x, startMY: p.y, startNX: n.x, startNY: n.y };
   selectedId = id;
   document.addEventListener('mousemove', onDrag);
   document.addEventListener('mouseup', endDrag);
 }
 function onDrag(e) {
   if (!dragState) return;
-  const dx = (e.clientX + wrap.scrollLeft) - dragState.startMX, dy = (e.clientY + wrap.scrollTop) - dragState.startMY;
+  const p = C.toCanvas(e.clientX, e.clientY);
+  const dx = p.x - dragState.startMX, dy = p.y - dragState.startMY;
   if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragState.moved = true;
   if (!dragState.moved) return;
   const n = find(dragState.id);
   n.x = Math.max(10, dragState.startNX + dx); n.y = Math.max(10, dragState.startNY + dy);
   const el = C.getEl(n.id); if (el) { el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; }
   document.querySelectorAll('.nmm-node.nmm-drop-target').forEach(function(x) { x.classList.remove('nmm-drop-target'); });
-  const t = getDropTarget(e.clientX + wrap.scrollLeft, e.clientY + wrap.scrollTop, dragState.id);
+  const t = getDropTarget(p.x, p.y, dragState.id);
   if (t) { const tel = C.getEl(t); if (tel) tel.classList.add('nmm-drop-target'); }
   C.drawLines();
 }
 function endDrag(e) {
   if (dragState && dragState.moved) {
-    const t = getDropTarget(e.clientX + wrap.scrollLeft, e.clientY + wrap.scrollTop, dragState.id);
+    const p = C.toCanvas(e.clientX, e.clientY);
+    const t = getDropTarget(p.x, p.y, dragState.id);
     if (t) find(dragState.id).parent = t;
     markDirty(); C.render();
   } else if (dragState) {
@@ -259,20 +262,22 @@ function getDropTarget(mx, my, draggingId) {
 // ============================================================
 let lastTap = 0, touchDragState = null, panState = null;
 function handleTouchStart(e, nodeId, ro) {
-  if (e.touches.length !== 1) return;
+  if (e.touches.length !== 1) { touchDragState = null; return; } // a second finger means pinch zoom
   const touch = e.touches[0], now = Date.now();
   if (now - lastTap < 300) { nmmOpenNodeModal(nodeId); lastTap = 0; return; }
   lastTap = now;
   if (ro) return;
   const n = find(nodeId); if (!n) return;
-  touchDragState = { id: nodeId, moved: false, startTX: touch.clientX + wrap.scrollLeft, startTY: touch.clientY + wrap.scrollTop, startNX: n.x, startNY: n.y };
+  const p = C.toCanvas(touch.clientX, touch.clientY);
+  touchDragState = { id: nodeId, moved: false, startTX: p.x, startTY: p.y, startNX: n.x, startNY: n.y };
   e.stopPropagation();
 }
 function handleTouchMove(e) {
   if (!touchDragState || e.touches.length !== 1) return;
   e.preventDefault();
   const touch = e.touches[0];
-  const dx = (touch.clientX + wrap.scrollLeft) - touchDragState.startTX, dy = (touch.clientY + wrap.scrollTop) - touchDragState.startTY;
+  const p = C.toCanvas(touch.clientX, touch.clientY);
+  const dx = p.x - touchDragState.startTX, dy = p.y - touchDragState.startTY;
   if (Math.abs(dx) > 5 || Math.abs(dy) > 5) touchDragState.moved = true;
   if (!touchDragState.moved) return;
   const n = find(touchDragState.id); if (!n) return;
@@ -289,7 +294,7 @@ wrap.addEventListener('touchstart', function(e) {
   panState = { x: e.touches[0].clientX, y: e.touches[0].clientY, sl: wrap.scrollLeft, st: wrap.scrollTop };
 }, { passive: true });
 wrap.addEventListener('touchmove', function(e) {
-  if (!panState || e.target.closest('.nmm-node')) return;
+  if (!panState || e.touches.length !== 1 || e.target.closest('.nmm-node')) return;
   wrap.scrollLeft = panState.sl + (panState.x - e.touches[0].clientX);
   wrap.scrollTop  = panState.st + (panState.y - e.touches[0].clientY);
 }, { passive: true });
