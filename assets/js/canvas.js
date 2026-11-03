@@ -4,8 +4,9 @@
  *   opts.editable          show Edit / + Child / Delete buttons
  *   opts.decorate(el, n)   called for each rendered node element (event wiring)
  *   opts.selectedId()      id to highlight (optional)
+ * Moving around: drag empty space or use the arrow keys (Shift for bigger steps).
  * Zoom: Ctrl/⌘ + scroll (and trackpad pinch), two-finger pinch on touch screens,
- * and the − / % / + / Fit buttons. Node x, y stay in unzoomed canvas pixels;
+ * and the − / % / + / Fit buttons or the + / − keys. Node x, y stay in unzoomed canvas pixels;
  * toCanvas() turns a pointer position into those. */
 (function() {
   const esc = NMMCore.esc;
@@ -157,8 +158,13 @@
       sizer.className = 'nmm-canvas-sizer';
       canvas.parentNode.insertBefore(sizer, canvas);
       sizer.appendChild(canvas);
-      // The motif is fixed to the screen; a scaled parent would pin it to the canvas instead
-      if (motif) wrap.parentNode.insertBefore(motif, wrap);
+      // The motif sits outside the scrolling canvas so it stays at the top of the map area
+      if (motif) {
+        wrap.parentNode.insertBefore(motif, wrap);
+        const placeMotif = function() { motif.style.top = wrap.offsetTop + 'px'; };
+        placeMotif();
+        window.addEventListener('resize', placeMotif);
+      }
 
       const bar = document.createElement('div');
       bar.className = 'nmm-zoom';
@@ -196,6 +202,32 @@
           (e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2);
       }, { passive: false });
       wrap.addEventListener('touchend', function(e) { if (e.touches.length < 2) pinch = null; });
+
+      // Grab empty space and drag to slide the map (cards keep their own drag)
+      let grab = null;
+      wrap.addEventListener('mousedown', function(e) {
+        if (e.button !== 0 || e.target.closest('.nmm-node')) return;
+        e.preventDefault();
+        grab = { x: e.clientX, y: e.clientY, sl: wrap.scrollLeft, st: wrap.scrollTop };
+        wrap.classList.add('nmm-grabbing');
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!grab) return;
+        wrap.scrollLeft = grab.sl - (e.clientX - grab.x);
+        wrap.scrollTop  = grab.st - (e.clientY - grab.y);
+      });
+      document.addEventListener('mouseup', function() { grab = null; wrap.classList.remove('nmm-grabbing'); });
+
+      // Arrow keys slide the map (Shift for bigger steps); + and − zoom
+      document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input,textarea,select,[contenteditable]')) return;
+        if (document.querySelector('.nmm-modal-overlay.open')) return;
+        const step = e.shiftKey ? 400 : 120;
+        const move = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+        if (move) { e.preventDefault(); wrap.scrollBy({ left: move[0], top: move[1], behavior: 'smooth' }); return; }
+        if (e.key === '+' || e.key === '=') setZoom(zoom * 1.2);
+        if (e.key === '-' || e.key === '_') setZoom(zoom / 1.2);
+      });
     }
     function applyZoom() {
       if (!sizer) return;

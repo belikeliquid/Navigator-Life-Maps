@@ -264,6 +264,17 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.6.5 — Quote behind the map, dated timeline, fainter background, back button, grab to move, Export AI <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        The motif or quote now sits quietly at the top of the map area, behind the lines and cards, and stays in place while you scroll the map. It no longer floats over cards when the page scrolls.<br>
+                        The timeline now shows only cards that have a date. Give a card a date in the mind map and it appears there.<br>
+                        The watermap background is fainter and now also shows behind the mind map editor and shared maps.<br>
+                        The "← Maps" button now sits first on the left of the Kanban and Timeline toolbars, as it does in the editor.<br>
+                        Move around the map by grabbing empty space and dragging, or with the arrow keys (hold Shift for bigger steps). The + and − keys zoom.<br>
+                        New "Export AI" button next to Export PNG: the map as a text outline with a description of how to read it, ready to copy into Basecamp, Claude or any AI to create a project, a document or a synthesis. Copy it or download it as a .md file. ("Import outline" is now just "Import" to keep the toolbar on one line.)
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.6.4 — Softer background <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         The watermap contour background is faded so it reads as a light texture behind the maps list, sign-in page and Kanban.

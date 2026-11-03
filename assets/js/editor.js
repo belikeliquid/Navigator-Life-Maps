@@ -771,9 +771,86 @@ window.nmmDoGCalExport = function() {
 };
 
 // ============================================================
+// EXPORT PROMPT — the map as a text outline plus a description of it,
+// ready to paste into Basecamp or an AI to build a project, document or synthesis
+// ============================================================
+const PROMPT_PURPOSES = {
+  basecamp: 'Turn this outline into a Basecamp project. Suggest a project name and a one-paragraph project description. Use each main branch as a to-do list and the cards under it as to-dos (deeper cards can become sub-steps in the to-do notes). Keep each card\'s notes as the to-do description, use dates as due dates, and use the Kanban stage as the status (or as Card Table columns: Triage, Start, Doing, Sprint, Review, Done). Flag anything that looks like a milestone.',
+  document: 'Write a clear, well-structured document from this outline. Use the main branches as sections and their cards as headings and paragraphs, turn the notes into flowing prose, and keep dates and status where they help the reader. Open with a short summary of the whole map.',
+  synthesis: 'Read this outline as a whole and write a synthesis: the main themes and how the branches connect, what is in motion right now (dated cards and Kanban stages), what seems missing, stuck or in tension, and three to five clear next steps.',
+  outline: 'Use this outline as context. Keep its structure and wording when you refer to it.'
+};
+function promptText(purpose) {
+  const live = nodes; // collapsed branches included
+  function kids(id) {
+    const ch = live.filter(function(n) { return n.parent === id; });
+    // Reading order follows the layout: top to bottom for Mind Map, left to right otherwise
+    return ch.sort(settings.layout === 'mind' ? function(a, b) { return a.y - b.y || a.x - b.x; } : function(a, b) { return a.x - b.x || a.y - b.y; });
+  }
+  function tags(n) {
+    const t = [];
+    if (n.date) t.push('[date: ' + n.date + ']');
+    if (NMMCore.isTask(n)) t.push('[task' + (n.tag && NMMCore.TAG_COLORS[n.tag] ? ', stage: ' + NMMCore.TAG_COLORS[n.tag].label : ', stage: Triage') + ']');
+    if (n.sefirot && NMMCore.SEFIROT_LABELS[n.sefirot]) t.push('[Tree of Life: ' + NMMCore.SEFIROT_LABELS[n.sefirot] + ']');
+    if (n._readonly) t.push('[linked from: ' + n._island_title + ']');
+    return t.length ? '  ' + t.join(' ') : '';
+  }
+  const lines = [];
+  function walk(n, depth) {
+    const pad = '  '.repeat(depth);
+    lines.push(pad + '- ' + (n.title || 'Untitled') + tags(n));
+    (n.subs || []).forEach(function(s) { if (s.trim()) lines.push(pad + '  ' + s.trim()); });
+    kids(n.id).forEach(function(c) { walk(c, depth + 1); });
+  }
+  const roots = live.filter(isRoot).sort(function(a, b) { return a.x - b.x || a.y - b.y; });
+  roots.forEach(function(r) { walk(r, 0); });
+
+  const dated = live.filter(function(n) { return n.date; }).length, tasks = live.filter(NMMCore.isTask).length;
+  const today = new Date().toISOString().slice(0, 10);
+  return [
+    '# ' + mapTitle,
+    'Navigator Life Map' + (mapCategory ? ' · Category: ' + mapCategory : '') + ' · Exported ' + today,
+    '',
+    '## About this outline',
+    'This is a mind map from Navigator Life Maps written out as an indented outline. Each line starting with "-" is a card; the lines indented beneath it are the cards that grow from it, so indentation shows how ideas branch. Plain lines directly under a card are its notes. The top-level cards are the map\'s islands, its main areas.',
+    'Labels in square brackets:',
+    '- [date: YYYY-MM-DD] the day the card is due or scheduled',
+    '- [task, stage: …] the card is a task on the Kanban board, in that stage (Triage, Start, Doing, Sprint, Review, Done)',
+    '- [Tree of Life: …] the card\'s position on the Tree of Life',
+    '- [linked from: …] the card comes from another map linked into this one',
+    'The map has ' + live.length + ' cards in ' + roots.length + ' island' + (roots.length === 1 ? '' : 's') + ', ' + dated + ' with dates and ' + tasks + ' marked as tasks.',
+    '',
+    '## What to do with it',
+    PROMPT_PURPOSES[purpose] || PROMPT_PURPOSES.outline,
+    '',
+    '## Outline',
+    lines.join('\n')
+  ].join('\n');
+}
+window.nmmOpenPromptExport = function() {
+  if (!nodes.length) { alert('This map has no cards yet.'); return; }
+  nmmUpdatePrompt();
+  $('nmm-prompt-modal').classList.add('open');
+};
+window.nmmUpdatePrompt = function() { $('nmm-prompt-text').value = promptText($('nmm-prompt-purpose').value); };
+window.nmmClosePromptExport = function() { $('nmm-prompt-modal').classList.remove('open'); };
+window.nmmCopyPrompt = function() {
+  const ta = $('nmm-prompt-text'), btn = $('nmm-prompt-copy');
+  const done = function() { btn.textContent = 'Copied ✓'; setTimeout(function() { btn.textContent = 'Copy'; }, 1800); };
+  if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(done, function() { ta.select(); document.execCommand('copy'); done(); });
+  else { ta.select(); document.execCommand('copy'); done(); }
+};
+window.nmmDownloadPrompt = function() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([$('nmm-prompt-text').value], { type: 'text/markdown' }));
+  a.download = (mapTitle || 'map').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '-prompt.md';
+  a.click();
+};
+
+// ============================================================
 // KEYBOARD + MODAL DISMISS
 // ============================================================
-function closeModals() { nmmCloseNodeModal(); nmmCloseSettings(); nmmCloseOutlineImport(); nmmCloseGCalModal(); }
+function closeModals() { nmmCloseNodeModal(); nmmCloseSettings(); nmmCloseOutlineImport(); nmmCloseGCalModal(); nmmClosePromptExport(); }
 document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.target.closest('input,textarea')) { e.preventDefault(); nmmUndo(); return; }
   if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); nmmSave(); return; }

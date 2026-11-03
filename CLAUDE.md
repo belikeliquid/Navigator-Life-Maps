@@ -15,7 +15,7 @@ WordPress plugin `navigator-mindmaps`, live on navigatorproject.org. Mind maps, 
 | `templates/*.php` | Markup only. No inline scripts |
 | `assets/js/core.js` | `NMMCore`: `api()`, `patchNode()`, nonce refresh, map-filter dropdown, `esc()`, tag colors, lazy html2canvas |
 | `assets/js/canvas.js` | `NMMCanvas.create()`: map rendering shared by the editor and the share view (nodes, lines, motif, PNG export) |
-| `assets/js/editor.js` | Editor: save/draft/conflict logic, drag, modals, outline import, .ics export |
+| `assets/js/editor.js` | Editor: save/draft/conflict logic, drag, modals, outline import, .ics export, Export AI (`promptText()`: map → described text outline) |
 | `assets/js/{view,kanban,timeline,manager,landing}.js` | One script per page |
 | `assets/mindmaps.css` | All styles. App UI uses `--nmm-font` (Fira Sans); map cards stay Barlow Condensed because their size drives saved layouts |
 
@@ -27,7 +27,7 @@ A map is an `nmm_mindmap` post. Its whole content is JSON in post meta: `nmm_nod
 
 Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. `parent: null` = island (root card). `x, y` = top-left on the canvas. `tag` ∈ start/doing/sprint/review/done or "" (Triage). Only Kanban tasks show on the board: `NMMCore.isTask(n)` (a node without `task` counts as one if it has a tag). `nmm_settings.layout` ∈ flow/mind/tol picks the Harmony style; `mind` also switches the canvas to sideways connectors.
 
-**Zoom.** `canvas.js` scales `#nmm-canvas` with a CSS transform inside a JS-created `.nmm-canvas-sizer` (and moves the fixed `#nmm-motif` out of it). Node x, y stay unzoomed: convert pointer positions with `C.toCanvas(clientX, clientY)`, never `clientX + scrollLeft`.
+**Zoom.** `canvas.js` scales `#nmm-canvas` with a CSS transform inside a JS-created `.nmm-canvas-sizer` (and moves `#nmm-motif` out of it, pinned to the top of the map area behind the cards). Dragging empty space and the arrow keys pan the map. Node x, y stay unzoomed: convert pointer positions with `C.toCanvas(clientX, clientY)`, never `clientX + scrollLeft`.
 
 **Saving.** Every write sends the whole node array. `nmm_rev` increments on each save. The editor sends `base_rev` and gets a 409 if the map changed since it loaded; Kanban/timeline/maps list use `NMMCore.patchNode()` (fresh GET, then PUT, no `base_rev`). The editor autosaves 2 s after a change and keeps a localStorage draft (`nmm_draft_<id>`) until the save is confirmed.
 

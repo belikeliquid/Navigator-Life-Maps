@@ -22,9 +22,10 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button class="nmm-btn" onclick="nmmCollapseAll()">Collapse</button>
     <span class="nmm-sep"></span>
     <button class="nmm-btn" onclick="nmmOpenSettings()">Settings</button>
-    <button class="nmm-btn" onclick="nmmOpenOutlineImport()">📋 Import outline</button>
+    <button class="nmm-btn" onclick="nmmOpenOutlineImport()" title="Import an outline">📋 Import</button>
     <button class="nmm-btn" onclick="nmmOpenGCalModal()">→ GCal</button>
     <button class="nmm-btn" onclick="nmmExportPNG()">Export PNG</button>
+    <button class="nmm-btn" onclick="nmmOpenPromptExport()" title="The map as a text outline for Basecamp or AI">Export AI</button>
     <button class="nmm-btn nmm-btn-save" id="nmm-save-btn" onclick="nmmSave()">Save</button>
     <span id="nmm-save-status" class="nmm-save-status"></span>
     <button class="nmm-btn nmm-mobile-menu-btn" id="nmm-mobile-menu-btn" onclick="nmmToggleMobileMenu()">☰</button>
@@ -57,6 +58,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button onclick="nmmOpenOutlineImport();nmmToggleMobileMenu()">📋 Import</button>
     <button onclick="nmmOpenGCalModal();nmmToggleMobileMenu()">→ GCal</button>
     <button onclick="nmmExportPNG();nmmToggleMobileMenu()">Export PNG</button>
+    <button onclick="nmmOpenPromptExport();nmmToggleMobileMenu()">Export AI</button>
     <button onclick="nmmSave();nmmToggleMobileMenu()">Save</button>
   </div>
 
@@ -167,6 +169,32 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
       <div class="nmm-modal-actions">
         <button class="nmm-btn" onclick="nmmCloseGCalModal()">Cancel</button>
         <button class="nmm-btn nmm-btn-primary" onclick="nmmDoGCalExport()">Export Selected →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export AI: the map as a text outline with a description, for Basecamp or AI -->
+  <div class="nmm-modal-overlay" id="nmm-prompt-modal">
+    <div class="nmm-modal nmm-prompt-modal">
+      <h3>Export AI</h3>
+      <p class="nmm-prompt-intro">Your map as a text outline with a description of how to read it. Copy it into Basecamp, Claude or any AI.</p>
+      <div class="nmm-field">
+        <label for="nmm-prompt-purpose">Use it to</label>
+        <select id="nmm-prompt-purpose" class="nmm-input" onchange="nmmUpdatePrompt()">
+          <option value="basecamp">Create a Basecamp project</option>
+          <option value="document">Write a document</option>
+          <option value="synthesis">Write a synthesis</option>
+          <option value="outline">Just the outline</option>
+        </select>
+      </div>
+      <div class="nmm-field">
+        <label for="nmm-prompt-text">Prompt</label>
+        <textarea id="nmm-prompt-text" class="nmm-input nmm-prompt-text" rows="16" spellcheck="false"></textarea>
+      </div>
+      <div class="nmm-modal-actions">
+        <button class="nmm-btn" onclick="nmmClosePromptExport()">Close</button>
+        <button class="nmm-btn" onclick="nmmDownloadPrompt()">Download .md</button>
+        <button class="nmm-btn nmm-btn-primary" id="nmm-prompt-copy" onclick="nmmCopyPrompt()">Copy</button>
       </div>
     </div>
   </div>

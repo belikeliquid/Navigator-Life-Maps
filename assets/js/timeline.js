@@ -1,5 +1,5 @@
 /* Navigator Mind Maps — timeline (/timeline/, /timeline/?map_id=N). Markup: templates/timeline.php
- * Dated cards sit at their date; undated cards are spread evenly. Drag a card sideways to reschedule. */
+ * Only cards with a date appear, each at its date. Drag a card sideways to reschedule. */
 (function() {
 const root = document.getElementById('nmm-timeline');
 if (!root) return;
@@ -64,7 +64,8 @@ function renderTimeline() {
   const canvas = $('nmm-tl-canvas'), markers = $('nmm-tl-markers'), spine = $('nmm-tl-spine'), nodesEl = $('nmm-tl-nodes');
   markers.innerHTML = ''; spine.innerHTML = ''; nodesEl.innerHTML = '';
 
-  const nodes = selectedMapIds.reduce(function(acc, id) { return acc.concat(mapNodes[id] || []); }, []);
+  const nodes = selectedMapIds.reduce(function(acc, id) { return acc.concat(mapNodes[id] || []); }, [])
+    .filter(function(n) { return n.date; });
   $('nmm-tl-canvas-wrap').style.display = nodes.length ? 'block' : 'none';
   $('nmm-tl-empty').style.display       = nodes.length ? 'none' : 'block';
   if (!nodes.length) return;
@@ -75,18 +76,10 @@ function renderTimeline() {
   // Sort by date, then by Kanban stage
   nodes.sort(function(a, b) {
     const ka = KANBAN_ORDER[a.tag || ''] ?? 5, kb = KANBAN_ORDER[b.tag || ''] ?? 5;
-    if (a.date && b.date) return a.date.localeCompare(b.date) || ka - kb;
-    if (a.date) return -1;
-    if (b.date) return 1;
-    return ka - kb;
+    return a.date.localeCompare(b.date) || ka - kb;
   });
 
-  const undated = nodes.filter(function(n) { return !n.date; });
-  undated.forEach(function(n, i) {
-    const frac = undated.length > 1 ? (i + 1) / (undated.length + 1) : 0.5;
-    n._x = PAD_L + frac * usable;
-  });
-  nodes.filter(function(n) { return n.date; }).forEach(function(n) {
+  nodes.forEach(function(n) {
     const x = PAD_L + ((new Date(n.date) - tlStart) / span) * usable;
     n._x = Math.max(PAD_L, Math.min(canvasW - PAD_R - NODE_W, x));
   });

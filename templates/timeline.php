@@ -2,6 +2,7 @@
 <div id="nmm-timeline" class="nmm-app">
 
   <div class="nmm-editor-toolbar">
+    <a href="<?php echo esc_url( home_url( '/maps/' ) ); ?>" class="nmm-btn nmm-btn-nav">← Maps</a>
     <div class="nmm-logo">
       <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
         <circle cx="14" cy="14" r="12" stroke="#0BBFBF" stroke-width="1.5"/>
@@ -36,8 +37,6 @@
     </div>
     <a href="#" id="nmm-tl-map-link" class="nmm-btn nmm-btn-kanban" style="display:none" title="Open this map">◈ Mind Map</a>
     <a href="<?php echo esc_url( home_url( '/kanban/' ) ); ?>" id="nmm-tl-kanban-link" class="nmm-btn nmm-btn-kanban">⬡ Kanban</a>
-    <span style="flex:1"></span>
-    <a href="<?php echo esc_url( home_url( '/maps/' ) ); ?>" class="nmm-btn nmm-btn-nav">← All maps</a>
   </div>
 
   <!-- Timeline canvas -->
@@ -55,8 +54,8 @@
     </div>
     <div id="nmm-tl-empty" style="display:none;text-align:center;padding:80px 20px;color:#aaa">
       <div style="font-size:48px;margin-bottom:16px">⬡</div>
-      <p style="font-size:18px;font-weight:600;color:#888">No nodes to display</p>
-      <p style="font-size:14px">Set a date range and select maps to see your timeline.</p>
+      <p style="font-size:18px;font-weight:600;color:#4b5563">No dated cards yet</p>
+      <p style="font-size:15px;color:#6b7280">In a mind map, edit a card and give it a <strong>date</strong>. It will appear here.</p>
     </div>
   </div>
 
