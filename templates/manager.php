@@ -19,6 +19,7 @@
     <a href="<?php echo home_url('/timeline/'); ?>" class="nmm-btn nmm-btn-kanban">◷ Timeline</a>
     <span style="flex:1"></span>
     <?php if ( current_user_can('nmm_edit_maps') || current_user_can('edit_posts') || current_user_can('manage_options') ) : ?>
+    <span id="nmm-map-count" class="nmm-map-count" style="display:none"></span>
     <button class="nmm-btn nmm-btn-primary" id="nmm-new-map-btn">+ New Map</button>
     <?php endif; ?>
     <?php if ( is_user_logged_in() ) : ?>

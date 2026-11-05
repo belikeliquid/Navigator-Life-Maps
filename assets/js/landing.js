@@ -23,20 +23,47 @@ document.getElementById('nmm-login-btn').addEventListener('click', function() {
   const err  = document.getElementById('nmm-login-error');
   hideError(err);
   if (!user || !pass) { showError(err, 'Please enter your username and password.'); return; }
+  const tsToken = turnstileToken('login');
+  if (tsEls.login && !tsToken) { showError(err, TS_WAIT); return; }
   const btn = this; btn.textContent = 'Logging in...'; btn.disabled = true;
   fetch(REST + 'auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
-    body: JSON.stringify({ username: user, password: pass })
+    body: JSON.stringify({ username: user, password: pass, turnstile_token: tsToken })
   }).then(function(r){ return r.json(); }).then(function(data) {
     if (data.success) { afterAuth(); }
-    else { showError(err, data.message || 'Login failed. Please check your details.'); btn.textContent = 'Log in'; btn.disabled = false; }
-  }).catch(function(){ showError(err, 'Connection error. Please try again.'); btn.textContent = 'Log in'; btn.disabled = false; });
+    else { showError(err, data.message || 'Login failed. Please check your details.'); btn.textContent = 'Log in'; btn.disabled = false; resetTurnstile('login'); }
+  }).catch(function(){ showError(err, 'Connection error. Please try again.'); btn.textContent = 'Log in'; btn.disabled = false; resetTurnstile('login'); });
 });
 
 document.getElementById('nmm-login-pass').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') document.getElementById('nmm-login-btn').click();
 });
+
+// Cloudflare Turnstile. Other forms on the page (the email popup) load the same script
+// in explicit mode, which leaves a plain .cf-turnstile empty, so login and signup render
+// their own widgets and read each token by widget id.
+const tsEls = { login: document.getElementById('nmm-login-turnstile'), signup: document.getElementById('nmm-signup-turnstile') };
+const tsWidgets = {};
+function renderTurnstile() {
+  if (!tsEls.login && !tsEls.signup) return;
+  if (!window.turnstile) {
+    if (!document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]')) {
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; s.async = true;
+      document.head.appendChild(s);
+    }
+    setTimeout(renderTurnstile, 200);
+    return;
+  }
+  ['login', 'signup'].forEach(function(k) {
+    if (tsEls[k]) tsWidgets[k] = window.turnstile.render(tsEls[k], { sitekey: tsEls[k].dataset.sitekey, theme: 'light' });
+  });
+}
+function turnstileToken(k) { return tsWidgets[k] !== undefined ? window.turnstile.getResponse(tsWidgets[k]) || '' : ''; }
+// A token works once, so a failed attempt needs a fresh one
+function resetTurnstile(k) { if (tsWidgets[k] !== undefined) window.turnstile.reset(tsWidgets[k]); }
+const TS_WAIT = 'The security check above hasn\'t finished. Please complete it, then try again.';
 
 // SIGNUP
 document.getElementById('nmm-signup-btn').addEventListener('click', function() {
@@ -44,22 +71,25 @@ document.getElementById('nmm-signup-btn').addEventListener('click', function() {
   const email = document.getElementById('nmm-signup-email').value.trim();
   const pass  = document.getElementById('nmm-signup-pass').value;
   const err   = document.getElementById('nmm-signup-error');
+  const inviteEl = document.getElementById('nmm-signup-invite');
+  const invite   = inviteEl ? inviteEl.value.trim() : '';
   hideError(err);
-  if (!user || !email || !pass) { showError(err, 'Please fill in all fields.'); return; }
+  if (!user || !email || !pass || (inviteEl && !invite)) { showError(err, 'Please fill in all fields.'); return; }
 
-  // Cloudflare Turnstile token if present
-  const tsEl = document.querySelector('.cf-turnstile iframe');
-  const tsToken = tsEl ? (window.turnstile ? window.turnstile.getResponse() : '') : '';
+  const tsToken = turnstileToken('signup');
+  if (tsEls.signup && !tsToken) { showError(err, TS_WAIT); return; }
 
   const btn = this; btn.textContent = 'Creating...'; btn.disabled = true;
   fetch(REST + 'auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
-    body: JSON.stringify({ username: user, email: email, password: pass, turnstile_token: tsToken })
+    body: JSON.stringify({ username: user, email: email, password: pass, invite_code: invite, turnstile_token: tsToken })
   }).then(function(r){ return r.json(); }).then(function(data) {
     if (data.success) { afterAuth(); }
-    else { showError(err, data.message || 'Registration failed. Please try again.'); btn.textContent = 'Create account'; btn.disabled = false; }
-  }).catch(function(){ showError(err, 'Connection error.'); btn.textContent = 'Create account'; btn.disabled = false; });
+    else { showError(err, data.message || 'Registration failed. Please try again.'); btn.textContent = 'Create account'; btn.disabled = false; resetTurnstile('signup'); }
+  }).catch(function(){ showError(err, 'Connection error.'); btn.textContent = 'Create account'; btn.disabled = false; resetTurnstile('signup'); });
 });
 
+
+renderTurnstile();
 })();

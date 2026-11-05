@@ -603,6 +603,11 @@ body:has(.nmm-app) .entry-content > *:first-child {
   margin-bottom: 16px;
 }
 .nmm-field { margin-bottom: 12px; }
+/* Signup security check: holds its space so the form doesn't jump when it loads */
+.nmm-turnstile { min-height: 65px; margin: 4px 0 8px; }
+
+.nmm-map-count { font-family: var(--nmm-font); font-size: 13px; color: rgba(255,255,255,0.75); white-space: nowrap; margin-right: 4px; }
+
 /* Export AI dialog */
 .nmm-modal.nmm-prompt-modal { width: 720px; max-width: 95vw; }
 .nmm-prompt-intro { font-size: 14px; color: var(--nmm-mid); margin: 0 0 14px; }

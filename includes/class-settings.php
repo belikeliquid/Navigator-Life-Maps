@@ -35,6 +35,10 @@ class NMM_Settings {
         if ( isset( $_POST['turnstile_secret_key'] ) ) {
             update_option( 'nmm_turnstile_secret_key', sanitize_text_field( wp_unslash( $_POST['turnstile_secret_key'] ) ) );
         }
+        // Invitation code for new accounts (blank = open signup). Stored only on the site.
+        if ( isset( $_POST['invite_code'] ) ) {
+            update_option( 'nmm_invite_code', sanitize_text_field( wp_unslash( $_POST['invite_code'] ) ) );
+        }
         // Custom CSS saved separately
         if ( isset( $_POST['custom_css'] ) ) {
             update_option( 'nmm_custom_css', wp_strip_all_tags( wp_unslash( $_POST['custom_css'] ) ) );
@@ -264,6 +268,16 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.7.0 — Invitations, Guides / Hosts, map limits, private maps <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        New accounts could not be created: the Cloudflare check never appeared on the signup form once the email popup added its own check to the page, so every attempt ended in "Security check required". The form now starts its own check and reads its own result, and it gets a fresh check after a failed attempt.<br>
+                        Cloudflare's check now also protects login, and an attempt is refused if the check can't run.<br>
+                        Signup needs an invitation code (set below).<br>
+                        Two kinds of user: standard users can own up to 3 maps, Guides / Hosts up to 5. Nobody loses a map they already have. AI features stop for someone at their limit.<br>
+                        Maps are now private: only their owner or an admin can open or change them, and share links still work for anyone who has one. Before this, maps could be read without logging in and any member could change another member's map.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.6.5 — Quote behind the map, dated timeline, fainter background, back button, grab to move, Export AI <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         The motif or quote now sits quietly at the top of the map area, behind the lines and cards, and stays in place while you scroll the map. It no longer floats over cards when the page scrolls.<br>
@@ -492,6 +506,19 @@ class NMM_Settings {
               and New User Default Role is set to <strong>Subscriber</strong>. 
               The plugin automatically grants <code>nmm_edit_maps</code> capability to new users.
             </div>
+          </div>
+          <div class="nmm-settings-card" style="margin-bottom:20px">
+            <h2>🧭 Signup and users</h2>
+            <div class="nmm-field" style="max-width:320px">
+              <label>Invitation code</label>
+              <input type="text" name="invite_code" value="<?php echo esc_attr( get_option('nmm_invite_code','') ); ?>" autocomplete="off" style="width:100%" />
+              <p style="font-size:11px;color:#666;margin-top:4px">New people need this code to create an account. Capital letters don't matter. Leave blank to open signup to anyone.</p>
+            </div>
+            <p style="font-size:12px;color:#666;margin-bottom:0">
+              <strong>Standard users</strong> (everyone who signs up): up to <?php echo (int) NMM_Auth::LIMIT_USER; ?> maps.
+              <strong>Guides / Hosts:</strong> up to <?php echo (int) NMM_Auth::LIMIT_HOST; ?> maps. To make someone a Guide / Host, set their role to <em>Guide / Host</em> in <a href="<?php echo esc_url( admin_url('users.php') ); ?>">Users</a> (WordPress Authors count as hosts too).
+              Admins and editors have no limit.
+            </p>
           </div>
         </div>
 

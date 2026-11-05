@@ -29,6 +29,8 @@ Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. 
 
 **Zoom.** `canvas.js` scales `#nmm-canvas` with a CSS transform inside a JS-created `.nmm-canvas-sizer` (and moves `#nmm-motif` out of it, pinned to the top of the map area behind the cards). Dragging empty space and the arrow keys pan the map. Node x, y stay unzoomed: convert pointer positions with `C.toCanvas(clientX, clientY)`, never `clientX + scrollLeft`.
 
+**Access.** Maps and islands are readable and writable only by their author or an admin (`can_access()`, a 404 otherwise); the public route is `/share/<key>`, which doesn't include linked-island cards for logged-out viewers. Post types have `show_in_rest` off. Signup needs `nmm_invite_code` (option on the site only; the repo is public, so never commit the code). Limits live in `NMM_Auth`: standard 3, host 5 (role `nmm_host` or WP Author), admin/editor none; enforced in `create_map` and the AI routes.
+
 **Saving.** Every write sends the whole node array. `nmm_rev` increments on each save. The editor sends `base_rev` and gets a 409 if the map changed since it loaded; Kanban/timeline/maps list use `NMMCore.patchNode()` (fresh GET, then PUT, no `base_rev`). The editor autosaves 2 s after a change and keeps a localStorage draft (`nmm_draft_<id>`) until the save is confirmed.
 
 ## Gotchas
@@ -37,6 +39,7 @@ Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. 
 - Speed Optimizer: bump `NMM_VERSION` on any CSS/JS change, then `wp sg purge`. Plugin scripts are excluded from combining.
 - AI model ids are hard-coded in `class-rest-api.php` (`/ai/questions`, `/ai/organize`).
 - Titles are user text: always build HTML with `NMMCore.esc()`.
+- Turnstile: the Simple Cloudflare Turnstile plugin (email popup) loads the script with `render=explicit` on the same pages, so `.cf-turnstile` never auto-renders. `landing.js` renders its own widget and reads `getResponse(widgetId)`.
 
 ## Testing
 

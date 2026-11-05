@@ -10,7 +10,7 @@ class NMM_REST_API {
     public static function routes() {
         $namespace = 'nmm/v1';
 
-        // Maps — GET is public, write requires auth
+        // Maps — only their owner or an admin; share links use /share/<key>
         register_rest_route( $namespace, '/maps', [
             [ 'methods' => 'GET',  'callback' => [ __CLASS__, 'get_maps' ],   'permission_callback' => '__return_true' ],
             [ 'methods' => 'POST', 'callback' => [ __CLASS__, 'create_map' ], 'permission_callback' => [ __CLASS__, 'auth' ] ],
@@ -21,10 +21,10 @@ class NMM_REST_API {
             [ 'methods' => 'DELETE', 'callback' => [ __CLASS__, 'delete_map' ], 'permission_callback' => [ __CLASS__, 'auth' ] ],
         ]);
 
-        // Islands — GET is public
+        // Islands — same rule; creating one is admin only (no app screen makes them)
         register_rest_route( $namespace, '/islands', [
             [ 'methods' => 'GET',  'callback' => [ __CLASS__, 'get_islands' ],   'permission_callback' => '__return_true' ],
-            [ 'methods' => 'POST', 'callback' => [ __CLASS__, 'create_island' ], 'permission_callback' => [ __CLASS__, 'auth' ] ],
+            [ 'methods' => 'POST', 'callback' => [ __CLASS__, 'create_island' ], 'permission_callback' => function() { return current_user_can( 'manage_options' ); } ],
         ]);
         register_rest_route( $namespace, '/islands/(?P<id>\d+)', [
             [ 'methods' => 'GET',    'callback' => [ __CLASS__, 'get_island' ],    'permission_callback' => '__return_true' ],
@@ -75,7 +75,13 @@ class NMM_REST_API {
         return current_user_can( 'nmm_edit_maps' ) || current_user_can( 'edit_posts' ) || current_user_can( 'manage_options' );
     }
 
+    // The person who made it, or an admin. Others get the same "not found" as a missing map.
+    private static function can_access( $post ) {
+        return current_user_can( 'manage_options' ) || ( is_user_logged_in() && (int) $post->post_author === get_current_user_id() );
+    }
+
     public static function get_maps( $request ) {
+        if ( ! is_user_logged_in() ) return rest_ensure_response( [] );
         $args = [
             'post_type'   => 'nmm_mindmap',
             'post_status' => 'publish',
@@ -83,8 +89,8 @@ class NMM_REST_API {
             'orderby'     => 'modified',
             'order'       => 'DESC',
         ];
-        // Filter by current user if logged in (admins see all)
-        if ( is_user_logged_in() && ! current_user_can( 'manage_options' ) ) {
+        // Admins see all
+        if ( ! current_user_can( 'manage_options' ) ) {
             $args['author'] = get_current_user_id();
         }
         $posts = get_posts( $args );
@@ -93,12 +99,14 @@ class NMM_REST_API {
 
     public static function get_map( $request ) {
         $post = get_post( $request['id'] );
-        if ( ! $post || $post->post_type !== 'nmm_mindmap' )
+        if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::can_access( $post ) )
             return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
         return rest_ensure_response( self::format_map( $post, true ) );
     }
 
     public static function create_map( $request ) {
+        $limit = NMM_Auth::limit_error();
+        if ( $limit ) return $limit;
         $params = $request->get_json_params();
         $id = wp_insert_post([
             'post_type'   => 'nmm_mindmap',
@@ -121,7 +129,7 @@ class NMM_REST_API {
 
     public static function update_map( $request ) {
         $post = get_post( $request['id'] );
-        if ( ! $post || $post->post_type !== 'nmm_mindmap' )
+        if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::can_access( $post ) )
             return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
         $params = $request->get_json_params();
         // The editor sends the revision it loaded; refuse the save if another
@@ -141,20 +149,23 @@ class NMM_REST_API {
 
     public static function delete_map( $request ) {
         $post = get_post( $request['id'] );
-        if ( ! $post || $post->post_type !== 'nmm_mindmap' )
+        if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::can_access( $post ) )
             return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
         wp_delete_post( $post->ID, true );
         return rest_ensure_response([ 'deleted' => true ]);
     }
 
     public static function get_islands( $request ) {
-        $posts = get_posts([ 'post_type' => 'nmm_island', 'post_status' => 'publish', 'numberposts' => -1 ]);
+        if ( ! is_user_logged_in() ) return rest_ensure_response( [] );
+        $args = [ 'post_type' => 'nmm_island', 'post_status' => 'publish', 'numberposts' => -1 ];
+        if ( ! current_user_can( 'manage_options' ) ) $args['author'] = get_current_user_id();
+        $posts = get_posts( $args );
         return rest_ensure_response( array_map( [ __CLASS__, 'format_island' ], $posts ) );
     }
 
     public static function get_island( $request ) {
         $post = get_post( $request['id'] );
-        if ( ! $post || $post->post_type !== 'nmm_island' )
+        if ( ! $post || $post->post_type !== 'nmm_island' || ! self::can_access( $post ) )
             return new WP_Error( 'not_found', 'Island not found', [ 'status' => 404 ] );
         return rest_ensure_response( self::format_island( $post, true ) );
     }
@@ -170,7 +181,7 @@ class NMM_REST_API {
 
     public static function update_island( $request ) {
         $post = get_post( $request['id'] );
-        if ( ! $post || $post->post_type !== 'nmm_island' )
+        if ( ! $post || $post->post_type !== 'nmm_island' || ! self::can_access( $post ) )
             return new WP_Error( 'not_found', 'Island not found', [ 'status' => 404 ] );
         $params = $request->get_json_params();
         if ( isset( $params['title'] ) ) wp_update_post([ 'ID' => $post->ID, 'post_title' => sanitize_text_field( $params['title'] ) ]);
@@ -181,7 +192,7 @@ class NMM_REST_API {
 
     public static function delete_island( $request ) {
         $post = get_post( $request['id'] );
-        if ( ! $post || $post->post_type !== 'nmm_island' )
+        if ( ! $post || $post->post_type !== 'nmm_island' || ! self::can_access( $post ) )
             return new WP_Error( 'not_found', 'Island not found', [ 'status' => 404 ] );
         wp_delete_post( $post->ID, true );
         return rest_ensure_response([ 'deleted' => true ]);
@@ -195,6 +206,8 @@ class NMM_REST_API {
     }
 
     public static function ai_questions( $request ) {
+        $limit = NMM_Auth::limit_error(); // no new map possible, so don't spend AI credit on one
+        if ( $limit ) return $limit;
         $params = $request->get_json_params();
         $title  = sanitize_text_field( $params['title'] ?? '' );
         $notes  = sanitize_textarea_field( $params['notes'] ?? '' );
@@ -296,6 +309,8 @@ Return the JSON array only.';
     }
 
     public static function ai_organize( $request ) {
+        $limit = NMM_Auth::limit_error();
+        if ( $limit ) return $limit;
         $params = $request->get_json_params();
         $title  = sanitize_text_field( $params['title'] ?? 'My Map' );
         $notes   = sanitize_textarea_field( $params['notes'] ?? '' );

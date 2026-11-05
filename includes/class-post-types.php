@@ -15,7 +15,7 @@ class NMM_Post_Types {
             'public'       => false,
             'show_ui'      => true,
             'show_in_menu' => true,
-            'show_in_rest' => true,
+            'show_in_rest' => false, // the app uses nmm/v1, which checks the owner
             'supports'     => [ 'title', 'custom-fields' ],
             'menu_icon'    => 'dashicons-networking',
             'capability_type' => 'post',
@@ -32,7 +32,7 @@ class NMM_Post_Types {
             'public'       => false,
             'show_ui'      => true,
             'show_in_menu' => 'edit.php?post_type=nmm_mindmap',
-            'show_in_rest' => true,
+            'show_in_rest' => false, // the app uses nmm/v1, which checks the owner
             'supports'     => [ 'title', 'custom-fields' ],
             'menu_icon'    => 'dashicons-networking',
         ]);

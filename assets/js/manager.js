@@ -14,8 +14,9 @@ function loadMaps() {
   var empty   = document.getElementById('nmm-empty');
   loading.style.display = 'flex'; grid.style.display = 'none'; empty.style.display = 'none';
   api('GET', 'maps').then(function(maps) {
-    allMaps = maps || [];
+    allMaps = Array.isArray(maps) ? maps : [];
     renderMaps(allMaps);
+    showMapCount();
   }).catch(function() {
     loading.innerHTML = '<p style="color:#cc3333;font-family:inherit">Failed to load maps. Please refresh.</p>';
   });
@@ -109,7 +110,20 @@ function filterMaps() {
 }
 
 // New map modal
+// Map limit: 0 means none (admins). The server enforces it; this explains it up front.
+var mapLimit = 0;
+api('GET', 'auth/me').then(function(me) { mapLimit = (me && me.limit) || 0; showMapCount(); }).catch(function() {});
+function showMapCount() {
+  var el = document.getElementById('nmm-map-count');
+  if (!el || !mapLimit) return;
+  el.textContent = allMaps.length + ' of ' + mapLimit + ' maps';
+  el.style.display = 'inline';
+}
 function openNewModal() {
+  if (mapLimit && allMaps.length >= mapLimit) {
+    alert('You have reached your limit of ' + mapLimit + ' maps. Delete a map to make room for a new one.');
+    return;
+  }
   document.getElementById('nmm-new-modal').classList.add('open');
   document.getElementById('nmm-new-title').value = '';
   setTimeout(function(){ document.getElementById('nmm-new-title').focus(); }, 50);
@@ -227,6 +241,7 @@ document.getElementById('nmm-new-confirm').addEventListener('click', async funct
         title: title, category: category, color: selectedColor,
         nodes: aiResp.nodes, settings: { motif: '', template: 'treeoflife' }
       });
+      if (!map || !map.id) { throw new Error((map && map.message) || 'The map could not be created'); }
       document.getElementById('nmm-new-modal').classList.remove('open');
       btn.textContent = 'Create Map →'; btn.disabled = false;
       window.location.href = editorUrl + '?map_id=' + map.id + '&template=treeoflife';
@@ -245,8 +260,9 @@ document.getElementById('nmm-new-confirm').addEventListener('click', async funct
     title: title, category: category, color: selectedColor,
     nodes: [], settings: { motif: '', template: currentMode }
   }).then(function(map) {
-    document.getElementById('nmm-new-modal').classList.remove('open');
     btn.textContent = 'Create Map →'; btn.disabled = false;
+    if (!map || !map.id) { alert((map && map.message) || 'Failed to create map. Please try again.'); return; }
+    document.getElementById('nmm-new-modal').classList.remove('open');
     var url = editorUrl + '?map_id=' + map.id;
     if (currentMode === 'outline' && outline) {
       url += '&outline=' + encodeURIComponent(outline) + '&template=outline';

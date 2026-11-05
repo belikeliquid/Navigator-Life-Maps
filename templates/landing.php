@@ -37,6 +37,9 @@
         <label>Password</label>
         <input type="password" id="nmm-login-pass" class="nmm-input" autocomplete="current-password" />
       </div>
+      <?php if ( get_option('nmm_turnstile_site_key') ) : ?>
+      <div id="nmm-login-turnstile" class="nmm-turnstile" data-sitekey="<?php echo esc_attr( get_option('nmm_turnstile_site_key') ); ?>"></div>
+      <?php endif; ?>
       <button class="nmm-btn nmm-btn-primary nmm-btn-full" id="nmm-login-btn">Log in</button>
       <div style="text-align:center;margin-top:10px">
         <a href="<?php echo wp_lostpassword_url(); ?>" style="font-size:11px;color:var(--nmm-teal)">Forgot password?</a>
@@ -59,10 +62,16 @@
         <label>Password</label>
         <input type="password" id="nmm-signup-pass" class="nmm-input" autocomplete="new-password" />
       </div>
+      <?php if ( get_option('nmm_invite_code') ) : ?>
+      <div class="nmm-field">
+        <label>Invitation code</label>
+        <input type="text" id="nmm-signup-invite" class="nmm-input" autocomplete="off" autocapitalize="none" spellcheck="false" />
+      </div>
+      <?php endif; ?>
       <?php
       $ts_site_key = get_option('nmm_turnstile_site_key', '');
       if ( $ts_site_key ) : ?>
-      <div class="cf-turnstile" data-sitekey="<?php echo esc_attr($ts_site_key); ?>" data-theme="light"></div>
+      <div id="nmm-signup-turnstile" class="nmm-turnstile" data-sitekey="<?php echo esc_attr($ts_site_key); ?>"></div>
       <?php endif; ?>
       <button class="nmm-btn nmm-btn-primary nmm-btn-full" id="nmm-signup-btn" style="margin-top:10px">Create account</button>
       <p style="font-size:10px;color:#aaa;text-align:center;margin-top:6px">Free account. No credit card needed.</p>
@@ -71,6 +80,3 @@
   </div>
 </div>
 
-<?php if ( get_option('nmm_turnstile_site_key') ) : ?>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-<?php endif; ?>
