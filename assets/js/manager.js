@@ -164,6 +164,7 @@ function showStep(step) {
   $new('nmm-new-step-question').style.display = step === 'question' ? 'block' : 'none';
   $new('nmm-new-step-working').style.display  = step === 'working'  ? 'block' : 'none';
   $new('nmm-new-actions').style.display       = step === 'working'  ? 'none'  : '';
+  showWorkText(step === 'working');
   var confirm = $new('nmm-new-confirm');
   confirm.disabled = false;
   if (step === 'details') {
@@ -179,6 +180,19 @@ function showStep(step) {
     input.value = answers[questionIdx] || '';
     setTimeout(function() { input.focus(); }, 50);
   }
+}
+
+// Words for the wait. They set the mood; they don't track real progress, so the last one stays.
+var WORK_TEXT = ['Reading your notes', 'Finding the main branches', 'Charting the connections', 'Placing your cards', 'Setting your course', 'Still charting, longer notes take a little more time'];
+var workTimer = null;
+function showWorkText(on) {
+  clearInterval(workTimer);
+  if (!on) return;
+  var i = 0, el = $new('nmm-work-text');
+  el.textContent = WORK_TEXT[0];
+  workTimer = setInterval(function() {
+    if (i < WORK_TEXT.length - 1) el.textContent = WORK_TEXT[++i];
+  }, 9000);
 }
 
 function pickTab(selector, chosen) {

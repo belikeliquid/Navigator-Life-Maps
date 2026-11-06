@@ -138,9 +138,18 @@
       </div>
 
       <div id="nmm-new-step-working" class="nmm-new-working" style="display:none">
-        <div class="nmm-spinner"></div>
-        <p>Organizing your map...</p>
-        <p class="nmm-new-hint">This can take up to a minute. Please keep this page open.</p>
+        <svg class="nmm-chart" viewBox="0 0 280 140" role="img" aria-label="Charting your map">
+          <g class="nmm-chart-branch nmm-chart-b1"><path d="M140 70 C100 70 96 22 62 22" pathLength="1"/><rect x="10" y="12" width="52" height="20" rx="6"/><line x1="19" y1="22" x2="46" y2="22"/></g>
+          <g class="nmm-chart-branch nmm-chart-b2"><path d="M140 70 C180 70 184 22 218 22" pathLength="1"/><rect x="218" y="12" width="52" height="20" rx="6"/><line x1="227" y1="22" x2="254" y2="22"/></g>
+          <g class="nmm-chart-branch nmm-chart-b3"><path d="M140 70 C100 70 96 118 62 118" pathLength="1"/><rect x="10" y="108" width="52" height="20" rx="6"/><line x1="19" y1="118" x2="46" y2="118"/></g>
+          <g class="nmm-chart-branch nmm-chart-b4"><path d="M140 70 C180 70 184 118 218 118" pathLength="1"/><rect x="218" y="108" width="52" height="20" rx="6"/><line x1="227" y1="118" x2="254" y2="118"/></g>
+          <circle class="nmm-chart-face" cx="140" cy="70" r="31"/>
+          <circle class="nmm-chart-orbit" cx="140" cy="70" r="39"/>
+          <g class="nmm-chart-ticks"><line x1="140" y1="39" x2="140" y2="45" transform="rotate(0 140 70)"/><line x1="140" y1="41" x2="140" y2="45" transform="rotate(45 140 70)"/><line x1="140" y1="39" x2="140" y2="45" transform="rotate(90 140 70)"/><line x1="140" y1="41" x2="140" y2="45" transform="rotate(135 140 70)"/><line x1="140" y1="39" x2="140" y2="45" transform="rotate(180 140 70)"/><line x1="140" y1="41" x2="140" y2="45" transform="rotate(225 140 70)"/><line x1="140" y1="39" x2="140" y2="45" transform="rotate(270 140 70)"/><line x1="140" y1="41" x2="140" y2="45" transform="rotate(315 140 70)"/></g>
+          <g class="nmm-chart-needle"><path class="nmm-chart-north" d="M140 46 L146 70 L134 70 Z"/><path class="nmm-chart-south" d="M140 94 L146 70 L134 70 Z"/><circle cx="140" cy="70" r="3"/></g>
+        </svg>
+        <p id="nmm-work-text" class="nmm-work-text" aria-live="polite">Reading your notes</p>
+        <p class="nmm-new-hint">This can take up to a minute or two. Please keep this page open.</p>
       </div>
 
       <div class="nmm-modal-actions" id="nmm-new-actions">

@@ -6,21 +6,36 @@
     return;
   }
 
-  // Keep the REST nonce fresh: SG Optimizer can serve pages long after the nonce was made.
+  // Keep the REST nonce fresh. This has to be WordPress's admin-ajax refresh: a REST request
+  // sent without a nonce counts as logged out, so a REST route can only hand out a nonce that
+  // fails for a logged-in user. Logged out, this gets a 400 and the current nonce stays.
   function refreshNonce() {
-    return fetch(NMM.restUrl + 'nonce').then(function(r) { return r.json(); })
-      .then(function(d) { if (d.nonce) NMM.nonce = d.nonce; return NMM.nonce; })
+    return fetch(NMM.ajaxUrl + '?action=rest-nonce', { credentials: 'same-origin' })
+      .then(function(r) { return r.ok ? r.text() : ''; })
+      .then(function(t) { if (/^[0-9a-f]{10}$/.test(t.trim())) NMM.nonce = t.trim(); return NMM.nonce; })
       .catch(function() { return NMM.nonce; });
   }
   setInterval(refreshNonce, 600000);
 
   // Returns parsed JSON. Errors from WordPress come back as {code, message, data}.
+  // A rejected nonce is refreshed and the call sent once more: WordPress refuses those before
+  // doing anything, so nothing can happen twice. It also goes stale if you log in or out in another tab.
   function api(method, endpoint, data) {
-    return fetch(NMM.restUrl + endpoint, {
-      method: method,
-      headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': NMM.nonce },
-      body: data ? JSON.stringify(data) : undefined
-    }).then(function(r) { return r.json(); });
+    function send() {
+      return fetch(NMM.restUrl + endpoint, {
+        method: method,
+        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': NMM.nonce },
+        body: data ? JSON.stringify(data) : undefined
+      }).then(function(r) { return r.json(); });
+    }
+    function staleNonce(res) { return res && res.code === 'rest_cookie_invalid_nonce'; }
+    return send().then(function(res) {
+      if (!staleNonce(res)) return res;
+      return refreshNonce().then(send).then(function(again) {
+        if (staleNonce(again)) again.message = 'You seem to be logged out. Please log in again in another tab, then try again here.';
+        return again;
+      });
+    });
   }
 
   // Change fields on one node from a page other than the editor (Kanban, timeline).

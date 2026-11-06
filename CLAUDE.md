@@ -41,6 +41,7 @@ Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. 
 - Speed Optimizer: bump `NMM_VERSION` on any CSS/JS change, then `wp sg purge`. Plugin scripts are excluded from combining.
 - AI model ids are hard-coded in `class-rest-api.php` (`/ai/questions`, `/ai/organize`).
 - Titles are user text: always build HTML with `NMMCore.esc()`.
+- REST nonces: a REST call without a nonce counts as logged out, so never fetch a nonce from a REST route. `NMMCore.refreshNonce()` uses `admin-ajax.php?action=rest-nonce`; `api()` retries once on `rest_cookie_invalid_nonce`. The landing page sends no nonce.
 - Turnstile: the Simple Cloudflare Turnstile plugin (email popup) loads the script with `render=explicit` on the same pages, so `.cf-turnstile` never auto-renders. `landing.js` renders its own widget and reads `getResponse(widgetId)`.
 
 ## Testing

@@ -269,6 +269,13 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.7.3 — Pages left open keep working, compass while the AI works <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        After 10 minutes on any app page, the page's security token was replaced with one that didn't work for a logged-in person, so creating maps ended in "Cookie check failed" and saves in the editor kept failing. The token now refreshes correctly, and a rejected one is renewed and the action retried automatically.<br>
+                        While AI Organize works, a compass finds its bearing as branches chart out to map cards.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.7.2 — New map dialog <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         Choose the layout when you create a map: Flow Chart (the default), Mind Map or Tree of Life. New maps open already arranged that way; before, AI maps always came out as Tree of Life.<br>

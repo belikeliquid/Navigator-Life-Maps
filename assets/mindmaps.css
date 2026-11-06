@@ -617,8 +617,53 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-q-bar span { display: block; height: 100%; background: var(--nmm-teal); transition: width 0.2s; }
 .nmm-app label.nmm-q-text { display: block; font-family: var(--nmm-font); font-size: 17px; font-weight: 500; line-height: 1.4; color: var(--nmm-navy); text-transform: none; letter-spacing: 0; margin-bottom: 12px; }
 .nmm-new-working { text-align: center; padding: 28px 0 12px; font-family: var(--nmm-font); font-size: 16px; color: var(--nmm-navy); }
-.nmm-new-working .nmm-spinner { margin: 0 auto 14px; }
 .nmm-new-working p { margin: 0 0 4px; }
+.nmm-work-text { min-height: 24px; font-weight: 500; }
+
+/* Waiting on the AI: a compass finding its bearing while branches chart out to map cards */
+.nmm-chart { display: block; width: 280px; max-width: 100%; height: auto; margin: 0 auto 14px; overflow: visible; }
+.nmm-chart-face { fill: #F4F1EA; stroke: #DDD9D0; stroke-width: 1; }
+.nmm-chart-orbit { fill: none; stroke: #0BBFBF; stroke-width: 1.5; stroke-dasharray: 3 6; stroke-linecap: round; transform-origin: 140px 70px; animation: nmm-orbit 14s linear infinite; }
+.nmm-chart-ticks line { stroke: #011C2F; stroke-width: 1.2; stroke-linecap: round; opacity: 0.45; }
+.nmm-chart-needle { transform-origin: 140px 70px; animation: nmm-needle 6s ease-in-out infinite; }
+.nmm-chart-north { fill: #011C2F; }
+.nmm-chart-south { fill: #C9A45C; }
+.nmm-chart-needle circle { fill: #F4F1EA; stroke: #011C2F; stroke-width: 1.2; }
+.nmm-chart-branch path { fill: none; stroke: #0BBFBF; stroke-width: 1.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: nmm-chart-line 6s ease-in-out infinite; }
+.nmm-chart-branch rect { fill: #fff; stroke: #0BBFBF; stroke-width: 1.5; }
+.nmm-chart-branch line { stroke: #011C2F; stroke-width: 2.5; stroke-linecap: round; opacity: 0.55; }
+.nmm-chart-branch rect, .nmm-chart-branch line { opacity: 0; animation: nmm-chart-card 6s ease-out infinite; }
+.nmm-chart-b2 rect, .nmm-chart-b3 rect { stroke: #C9A45C; }
+.nmm-chart-b2 path, .nmm-chart-b3 path { stroke: #C9A45C; }
+.nmm-chart-b2 path, .nmm-chart-b2 rect, .nmm-chart-b2 line { animation-delay: 0.7s; }
+.nmm-chart-b3 path, .nmm-chart-b3 rect, .nmm-chart-b3 line { animation-delay: 1.4s; }
+.nmm-chart-b4 path, .nmm-chart-b4 rect, .nmm-chart-b4 line { animation-delay: 2.1s; }
+@keyframes nmm-orbit { to { transform: rotate(360deg); } }
+@keyframes nmm-needle {
+  0%, 100% { transform: rotate(-38deg); }
+  22% { transform: rotate(46deg); }
+  42% { transform: rotate(-20deg); }
+  60% { transform: rotate(14deg); }
+  76% { transform: rotate(-5deg); }
+  88% { transform: rotate(2deg); }
+}
+@keyframes nmm-chart-line {
+  0% { stroke-dashoffset: 1; opacity: 1; }
+  20%, 72% { stroke-dashoffset: 0; opacity: 1; }
+  86%, 100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes nmm-chart-card {
+  0%, 16% { opacity: 0; }
+  24%, 72% { opacity: 1; }
+  86%, 100% { opacity: 0; }
+}
+/* Respect "reduce motion": show the finished chart, still */
+@media (prefers-reduced-motion: reduce) {
+  .nmm-chart-orbit, .nmm-chart-needle, .nmm-chart-branch path, .nmm-chart-branch rect, .nmm-chart-branch line { animation: none; }
+  .nmm-chart-branch path { stroke-dashoffset: 0; }
+  .nmm-chart-branch rect { opacity: 1; }
+  .nmm-chart-branch line { opacity: 0.55; }
+}
 
 /* New map card, after the last map */
 .nmm-app .nmm-card-new {

@@ -2,17 +2,11 @@
 (function() {
 if (!document.getElementById('nmm-login-btn')) return;
 const REST  = NMM.restUrl;
-let nonce   = NMM.nonce;
 
 function showError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
 function hideError(el) { el.style.display = 'none'; }
 
 async function afterAuth() {
-  // Refresh nonce after login
-  try {
-    const nd = await fetch(REST + 'nonce').then(function(r){ return r.json(); });
-    if (nd.nonce) nonce = nd.nonce;
-  } catch(e) {}
   window.location.href = NMM.homeUrl + '/maps/';
 }
 
@@ -28,7 +22,7 @@ document.getElementById('nmm-login-btn').addEventListener('click', function() {
   const btn = this; btn.textContent = 'Logging in...'; btn.disabled = true;
   fetch(REST + 'auth/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+    headers: { 'Content-Type': 'application/json' }, // no nonce: this page acts for nobody yet, and an old one would be refused
     body: JSON.stringify({ username: user, password: pass, turnstile_token: tsToken })
   }).then(function(r){ return r.json(); }).then(function(data) {
     if (data.success) { afterAuth(); }
@@ -82,7 +76,7 @@ document.getElementById('nmm-signup-btn').addEventListener('click', function() {
   const btn = this; btn.textContent = 'Creating...'; btn.disabled = true;
   fetch(REST + 'auth/register', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+    headers: { 'Content-Type': 'application/json' }, // no nonce: this page acts for nobody yet, and an old one would be refused
     body: JSON.stringify({ username: user, email: email, password: pass, invite_code: invite, turnstile_token: tsToken })
   }).then(function(r){ return r.json(); }).then(function(data) {
     if (data.success) { afterAuth(); }

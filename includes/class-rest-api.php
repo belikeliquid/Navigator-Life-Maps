@@ -60,14 +60,6 @@ class NMM_REST_API {
             'permission_callback' => [ __CLASS__, 'auth' ],
         ]);
 
-        // Nonce refresh
-        register_rest_route( $namespace, '/nonce', [
-            'methods'             => 'GET',
-            'callback'            => function() {
-                return rest_ensure_response([ 'nonce' => wp_create_nonce('wp_rest') ]);
-            },
-            'permission_callback' => '__return_true',
-        ]);
     }
 
     public static function auth() {
