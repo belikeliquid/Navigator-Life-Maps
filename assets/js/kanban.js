@@ -11,6 +11,14 @@ const $   = function(id) { return document.getElementById(id); };
 let allMaps = [], selectedMapIds = [], draggingCard = null, kbEditNode = null;
 const mapNodes = {}; // map id -> node array, loaded on demand
 
+// Guidance only: nothing stops a card being dropped here. Matches limit_stages() in class-rest-api.php.
+const LIMITS = {
+  start:  { max: 5, warn: 'Too many tasks in Start will feel overwhelming. Keep the next 5 here and move the rest to Triage.' },
+  doing:  { max: 5, warn: 'Too many tasks in Doing will slow down your progress. Finish some or move them back to Triage.' },
+  sprint: { max: 3, warn: 'Too many items in Sprint will keep you from prioritizing. Choose the 3 that matter most.' },
+  review: { max: 5, warn: 'Too many tasks in Review will hold up your progress. Clear a few before adding more.' }
+};
+
 async function loadAll() {
   allMaps = (await api('GET', 'maps')) || [];
   const fromUrl = NMMCore.mapIdsFromUrl().filter(function(id) { return allMaps.some(function(m) { return m.id === id; }); });
@@ -77,6 +85,20 @@ function renderBoard() {
   nodes.forEach(function(n) {
     const zone = n.tag ? document.querySelector('.nmm-kb-col-cards[data-tag="' + n.tag.toLowerCase() + '"]') : null;
     (zone || triage).appendChild(makeCard(n));
+  });
+  showColumnCounts();
+}
+
+function showColumnCounts() {
+  document.querySelectorAll('.nmm-kb-col').forEach(function(col) {
+    const limit = LIMITS[col.dataset.tag];
+    const count = col.querySelectorAll('.nmm-kb-card').length;
+    const over  = !!limit && count > limit.max;
+    col.classList.toggle('nmm-kb-col-over', over);
+    col.querySelector('.nmm-kb-col-count').textContent = limit ? count + ' / ' + limit.max : count;
+    const warn = col.querySelector('.nmm-kb-col-warn');
+    warn.textContent = over ? '⚠ ' + limit.warn : '';
+    warn.style.display = over ? '' : 'none';
   });
 }
 

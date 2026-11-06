@@ -334,6 +334,14 @@ A: $a
         }
 
         $today  = date('Y-m-d');
+        $kanban = 'Kanban stages — assign by urgency and importance, and keep each stage small so the board stays focused:
+- sprint: at most 3 cards. Must happen immediately, the highest priority of all
+- doing: at most 5 cards. Already in progress according to the notes or answers
+- start: at most 5 cards. The next things to begin
+- review: at most 5 cards. Waiting on something or needs checking
+- done: already completed according to the notes or answers
+These are limits, not targets. Choose only the most important and most urgent cards for these stages. Every other task gets tag "" and task true, so it waits in Triage until there is room.
+Headings and cards that only hold information get tag "" and task false.';
         $prompt = 'You are organizing content for a mind map based on the Kabbalistic Tree of Life.
 
 Today is ' . $today . '. Use this as the reference for all dates. All dates must be on or after today.
@@ -357,12 +365,7 @@ Sefirot guide:
 - yesod: foundation, daily practice, habits
 - malkuth: material, practical, physical reality
 
-Kanban tag guide — assign based on urgency from answers:
-- sprint: must happen immediately, highest urgency
-- doing: currently in progress
-- start: needs to begin soon
-- review: waiting on something or needs checking
-- done: completed
+' . $kanban . '
 
 Return ONLY a JSON array of nodes. No explanation. No markdown.
 
@@ -377,8 +380,9 @@ Each node must have:
 - collapsed: false
 - date: "YYYY-MM-DD" if date mentioned, otherwise ""
 - tag: one of start/doing/sprint/review/done or ""
+- task: true if the card is something to do, false if it is a heading or only information
 
-Include center node: id "c", sefirot "tiphereth", x 1100, y 550, title = map title, parent null, tag "", date "".
+Include center node: id "c", sefirot "tiphereth", x 1100, y 550, title = map title, parent null, tag "", task false, date "".
 
 Sefirot x,y positions:
 kether: 1100,100 — chochma: 800,250 — binah: 1400,250
@@ -400,12 +404,7 @@ Notes:
 
 Group the notes into 3 to 7 main branches under one root card, with the details as cards beneath them. Keep the wording of the notes where you can. Use the answers to set Kanban tags based on urgency and priority, and add dates where they are mentioned.
 
-Kanban tag guide — assign based on urgency from answers, and leave blank for cards that are not tasks:
-- sprint: must happen immediately, highest urgency
-- doing: currently in progress
-- start: needs to begin soon
-- review: waiting on something or needs checking
-- done: completed
+' . $kanban . '
 
 Return ONLY a JSON array of nodes. No explanation. No markdown.
 
@@ -420,8 +419,9 @@ Each node must have:
 - collapsed: false
 - date: "YYYY-MM-DD" if date mentioned, otherwise ""
 - tag: one of start/doing/sprint/review/done or ""
+- task: true if the card is something to do, false if it is a heading or only information
 
-Include the root card: id "c", title = map title, parent null, tag "", date "".
+Include the root card: id "c", title = map title, parent null, tag "", task false, date "".
 
 Return JSON array only. Start with [ end with ].';
         }
@@ -467,7 +467,39 @@ Return JSON array only. Start with [ end with ].';
             return new WP_Error( 'parse_error', 'Could not parse AI response: ' . substr( $text, 0, 200 ), [ 'status' => 500 ] );
         }
 
-        return rest_ensure_response( [ 'nodes' => $nodes ] );
+        return rest_ensure_response( [ 'nodes' => self::limit_stages( $nodes ) ] );
+    }
+
+    /**
+     * The prompt asks for small Kanban stages, and this holds the AI to it: the soonest
+     * cards keep their stage and the rest wait in Triage. Matches LIMITS in kanban.js.
+     */
+    public static function limit_stages( $nodes ) {
+        $limits = [ 'sprint' => 3, 'doing' => 5, 'start' => 5, 'review' => 5 ];
+        $stages = [];
+        foreach ( $nodes as $i => $n ) {
+            if ( ! is_array( $n ) ) continue;
+            $tag = strtolower( trim( (string) ( $n['tag'] ?? '' ) ) );
+            if ( ! isset( $limits[ $tag ] ) && $tag !== 'done' ) $tag = '';
+            $nodes[ $i ]['tag']  = $tag;
+            $nodes[ $i ]['task'] = $tag !== '' || ! empty( $n['task'] );
+            if ( $tag !== '' ) $stages[ $tag ][] = $i;
+        }
+        foreach ( $limits as $tag => $max ) {
+            $list = $stages[ $tag ] ?? [];
+            usort( $list, function ( $a, $b ) use ( $nodes ) {
+                $da = $nodes[ $a ]['date'] ?? '';
+                $db = $nodes[ $b ]['date'] ?? '';
+                if ( $da !== $db ) {
+                    if ( $da === '' ) return 1;
+                    if ( $db === '' ) return -1;
+                    return strcmp( $da, $db );
+                }
+                return $a - $b;
+            } );
+            foreach ( array_slice( $list, $max ) as $i ) $nodes[ $i ]['tag'] = '';
+        }
+        return $nodes;
     }
 
     private static function format_map( $post, $include_data = false ) {

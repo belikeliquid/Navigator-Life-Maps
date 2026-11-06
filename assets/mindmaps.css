@@ -1018,6 +1018,18 @@ body:has(.nmm-app) .entry-content > *:first-child {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+.nmm-kb-col-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.nmm-kb-col-count { font-size: 12px; font-weight: 500; letter-spacing: 0; opacity: 0.75; white-space: nowrap; }
+.nmm-kb-col-over .nmm-kb-col-count { font-weight: 700; opacity: 1; }
+.nmm-kb-col-warn {
+  padding: 9px 12px;
+  background: rgba(201,164,92,0.22);
+  border-left: 3px solid #C9A45C;
+  color: var(--nmm-navy);
+  font-family: var(--nmm-font);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
 .nmm-kb-start  { background: #B5D4F4; color: #0C447C; }
 .nmm-kb-doing  { background: #FAC775; color: #633806; }
 .nmm-kb-sprint { background: #EF9F27; color: #412402; }

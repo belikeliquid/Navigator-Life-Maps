@@ -47,23 +47,28 @@
     <!-- 5 Kanban columns -->
     <div class="nmm-kb-columns" id="nmm-kb-columns" style="display:none">
       <div class="nmm-kb-col" data-tag="start">
-        <div class="nmm-kb-col-header nmm-kb-start">Start</div>
+        <div class="nmm-kb-col-header nmm-kb-start">Start <span class="nmm-kb-col-count"></span></div>
+        <div class="nmm-kb-col-warn" role="status" style="display:none"></div>
         <div class="nmm-kb-col-cards" data-tag="start"></div>
       </div>
       <div class="nmm-kb-col" data-tag="doing">
-        <div class="nmm-kb-col-header nmm-kb-doing">Doing</div>
+        <div class="nmm-kb-col-header nmm-kb-doing">Doing <span class="nmm-kb-col-count"></span></div>
+        <div class="nmm-kb-col-warn" role="status" style="display:none"></div>
         <div class="nmm-kb-col-cards" data-tag="doing"></div>
       </div>
       <div class="nmm-kb-col" data-tag="sprint">
-        <div class="nmm-kb-col-header nmm-kb-sprint">Sprint</div>
+        <div class="nmm-kb-col-header nmm-kb-sprint">Sprint <span class="nmm-kb-col-count"></span></div>
+        <div class="nmm-kb-col-warn" role="status" style="display:none"></div>
         <div class="nmm-kb-col-cards" data-tag="sprint"></div>
       </div>
       <div class="nmm-kb-col" data-tag="review">
-        <div class="nmm-kb-col-header nmm-kb-review">Review</div>
+        <div class="nmm-kb-col-header nmm-kb-review">Review <span class="nmm-kb-col-count"></span></div>
+        <div class="nmm-kb-col-warn" role="status" style="display:none"></div>
         <div class="nmm-kb-col-cards" data-tag="review"></div>
       </div>
       <div class="nmm-kb-col" data-tag="done">
-        <div class="nmm-kb-col-header nmm-kb-done">Done</div>
+        <div class="nmm-kb-col-header nmm-kb-done">Done <span class="nmm-kb-col-count"></span></div>
+        <div class="nmm-kb-col-warn" role="status" style="display:none"></div>
         <div class="nmm-kb-col-cards" data-tag="done"></div>
       </div>
     </div>
