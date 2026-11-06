@@ -42,6 +42,7 @@
   <!-- Timeline canvas -->
   <div class="nmm-tl-body" id="nmm-tl-body">
     <div id="nmm-tl-loading" class="nmm-loading"><div class="nmm-spinner"></div><span>Loading your maps...</span></div>
+    <div id="nmm-tl-range-note" class="nmm-tl-range-note" style="display:none"></div>
     <div id="nmm-tl-canvas-wrap" class="nmm-tl-canvas-wrap" style="display:none">
       <div id="nmm-tl-canvas" class="nmm-tl-canvas">
         <!-- Date markers -->

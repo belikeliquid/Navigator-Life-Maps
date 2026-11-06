@@ -1,5 +1,7 @@
 /* Navigator Mind Maps — timeline (/timeline/, /timeline/?map_id=N). Markup: templates/timeline.php
- * Only cards with a date appear, each at its date. Drag a card sideways to reschedule. */
+ * Cards with a date inside the chosen range appear at their date, each in the nearest free spot
+ * above or below the line, so they never overlap. Drag a card sideways to reschedule, click it
+ * to see its notes and edit it, drag empty space to slide along the line. */
 (function() {
 const root = document.getElementById('nmm-timeline');
 if (!root) return;
@@ -8,16 +10,29 @@ const api = NMMCore.api, esc = NMMCore.esc, TAG_COLORS = NMMCore.TAG_COLORS;
 const $   = function(id) { return document.getElementById(id); };
 
 const KANBAN_ORDER = { done: 0, review: 1, sprint: 2, doing: 3, start: 4, '': 5 };
-const NODE_W = 180, NODE_H = 80, SPINE_Y = 340, PAD_L = 80, PAD_R = 80;
+const CARD_W = 190, CARD_GAP = 10, PAD = CARD_W / 2 + 24, MARGIN = 28;
+const GAP_ABOVE = 30, GAP_BELOW = 52; // space from the line to the first card; below it also holds the date labels
+const CARDS_PER_WIDTH = 4;            // a crowded range gets wider, so about this many cards share each card's width
+const MAX_DAY_PX = 30, MAX_WIDTH = 6000; // the most a busy stretch can spread out
+const DAY_MS = 86400000;
+
+// Dates are whole days, kept as day numbers so time zones can't shift a card
+function dayNum(s) { const p = s.split('-'); return Date.UTC(+p[0], p[1] - 1, +p[2]) / DAY_MS; }
+function dayStr(n) { return new Date(n * DAY_MS).toISOString().split('T')[0]; }
+function dayLabel(n, withYear) {
+  const o = { month: 'short', day: 'numeric', timeZone: 'UTC' };
+  if (withYear) o.year = 'numeric';
+  return new Date(n * DAY_MS).toLocaleDateString('en-US', o);
+}
 
 let allMaps = [], selectedMapIds = [], editNode = null;
 const mapNodes = {}; // map id -> node array, loaded on demand
 
 // Default range: today to 30 days out
-let tlStart = new Date(), tlEnd = new Date();
-tlEnd.setDate(tlEnd.getDate() + 30);
-$('nmm-tl-start').value = tlStart.toISOString().split('T')[0];
-$('nmm-tl-end').value   = tlEnd.toISOString().split('T')[0];
+const now = new Date();
+let tlStart = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / DAY_MS, tlEnd = tlStart + 30;
+function showRange() { $('nmm-tl-start').value = dayStr(tlStart); $('nmm-tl-end').value = dayStr(tlEnd); }
+showRange();
 
 async function loadAll() {
   allMaps = (await api('GET', 'maps')) || [];
@@ -55,23 +70,60 @@ function updateLinks() {
 $('nmm-tl-apply-btn').addEventListener('click', function() {
   const s = $('nmm-tl-start').value, e = $('nmm-tl-end').value;
   if (!s || !e) { alert('Please set both a start and end date.'); return; }
-  if (new Date(s) >= new Date(e)) { alert('End date must be after start date.'); return; }
-  tlStart = new Date(s); tlEnd = new Date(e);
+  if (dayNum(s) >= dayNum(e)) { alert('End date must be after start date.'); return; }
+  tlStart = dayNum(s); tlEnd = dayNum(e);
   renderTimeline();
 });
+
+// Says what the chosen dates leave out, with a way to see it
+function showRangeNote(dated, before, after) {
+  const note = $('nmm-tl-range-note');
+  note.innerHTML = '';
+  if (!before && !after) { note.style.display = 'none'; return; }
+  const parts = [];
+  if (before) parts.push(before + (before === 1 ? ' card' : ' cards') + ' before ' + dayLabel(tlStart));
+  if (after)  parts.push(after + (after === 1 ? ' card' : ' cards') + ' after ' + dayLabel(tlEnd));
+  const span = document.createElement('span');
+  span.textContent = parts.join(' · ');
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.textContent = 'Show all dates';
+  btn.addEventListener('click', function() {
+    const days = dated.map(function(n) { return dayNum(n.date); });
+    tlStart = Math.min(tlStart, Math.min.apply(null, days));
+    tlEnd   = Math.max(tlEnd, Math.max.apply(null, days));
+    showRange(); renderTimeline();
+  });
+  note.appendChild(span); note.appendChild(btn);
+  note.style.display = 'flex';
+}
+
+// The closest distance from the line where a card fits, given the cards already on that side
+function fitDistance(placed, x, h, start) {
+  let d = start;
+  placed.filter(function(r) { return x < r.x + CARD_W + CARD_GAP && r.x < x + CARD_W + CARD_GAP; })
+    .sort(function(a, b) { return a.d - b.d; })
+    .some(function(r) {
+      if (d + h + CARD_GAP <= r.d) return true; // fits in the gap before this one
+      d = Math.max(d, r.d + r.h + CARD_GAP);
+      return false;
+    });
+  return d;
+}
 
 function renderTimeline() {
   const canvas = $('nmm-tl-canvas'), markers = $('nmm-tl-markers'), spine = $('nmm-tl-spine'), nodesEl = $('nmm-tl-nodes');
   markers.innerHTML = ''; spine.innerHTML = ''; nodesEl.innerHTML = '';
 
-  const nodes = selectedMapIds.reduce(function(acc, id) { return acc.concat(mapNodes[id] || []); }, [])
-    .filter(function(n) { return n.date; });
-  $('nmm-tl-canvas-wrap').style.display = nodes.length ? 'block' : 'none';
-  $('nmm-tl-empty').style.display       = nodes.length ? 'none' : 'block';
-  if (!nodes.length) return;
+  const dated = selectedMapIds.reduce(function(acc, id) { return acc.concat(mapNodes[id] || []); }, [])
+    .filter(function(n) { return /^\d{4}-\d{2}-\d{2}$/.test(n.date || ''); });
+  $('nmm-tl-canvas-wrap').style.display = dated.length ? 'block' : 'none';
+  $('nmm-tl-empty').style.display       = dated.length ? 'none' : 'block';
+  if (!dated.length) { showRangeNote([], 0, 0); return; }
 
-  const canvasW = Math.max(window.innerWidth - 40, 1200), usable = canvasW - PAD_L - PAD_R, span = tlEnd - tlStart;
-  canvas.style.width = canvasW + 'px';
+  const nodes = dated.filter(function(n) { const d = dayNum(n.date); return d >= tlStart && d <= tlEnd; });
+  showRangeNote(dated,
+    dated.filter(function(n) { return dayNum(n.date) < tlStart; }).length,
+    dated.filter(function(n) { return dayNum(n.date) > tlEnd; }).length);
 
   // Sort by date, then by Kanban stage
   nodes.sort(function(a, b) {
@@ -79,70 +131,105 @@ function renderTimeline() {
     return a.date.localeCompare(b.date) || ka - kb;
   });
 
-  nodes.forEach(function(n) {
-    const x = PAD_L + ((new Date(n.date) - tlStart) / span) * usable;
-    n._x = Math.max(PAD_L, Math.min(canvasW - PAD_R - NODE_W, x));
-  });
-
-  // Alternate above / below the spine
+  const viewW = $('nmm-tl-canvas-wrap').clientWidth, span = tlEnd - tlStart;
+  // Wide enough for the busiest stretch of dates, within reason, so stacks stay short
+  let busiest = 0;
   nodes.forEach(function(n, i) {
-    n._above = i % 2 === 0;
-    n._y = n._above ? SPINE_Y - NODE_H - 60 - (Math.floor(i / 2) % 2) * 40 : SPINE_Y + 60 + (Math.floor(i / 2) % 2) * 40;
+    const later = nodes[i + CARDS_PER_WIDTH];
+    if (later) busiest = Math.max(busiest, (CARD_W + CARD_GAP) / Math.max(1, dayNum(later.date) - dayNum(n.date)));
   });
-  const maxY = Math.max.apply(null, nodes.map(function(n) { return n._y + NODE_H; }).concat(SPINE_Y + 80));
-  const minY = Math.min.apply(null, nodes.map(function(n) { return n._y; }).concat(SPINE_Y - 80));
-  canvas.style.height = (maxY - minY + 80) + 'px';
-  const yOff = Math.max(0, -minY + 40);
-  canvas.style.paddingTop = yOff + 'px';
+  const canvasW = Math.max(viewW, nodes.length * (CARD_W + CARD_GAP) / CARDS_PER_WIDTH + PAD * 2,
+    Math.min(MAX_WIDTH, Math.min(busiest, MAX_DAY_PX) * span + PAD * 2));
+  const pxPerDay = (canvasW - PAD * 2) / span;
+  function dayX(d) { return PAD + (d - tlStart) * pxPerDay; }
+  canvas.style.width = canvasW + 'px';
+  const manyMaps = selectedMapIds.length > 1;
+  const thisYear = new Date(tlStart * DAY_MS).getUTCFullYear();
 
-  spine.style.cssText = 'position:absolute;top:' + (SPINE_Y + yOff) + 'px;left:' + PAD_L + 'px;right:' + PAD_R + 'px;height:2px;background:var(--nmm-teal);opacity:0.4;';
-  for (let i = 0; i <= 6; i++) {
-    const frac = i / 6, d = new Date(tlStart.getTime() + frac * span);
+  // Build the cards first: where each one goes depends on its real height
+  const cards = nodes.map(function(n) {
+    const tc = TAG_COLORS[n.tag || ''], day = dayNum(n.date), subs = (n.subs || []).filter(Boolean);
+    const el = document.createElement('div');
+    el.className = 'nmm-tl-node';
+    el.style.width = CARD_W + 'px';
+    el.style.borderLeftColor = tc ? tc.bg : (n._map_color || '#0BBFBF');
+    if (subs.length) el.title = subs.join('\n');
+    el.innerHTML =
+      '<div class="nmm-tl-title">' + esc(n.title) + '</div>' +
+      '<div class="nmm-tl-meta"><span data-date class="nmm-tl-date">' + esc(dayLabel(day, new Date(day * DAY_MS).getUTCFullYear() !== thisYear)) + '</span>' +
+      (tc ? '<span class="nmm-tl-tag" style="background:' + tc.bg + ';color:' + tc.text + '">' + tc.label + '</span>' : '') +
+      (subs.length ? '<span class="nmm-tl-notes">' + subs.length + (subs.length === 1 ? ' note' : ' notes') + '</span>' : '') + '</div>' +
+      (manyMaps ? '<div class="nmm-tl-map">' + esc(n._map_title) + '</div>' : '');
+    nodesEl.appendChild(el);
+    return { n: n, el: el, day: day, h: el.offsetHeight };
+  });
+
+  // Each card takes the nearest free spot above or below the line
+  const above = [], below = [];
+  let nextAbove = true;
+  cards.forEach(function(c) {
+    c.x = dayX(c.day) - CARD_W / 2;
+    const up = fitDistance(above, c.x, c.h, GAP_ABOVE), down = fitDistance(below, c.x, c.h, GAP_BELOW);
+    const upCost = up - GAP_ABOVE, downCost = down - GAP_BELOW;
+    c.above = upCost < downCost || (upCost === downCost && nextAbove);
+    if (upCost === downCost) nextAbove = !nextAbove;
+    c.d = c.above ? up : down;
+    (c.above ? above : below).push({ x: c.x, d: c.d, h: c.h });
+  });
+  function reach(list, min) { return list.reduce(function(m, r) { return Math.max(m, r.d + r.h); }, min); }
+  const spineY = reach(above, GAP_ABOVE) + MARGIN;
+  canvas.style.height = (spineY + reach(below, GAP_BELOW) + MARGIN) + 'px';
+
+  spine.style.cssText = 'top:' + spineY + 'px;left:' + (PAD - 40) + 'px;width:' + (canvasW - PAD * 2 + 80) + 'px;';
+
+  // Date labels: as many as comfortably fit, on whole days
+  const every = Math.max(1, Math.round(span / Math.max(2, Math.floor(canvasW / 150))));
+  for (let d = tlStart; d <= tlEnd; d += every) {
     const mk = document.createElement('div');
-    mk.style.cssText = 'position:absolute;left:' + (PAD_L + frac * usable) + 'px;top:' + (SPINE_Y + yOff - 8) + 'px;transform:translateX(-50%);';
-    mk.innerHTML = '<div style="width:1px;height:16px;background:rgba(11,191,191,0.3);margin:0 auto"></div>' +
-      '<div style="font-size:10.5px;color:#6b7280;white-space:nowrap;text-align:center;margin-top:2px">' +
-      d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</div>';
+    mk.className = 'nmm-tl-tick';
+    mk.style.cssText = 'left:' + dayX(d) + 'px;top:' + (spineY - 4) + 'px;';
+    mk.innerHTML = '<i></i><span>' + dayLabel(d) + '</span>';
     markers.appendChild(mk);
   }
 
-  nodes.forEach(function(n) {
-    const tc = TAG_COLORS[n.tag || ''];
-    const el = document.createElement('div');
-    el.className = 'nmm-tl-node';
-    el.style.cssText = 'position:absolute;left:' + n._x + 'px;top:' + (n._y + yOff) + 'px;width:' + NODE_W + 'px;min-height:' + NODE_H + 'px;';
-    el.style.borderColor = n._map_color;
-    el.innerHTML =
-      '<div style="font-size:12.5px;font-weight:600;color:#011c2f;line-height:1.3">' + esc(n.title) + '</div>' +
-      (n.subs && n.subs.length ? '<div style="font-size:11px;color:#4b5563;margin-top:2px">' + esc(n.subs.slice(0, 2).join(' · ')) + '</div>' : '') +
-      (n.date ? '<div data-date style="font-size:10.5px;color:#078f8f;margin-top:2px;font-weight:600">📅 ' + esc(n.date) + '</div>' : '') +
-      (tc ? '<span style="display:inline-block;background:' + tc.bg + ';color:' + tc.text + ';font-size:9.5px;font-weight:600;padding:1px 6px;border-radius:3px;letter-spacing:0.05em;text-transform:uppercase;margin-top:3px">' + tc.label + '</span>' : '') +
-      '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + esc(n._map_title) + '</div>';
+  cards.forEach(function(c) {
+    const n = c.n, el = c.el, x = dayX(c.day);
+    el.style.left = c.x + 'px';
+    el.style.top  = (c.above ? spineY - c.d - c.h : spineY + c.d) + 'px';
 
+    // A line from the card back to its date
     const conn = document.createElement('div');
-    const bottom = n._above ? n._y + yOff + NODE_H : n._y + yOff, spineTop = SPINE_Y + yOff;
-    conn.style.cssText = 'position:absolute;left:' + (n._x + NODE_W / 2) + 'px;top:' + Math.min(bottom, spineTop) + 'px;width:1px;height:' + Math.abs(spineTop - bottom) + 'px;background:rgba(11,191,191,0.35);border-left:1px dashed rgba(11,191,191,0.5);';
-    nodesEl.appendChild(conn);
+    conn.className = 'nmm-tl-conn';
+    conn.style.cssText = 'left:' + x + 'px;top:' + (c.above ? spineY - c.d : spineY) + 'px;height:' + c.d + 'px;';
+    const dot = document.createElement('div');
+    dot.className = 'nmm-tl-dot';
+    dot.style.cssText = 'left:' + x + 'px;top:' + spineY + 'px;';
+    nodesEl.insertBefore(conn, nodesEl.firstChild);
+    nodesEl.insertBefore(dot, nodesEl.firstChild);
 
-    // Drag sideways to reschedule; a plain click opens the editor
+    // Drag sideways to reschedule, a day at a time; a plain click opens the card
     el.addEventListener('mousedown', function(e) {
       if (e.button !== 0) return;
-      e.preventDefault();
-      const startX = e.clientX, origX = n._x;
-      let moved = false, newDate = n.date;
+      e.preventDefault(); e.stopPropagation();
+      const startX = e.clientX;
+      let moved = false, newDay = c.day;
       function onMove(ev) {
-        const x = Math.max(PAD_L, Math.min(canvasW - PAD_R - NODE_W, origX + ev.clientX - startX));
         if (Math.abs(ev.clientX - startX) > 3) moved = true;
-        newDate = new Date(tlStart.getTime() + ((x - PAD_L) / usable) * span).toISOString().split('T')[0];
-        n._x = x; el.style.left = x + 'px'; conn.style.left = (x + NODE_W / 2) + 'px';
+        if (!moved) return;
+        newDay = Math.max(tlStart, Math.min(tlEnd, c.day + Math.round((ev.clientX - startX) / pxPerDay)));
+        const nx = dayX(newDay);
+        el.style.left = (nx - CARD_W / 2) + 'px'; el.classList.add('nmm-tl-dragging');
+        conn.style.left = nx + 'px'; dot.style.left = nx + 'px';
+        el.querySelector('[data-date]').textContent = dayLabel(newDay);
       }
       function onUp() {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
         if (!moved) { openEdit(n); return; }
+        if (newDay === c.day) { renderTimeline(); return; }
         const oldDate = n.date;
-        n.date = newDate; renderTimeline();
-        NMMCore.patchNode(n._map_id, n.id, { date: newDate }).catch(function(err) {
+        n.date = dayStr(newDay); renderTimeline();
+        NMMCore.patchNode(n._map_id, n.id, { date: n.date }).catch(function(err) {
           n.date = oldDate; renderTimeline();
           alert('Could not reschedule "' + n.title + '": ' + err.message);
         });
@@ -150,9 +237,24 @@ function renderTimeline() {
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
     });
-    nodesEl.appendChild(el);
   });
 }
+
+// Drag empty space to slide along a wide timeline
+(function() {
+  const wrap = $('nmm-tl-canvas-wrap');
+  let grab = null;
+  wrap.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    grab = { x: e.clientX, sl: wrap.scrollLeft };
+    wrap.classList.add('nmm-grabbing');
+  });
+  document.addEventListener('mousemove', function(e) { if (grab) wrap.scrollLeft = grab.sl - (e.clientX - grab.x); });
+  document.addEventListener('mouseup', function() { grab = null; wrap.classList.remove('nmm-grabbing'); });
+  let resizeTimer = null;
+  window.addEventListener('resize', function() { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderTimeline, 200); });
+})();
 
 function openEdit(n) {
   editNode = n;

@@ -269,6 +269,13 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.7.4 — Timeline that stays readable <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Timeline cards are now real cards that never overlap: each takes the nearest free spot above or below the line, and a crowded range gets wider and slides sideways. Cards show their title, date and stage; click one for its notes.<br>
+                        Dragging a card changes its date a day at a time. Cards outside the chosen dates are hidden instead of being pinned to the edge, with a note and a Show all dates button.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.7.3 — Pages left open keep working, compass while the AI works <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         After 10 minutes on any app page, the page's security token was replaced with one that didn't work for a logged-in person, so creating maps ended in "Cookie check failed" and saves in the editor kept failing. The token now refreshes correctly, and a rejected one is renewed and the action retried automatically.<br>
