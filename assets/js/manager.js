@@ -82,7 +82,7 @@ function renderMaps(maps) {
       if (!confirm('Delete "' + title + '"? This cannot be undone.')) return;
       api('DELETE', 'maps/' + id).then(function() {
         card.style.transition = 'opacity 0.2s'; card.style.opacity = '0';
-        setTimeout(function(){ card.remove(); allMaps = allMaps.filter(function(m){ return m.id!==id; }); if(!allMaps.length){ grid.style.display='none'; document.getElementById('nmm-empty').style.display='block'; } }, 200);
+        setTimeout(function(){ card.remove(); allMaps = allMaps.filter(function(m){ return m.id!==id; }); showMapCount(); if(!allMaps.length){ grid.style.display='none'; document.getElementById('nmm-empty').style.display='block'; } }, 200);
       });
     });
 
@@ -96,6 +96,15 @@ function renderMaps(maps) {
 
     grid.appendChild(card);
   });
+
+  // New map card after the last map
+  if (document.getElementById('nmm-new-map-btn')) {
+    var addCard = document.createElement('button');
+    addCard.type = 'button'; addCard.className = 'nmm-card-new'; addCard.innerHTML = '<span>+</span> New map';
+    addCard.addEventListener('click', openNewModal);
+    grid.appendChild(addCard);
+    showMapCount();
+  }
 }
 
 // Search + filter
@@ -115,6 +124,8 @@ var mapLimit = 0;
 api('GET', 'auth/me').then(function(me) { mapLimit = (me && me.limit) || 0; showMapCount(); }).catch(function() {});
 function showMapCount() {
   var el = document.getElementById('nmm-map-count');
+  var addCard = document.querySelector('.nmm-card-new');
+  if (addCard) addCard.style.display = mapLimit && allMaps.length >= mapLimit ? 'none' : '';
   if (!el || !mapLimit) return;
   el.textContent = allMaps.length + ' of ' + mapLimit + ' maps';
   el.style.display = 'inline';
@@ -126,6 +137,8 @@ function openNewModal() {
   }
   document.getElementById('nmm-new-modal').classList.add('open');
   document.getElementById('nmm-new-title').value = '';
+  showNewError('');
+  showStep('details');
   setTimeout(function(){ document.getElementById('nmm-new-title').focus(); }, 50);
 }
 var newBtn      = document.getElementById('nmm-new-map-btn');
@@ -133,78 +146,139 @@ var emptyNewBtn = document.getElementById('nmm-empty-new-btn');
 if (newBtn)      newBtn.addEventListener('click', openNewModal);
 if (emptyNewBtn) emptyNewBtn.addEventListener('click', openNewModal);
 
-var cancelBtn = document.getElementById('nmm-new-cancel');
-if (cancelBtn) cancelBtn.addEventListener('click', function(){ document.getElementById('nmm-new-modal').classList.remove('open'); });
+// ---- New map steps: details, then AI questions one at a time, then the map ----
+var currentMode = 'ai', currentLayout = 'flow', newStep = 'details';
+var questions = [], questionIdx = 0, answers = [], questionsFor = '';
+var LAYOUT_HINTS = {
+  flow: 'Top to bottom, like an org chart.',
+  mind: 'Your main idea in the centre, with branches out to the left and right.',
+  tol: 'Topics placed on the ten positions of the Tree of Life.'
+};
+function $new(id) { return document.getElementById(id); }
 
-// Mode tabs
-var currentMode = 'ai';
-var aiQuestions = [];
-var tolQuestions = [];
+function showNewError(msg) { var e = $new('nmm-new-error'); e.textContent = msg; e.style.display = msg ? 'block' : 'none'; }
 
-document.querySelectorAll('.nmm-mode-tab').forEach(function(tab) {
+function showStep(step) {
+  newStep = step;
+  $new('nmm-new-step-details').style.display  = step === 'details'  ? 'block' : 'none';
+  $new('nmm-new-step-question').style.display = step === 'question' ? 'block' : 'none';
+  $new('nmm-new-step-working').style.display  = step === 'working'  ? 'block' : 'none';
+  $new('nmm-new-actions').style.display       = step === 'working'  ? 'none'  : '';
+  var confirm = $new('nmm-new-confirm');
+  confirm.disabled = false;
+  if (step === 'details') {
+    $new('nmm-new-cancel').textContent = 'Cancel';
+    confirm.textContent = currentMode === 'ai' ? 'Next →' : 'Create Map →';
+  } else if (step === 'question') {
+    $new('nmm-new-cancel').textContent = '← Back';
+    confirm.textContent = questionIdx === questions.length - 1 ? 'Create Map →' : 'Next →';
+    $new('nmm-q-progress').textContent = 'Question ' + (questionIdx + 1) + ' of ' + questions.length;
+    $new('nmm-q-bar-fill').style.width = ((questionIdx + 1) / questions.length * 100) + '%';
+    $new('nmm-q-text').textContent = questions[questionIdx];
+    var input = $new('nmm-q-answer');
+    input.value = answers[questionIdx] || '';
+    setTimeout(function() { input.focus(); }, 50);
+  }
+}
+
+function pickTab(selector, chosen) {
+  document.querySelectorAll(selector).forEach(function(t) { t.classList.toggle('active', t === chosen); });
+}
+document.querySelectorAll('.nmm-layout-tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    currentLayout = this.dataset.layout;
+    pickTab('.nmm-layout-tab', this);
+    $new('nmm-layout-hint').textContent = LAYOUT_HINTS[currentLayout];
+  });
+});
+$new('nmm-layout-hint').textContent = LAYOUT_HINTS[currentLayout];
+document.querySelectorAll('.nmm-start-tab').forEach(function(tab) {
   tab.addEventListener('click', function() {
     currentMode = this.dataset.mode;
-    document.querySelectorAll('.nmm-mode-tab').forEach(function(t){ t.classList.remove('active'); });
-    this.classList.add('active');
+    pickTab('.nmm-start-tab', this);
     document.querySelectorAll('.nmm-mode-section').forEach(function(s){ s.style.display='none'; });
-    document.getElementById('nmm-mode-' + currentMode).style.display = 'block';
+    $new('nmm-mode-' + currentMode).style.display = 'block';
+    showStep('details');
   });
 });
 
-function buildQuestionsUI(questions, listId, wrapId) {
-  var listEl = document.getElementById(listId);
-  var wrapEl = document.getElementById(wrapId);
-  listEl.innerHTML = '';
-  questions.forEach(function(q, i) {
-    var div = document.createElement('div');
-    div.className = 'nmm-field';
-    div.style.marginBottom = '8px';
-    div.innerHTML = '<label style="font-size:11px;font-weight:600;color:#555;text-transform:none;letter-spacing:0;margin-bottom:4px;display:block">' + q + '</label>' +
-      '<input type="text" class="nmm-input nmm-q-answer" data-index="' + i + '" placeholder="Your answer..." style="font-size:12px" />';
-    listEl.appendChild(div);
-  });
-  wrapEl.style.display = 'block';
-}
+function keepAnswer() { if (newStep === 'question') answers[questionIdx] = $new('nmm-q-answer').value.trim(); }
 
-function collectAnswers(questions, listId) {
-  var answers = [];
-  var inputs = document.getElementById(listId).querySelectorAll('.nmm-q-answer');
-  inputs.forEach(function(input, i) {
-    if (questions[i]) answers.push({ question: questions[i], answer: input.value.trim() });
-  });
-  return answers;
-}
+// Cancel on the details step, Back on a question
+$new('nmm-new-cancel').addEventListener('click', function() {
+  showNewError('');
+  if (newStep === 'question') {
+    keepAnswer();
+    if (questionIdx > 0) { questionIdx--; showStep('question'); } else { showStep('details'); }
+    return;
+  }
+  $new('nmm-new-modal').classList.remove('open');
+});
 
-function analyzeNotes(notesId, btnId, listId, wrapId, questionsVar) {
-  var notes = document.getElementById(notesId).value.trim();
-  var title = document.getElementById('nmm-new-title').value.trim();
-  if (!notes) { alert('Please paste your notes first.'); return; }
-  var btn = document.getElementById(btnId);
-  btn.textContent = 'Analyzing...'; btn.disabled = true;
-  api('POST', 'ai/questions', { title: title, notes: notes }).then(function(data) {
-    btn.textContent = 'Analyze notes →'; btn.disabled = false;
-    if (data.questions && data.questions.length) {
-      if (questionsVar === 'ai') aiQuestions = data.questions;
-      else tolQuestions = data.questions;
-      buildQuestionsUI(data.questions, listId, wrapId);
-    } else if (data.message) {
-      alert('Could not analyze notes. ' + data.message);
+// Enter moves to the next question; Shift+Enter starts a new line
+$new('nmm-q-answer').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $new('nmm-new-confirm').click(); }
+});
+
+// Next / Create Map
+$new('nmm-new-confirm').addEventListener('click', function() {
+  showNewError('');
+  if (newStep === 'question') {
+    keepAnswer();
+    if (questionIdx < questions.length - 1) { questionIdx++; showStep('question'); return; }
+    organizeWithAI();
+    return;
+  }
+  if (!$new('nmm-new-title').value.trim()) { showNewError('Please enter a map title.'); return; }
+  if (currentMode !== 'ai') { createPlainMap(); return; }
+  var notes = $new('nmm-ai-notes').value.trim();
+  if (!notes) { showNewError('Please paste your notes first.'); return; }
+  // Going back and forward with the same notes doesn't ask (or pay) for new questions
+  if (questionsFor === notes && questions.length) { questionIdx = 0; showStep('question'); return; }
+  var btn = this; btn.disabled = true; btn.textContent = 'Reading your notes...';
+  api('POST', 'ai/questions', { title: $new('nmm-new-title').value.trim(), notes: notes }).then(function(data) {
+    if (data && data.questions && data.questions.length) {
+      questions = data.questions; answers = []; questionIdx = 0; questionsFor = notes;
+      showStep('question');
+    } else if (data && data.code === 'nmm_map_limit') {
+      showNewError(data.message); showStep('details');
+    } else {
+      questions = []; answers = []; organizeWithAI(); // no questions came back: the notes alone are enough to go on
     }
-  }).catch(function() {
-    btn.textContent = 'Analyze notes →'; btn.disabled = false;
-    alert('Could not analyze notes. Please try again.');
-  });
+  }).catch(function() { questions = []; answers = []; organizeWithAI(); });
+});
+
+function newMapFields(nodes) {
+  return { title: $new('nmm-new-title').value.trim(), category: $new('nmm-new-category').value, color: selectedColor,
+    nodes: nodes, settings: { motif: '', layout: currentLayout } };
 }
 
-var aiAnalyzeBtn = document.getElementById('nmm-ai-analyze-btn');
-if (aiAnalyzeBtn) aiAnalyzeBtn.addEventListener('click', function() {
-  analyzeNotes('nmm-ai-notes', 'nmm-ai-analyze-btn', 'nmm-ai-questions-list', 'nmm-ai-questions-wrap', 'ai');
-});
+async function organizeWithAI() {
+  var back = questions.length ? 'question' : 'details';
+  showStep('working');
+  try {
+    var qa = questions.map(function(q, i) { return { question: q, answer: answers[i] || '' }; });
+    var aiResp = await api('POST', 'ai/organize', { title: $new('nmm-new-title').value.trim(), notes: $new('nmm-ai-notes').value.trim(), answers: qa, layout: currentLayout });
+    if (!aiResp || !aiResp.nodes) throw new Error((aiResp && aiResp.message) || 'No cards came back.');
+    var map = await api('POST', 'maps', newMapFields(aiResp.nodes));
+    if (!map || !map.id) throw new Error((map && map.message) || 'The map could not be created.');
+    window.location.href = editorUrl + '?map_id=' + map.id + '&arrange=1';
+  } catch (e) {
+    // A timeout from the server comes back as an HTML page, which shows up here as a JSON error
+    var msg = e instanceof SyntaxError ? 'The AI took too long to answer.' : e.message;
+    showNewError(msg + ' Your notes and answers are still here, so you can try again.');
+    showStep(back);
+  }
+}
 
-var tolAnalyzeBtn = document.getElementById('nmm-tol-analyze-btn');
-if (tolAnalyzeBtn) tolAnalyzeBtn.addEventListener('click', function() {
-  analyzeNotes('nmm-tol-notes', 'nmm-tol-analyze-btn', 'nmm-tol-questions-list', 'nmm-tol-questions-wrap', 'tol');
-});
+function createPlainMap() {
+  var btn = $new('nmm-new-confirm'); btn.disabled = true; btn.textContent = 'Creating...';
+  var outline = currentMode === 'outline' ? $new('nmm-new-outline').value.trim() : '';
+  api('POST', 'maps', newMapFields([])).then(function(map) {
+    if (!map || !map.id) { showNewError((map && map.message) || 'Failed to create map. Please try again.'); showStep('details'); return; }
+    window.location.href = editorUrl + '?map_id=' + map.id + (outline ? '&arrange=1&outline=' + encodeURIComponent(outline) : '');
+  }).catch(function() { showNewError('Failed to create map. Please try again.'); showStep('details'); });
+}
 
 // Color swatches
 document.querySelectorAll('.nmm-color-swatch').forEach(function(swatch) {
@@ -212,67 +286,6 @@ document.querySelectorAll('.nmm-color-swatch').forEach(function(swatch) {
     document.querySelectorAll('.nmm-color-swatch').forEach(function(s){ s.classList.remove('active'); });
     this.classList.add('active'); selectedColor = this.dataset.color;
     document.getElementById('nmm-new-color').value = selectedColor;
-  });
-});
-
-// Create map
-document.getElementById('nmm-new-confirm').addEventListener('click', async function() {
-  var title    = document.getElementById('nmm-new-title').value.trim();
-  var category = document.getElementById('nmm-new-category').value;
-  if (!title) { alert('Please enter a map title.'); return; }
-  var btn = this; btn.disabled = true;
-
-  // AI mode or Tree of Life mode — call server to organize notes into nodes
-  if (currentMode === 'ai' || currentMode === 'treeoflife') {
-    var notesId  = currentMode === 'ai' ? 'nmm-ai-notes' : 'nmm-tol-notes';
-    var statusId = currentMode === 'ai' ? 'nmm-ai-status' : 'nmm-tol-status';
-    var qList    = currentMode === 'ai' ? 'nmm-ai-questions-list' : 'nmm-tol-questions-list';
-    var qStore   = currentMode === 'ai' ? aiQuestions : tolQuestions;
-    var notes    = document.getElementById(notesId).value.trim();
-    if (!notes) { alert('Please paste your notes first.'); btn.disabled = false; return; }
-    var answers  = collectAnswers(qStore, qList);
-    btn.textContent = 'Organizing...';
-    document.getElementById(statusId).style.display = 'block';
-    try {
-      var aiResp = await api('POST', 'ai/organize', { title: title, notes: notes, answers: answers, mode: currentMode });
-      document.getElementById(statusId).style.display = 'none';
-      if (!aiResp || !aiResp.nodes) { throw new Error((aiResp && aiResp.message) || 'No nodes returned'); }
-      var map = await api('POST', 'maps', {
-        title: title, category: category, color: selectedColor,
-        nodes: aiResp.nodes, settings: { motif: '', template: 'treeoflife' }
-      });
-      if (!map || !map.id) { throw new Error((map && map.message) || 'The map could not be created'); }
-      document.getElementById('nmm-new-modal').classList.remove('open');
-      btn.textContent = 'Create Map →'; btn.disabled = false;
-      window.location.href = editorUrl + '?map_id=' + map.id + '&template=treeoflife';
-    } catch(e) {
-      document.getElementById(statusId).style.display = 'none';
-      btn.textContent = 'Create Map →'; btn.disabled = false;
-      alert('AI organize failed: ' + e.message + '\n\nPlease try again or use Outline mode.');
-    }
-    return;
-  }
-
-  // Outline, Tree of Life, Blank
-  btn.textContent = 'Creating...';
-  var outline = document.getElementById('nmm-new-outline') ? document.getElementById('nmm-new-outline').value.trim() : '';
-  api('POST', 'maps', {
-    title: title, category: category, color: selectedColor,
-    nodes: [], settings: { motif: '', template: currentMode }
-  }).then(function(map) {
-    btn.textContent = 'Create Map →'; btn.disabled = false;
-    if (!map || !map.id) { alert((map && map.message) || 'Failed to create map. Please try again.'); return; }
-    document.getElementById('nmm-new-modal').classList.remove('open');
-    var url = editorUrl + '?map_id=' + map.id;
-    if (currentMode === 'outline' && outline) {
-      url += '&outline=' + encodeURIComponent(outline) + '&template=outline';
-    } else if (currentMode === 'treeoflife') {
-      url += '&template=treeoflife';
-    }
-    window.location.href = url;
-  }).catch(function() {
-    btn.textContent = 'Create Map →'; btn.disabled = false;
-    alert('Failed to create map. Please try again.');
   });
 });
 

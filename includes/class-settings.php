@@ -32,7 +32,8 @@ class NMM_Settings {
         if ( isset( $_POST['turnstile_site_key'] ) ) {
             update_option( 'nmm_turnstile_site_key', sanitize_text_field( wp_unslash( $_POST['turnstile_site_key'] ) ) );
         }
-        if ( isset( $_POST['turnstile_secret_key'] ) ) {
+        // Blank means keep the saved key: the form never sends the real one back
+        if ( ! empty( $_POST['turnstile_secret_key'] ) ) {
             update_option( 'nmm_turnstile_secret_key', sanitize_text_field( wp_unslash( $_POST['turnstile_secret_key'] ) ) );
         }
         // Invitation code for new accounts (blank = open signup). Stored only on the site.
@@ -268,6 +269,20 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.7.2 — New map dialog <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Choose the layout when you create a map: Flow Chart (the default), Mind Map or Tree of Life. New maps open already arranged that way; before, AI maps always came out as Tree of Life.<br>
+                        AI Organize asks its questions one at a time with Next and Back. Problems show inside the dialog and keep your notes and answers. The AI also has more time and room to answer, which should stop Create Map failing on longer notes.<br>
+                        A New map card now follows your last map. It hides once you reach your map limit.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.7.1 — Settings no longer break the security check <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Saving this settings page overwrote the Turnstile secret key with the row of dots shown in its box, so Cloudflare rejected every signup and login. The box now stays empty and a blank box keeps the saved key.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.7.0 — Invitations, Guides / Hosts, map limits, private maps <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         New accounts could not be created: the Cloudflare check never appeared on the signup form once the email popup added its own check to the page, so every attempt ended in "Security check required". The form now starts its own check and reads its own result, and it gets a fresh check after a failed attempt.<br>
@@ -496,7 +511,7 @@ class NMM_Settings {
               </div>
               <div class="nmm-field">
                 <label>Secret Key (private)</label>
-                <input type="password" name="turnstile_secret_key" value="<?php echo get_option('nmm_turnstile_secret_key') ? '••••••••••••' : ''; ?>" placeholder="0x4AAAAAAA..." style="font-family:monospace;font-size:12px" />
+                <input type="password" name="turnstile_secret_key" value="" autocomplete="new-password" placeholder="<?php echo get_option('nmm_turnstile_secret_key') ? 'Paste new key to replace' : '0x4AAAAAAA...'; ?>" style="font-family:monospace;font-size:12px" />
                 <?php if ( get_option('nmm_turnstile_secret_key') ) : ?><p style="font-size:11px;color:#0f6e56;margin-top:4px">✓ Secret key is saved</p><?php endif; ?>
               </div>
             </div>

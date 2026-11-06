@@ -31,6 +31,8 @@ Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. 
 
 **Access.** Maps and islands are readable and writable only by their author or an admin (`can_access()`, a 404 otherwise); the public route is `/share/<key>`, which doesn't include linked-island cards for logged-out viewers. Post types have `show_in_rest` off. Signup needs `nmm_invite_code` (option on the site only; the repo is public, so never commit the code). Limits live in `NMM_Auth`: standard 3, host 5 (role `nmm_host` or WP Author), admin/editor none; enforced in `create_map` and the AI routes.
 
+**Creating.** The new-map dialog (`manager.js`) saves `settings.layout` and sends `layout` to `/ai/organize`: `tol` gets the sefirot prompt, anything else a plain hierarchy with x, y of 0. It opens the editor with `&arrange=1`, which lays the map out once.
+
 **Saving.** Every write sends the whole node array. `nmm_rev` increments on each save. The editor sends `base_rev` and gets a 409 if the map changed since it loaded; Kanban/timeline/maps list use `NMMCore.patchNode()` (fresh GET, then PUT, no `base_rev`). The editor autosaves 2 s after a change and keeps a localStorage draft (`nmm_draft_<id>`) until the save is confirmed.
 
 ## Gotchas

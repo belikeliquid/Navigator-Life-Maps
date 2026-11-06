@@ -64,7 +64,8 @@ async function loadMap() {
     if (outline) addOutline(parseOutline(outline));
     changed = true;
   }
-  if (new URLSearchParams(location.search).has('outline')) history.replaceState(null, '', NMM.editorUrl + '?map_id=' + MAP_ID);
+  const arrange = new URLSearchParams(location.search).has('arrange');
+  if (new URLSearchParams(location.search).has('outline') || arrange) history.replaceState(null, '', NMM.editorUrl + '?map_id=' + MAP_ID);
 
   const titleEl = $('nmm-map-title-display');
   titleEl.textContent = mapTitle;
@@ -77,6 +78,13 @@ async function loadMap() {
   showLayoutStyle();
   await C.loadLinkedIslands(linkedIslands, nodes);
   C.render();
+  if (arrange) { // a new map from the creator: lay it out in its chosen style
+    const live = nodes.filter(function(n) { return !n._readonly; });
+    (layoutStyle() === 'tol' && !hasSefirot() ? tidyLayout : LAYOUT_STYLES[layoutStyle()])(live);
+    keepOnCanvas();
+    C.render();
+    changed = true;
+  }
   C.autoCenter();
   if (changed) markDirty();
 }
@@ -536,13 +544,16 @@ window.nmmHarmony = function() {
   }
   pushUndo();
   LAYOUT_STYLES[style](live);
-  // Keep everything on the canvas (it can't scroll to negative positions)
+  keepOnCanvas();
+  markDirty(); C.render(); C.autoCenter();
+};
+// The canvas can't scroll to negative positions
+function keepOnCanvas() {
   const minX = Math.min.apply(null, nodes.map(function(n) { return n.x; }));
   const minY = Math.min.apply(null, nodes.map(function(n) { return n.y; }));
   const sx = Math.max(0, LAYOUT.margin - minX), sy = Math.max(0, LAYOUT.margin - minY);
   nodes.forEach(function(n) { n.x = Math.round(n.x + sx); n.y = Math.round(n.y + sy); });
-  markDirty(); C.render(); C.autoCenter();
-};
+}
 
 // Layout style menu next to Harmony. Picking a style saves it with the map and applies it.
 const layoutMenu = $('nmm-layout-menu');

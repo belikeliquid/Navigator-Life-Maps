@@ -235,7 +235,7 @@ Return ONLY a JSON array of question strings. No explanation. No markdown. Examp
 Return the JSON array only.';
 
         $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
-            'timeout' => 20,
+            'timeout' => 45,
             'headers' => [
                 'Content-Type'      => 'application/json',
                 'x-api-key'         => $api_key,
@@ -315,7 +315,7 @@ Return the JSON array only.';
         $title  = sanitize_text_field( $params['title'] ?? 'My Map' );
         $notes   = sanitize_textarea_field( $params['notes'] ?? '' );
         $answers = $params['answers'] ?? [];
-        $mode    = sanitize_text_field( $params['mode'] ?? 'ai' );
+        $layout  = sanitize_key( $params['layout'] ?? 'flow' );
 
         if ( ! $notes ) {
             return new WP_Error( 'no_notes', 'No notes provided', [ 'status' => 400 ] );
@@ -395,8 +395,48 @@ netzach: 800,750 — hod: 1400,750 — yesod: 1100,900 — malkuth: 1100,1100
 
 Return JSON array only. Start with [ end with ].';
 
+        // Flow Chart and Mind Map need a plain hierarchy; the editor lays it out from there.
+        if ( $layout !== 'tol' ) {
+            $prompt = 'You are organizing notes into a clear hierarchy for a mind map.
+
+Today is ' . $today . '. Use this as the reference for all dates. All dates must be on or after today.
+
+Map title: ' . $title . '
+
+Notes:
+' . $notes . $answers_text . '
+
+Group the notes into 3 to 7 main branches under one root card, with the details as cards beneath them. Keep the wording of the notes where you can. Use the answers to set Kanban tags based on urgency and priority, and add dates where they are mentioned.
+
+Kanban tag guide — assign based on urgency from answers, and leave blank for cards that are not tasks:
+- sprint: must happen immediately, highest urgency
+- doing: currently in progress
+- start: needs to begin soon
+- review: waiting on something or needs checking
+- done: completed
+
+Return ONLY a JSON array of nodes. No explanation. No markdown.
+
+Each node must have:
+- id: short unique string like "n1"
+- x: 0
+- y: 0
+- title: short topic title (under 6 words)
+- subs: array of subtitle strings (key points, max 4)
+- parent: the id of the card it belongs under
+- sefirot: ""
+- collapsed: false
+- date: "YYYY-MM-DD" if date mentioned, otherwise ""
+- tag: one of start/doing/sprint/review/done or ""
+
+Include the root card: id "c", title = map title, parent null, tag "", date "".
+
+Return JSON array only. Start with [ end with ].';
+        }
+
+        // Longer notes need longer answers, and the model can take a minute to write them
         $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
-            'timeout' => 30,
+            'timeout' => 120,
             'headers' => [
                 'Content-Type'      => 'application/json',
                 'x-api-key'         => $api_key,
@@ -404,7 +444,7 @@ Return JSON array only. Start with [ end with ].';
             ],
             'body' => json_encode([
                 'model'      => 'claude-opus-4-6',
-                'max_tokens' => 2000,
+                'max_tokens' => 4000,
                 'messages'   => [
                     [ 'role' => 'user', 'content' => $prompt ]
                 ],

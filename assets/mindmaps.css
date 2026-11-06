@@ -608,6 +608,40 @@ body:has(.nmm-app) .entry-content > *:first-child {
 
 .nmm-map-count { font-family: var(--nmm-font); font-size: 13px; color: rgba(255,255,255,0.75); white-space: nowrap; margin-right: 4px; }
 
+/* New map dialog */
+.nmm-mode-tabs.nmm-tabs-3 { grid-template-columns: repeat(3, 1fr); }
+.nmm-layout-tab svg { vertical-align: -4px; margin-right: 2px; }
+.nmm-new-hint { font-family: var(--nmm-font); font-size: 13px; line-height: 1.5; color: var(--nmm-light); margin: 6px 0 0; }
+.nmm-q-progress { font-family: var(--nmm-font); font-size: 13px; font-weight: 600; color: var(--nmm-teal); margin: 8px 0 6px; }
+.nmm-q-bar { height: 4px; background: var(--nmm-border); border-radius: 2px; overflow: hidden; margin-bottom: 18px; }
+.nmm-q-bar span { display: block; height: 100%; background: var(--nmm-teal); transition: width 0.2s; }
+.nmm-app label.nmm-q-text { display: block; font-family: var(--nmm-font); font-size: 17px; font-weight: 500; line-height: 1.4; color: var(--nmm-navy); text-transform: none; letter-spacing: 0; margin-bottom: 12px; }
+.nmm-new-working { text-align: center; padding: 28px 0 12px; font-family: var(--nmm-font); font-size: 16px; color: var(--nmm-navy); }
+.nmm-new-working .nmm-spinner { margin: 0 auto 14px; }
+.nmm-new-working p { margin: 0 0 4px; }
+
+/* New map card, after the last map */
+.nmm-app .nmm-card-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 150px;
+  padding: 16px;
+  margin: 0;
+  border: 2px dashed var(--nmm-teal);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.5);
+  color: #078f8f;
+  font-family: var(--nmm-font);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.nmm-app .nmm-card-new:hover { background: rgba(255,255,255,0.9); }
+.nmm-app .nmm-card-new span { font-size: 24px; font-weight: 400; line-height: 1; }
+
 /* Export AI dialog */
 .nmm-modal.nmm-prompt-modal { width: 720px; max-width: 95vw; }
 .nmm-prompt-intro { font-size: 14px; color: var(--nmm-mid); margin: 0 0 14px; }

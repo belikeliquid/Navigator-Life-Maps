@@ -52,11 +52,13 @@
     </div>
   </div>
 
-  <!-- New Map Modal — four modes: AI Organize, Outline, Tree of Life, Blank -->
+  <!-- New Map Modal — details (layout + how to start), then AI questions one at a time. Driven by manager.js -->
   <div class="nmm-modal-overlay" id="nmm-new-modal">
     <div class="nmm-modal" style="width:560px;max-width:96vw">
       <h3>Create a new map</h3>
+      <div id="nmm-new-error" class="nmm-login-error" style="display:none"></div>
 
+      <div id="nmm-new-step-details">
       <div class="nmm-field">
         <label>Map title</label>
         <input type="text" id="nmm-new-title" class="nmm-input" placeholder="e.g. April 2026 Planning" />
@@ -88,62 +90,62 @@
       </div>
 
       <div class="nmm-field">
+        <label>Layout</label>
+        <div class="nmm-mode-tabs nmm-tabs-3">
+          <button type="button" class="nmm-mode-tab nmm-layout-tab active" data-layout="flow"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="8.5" y="2.5" width="7" height="5" rx="1.2" fill="currentColor"/><path d="M12 7.5v4M4.5 11.5h15M4.5 11.5v4M12 11.5v4M19.5 11.5v4"/><rect x="1.5" y="15.5" width="6" height="5" rx="1.2" fill="currentColor"/><rect x="9" y="15.5" width="6" height="5" rx="1.2" fill="currentColor"/><rect x="16.5" y="15.5" width="6" height="5" rx="1.2" fill="currentColor"/></svg> Flow Chart</button>
+          <button type="button" class="nmm-mode-tab nmm-layout-tab" data-layout="mind"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><rect x="8" y="9.5" width="8" height="5" rx="2"/><rect x="1" y="2" width="5" height="4" rx="1.2"/><rect x="18" y="2" width="5" height="4" rx="1.2"/><rect x="1" y="18" width="5" height="4" rx="1.2"/><rect x="18" y="18" width="5" height="4" rx="1.2"/><path d="M9.5 9.5V4H6M14.5 9.5V4H18M9.5 14.5V20H6M14.5 14.5V20H18"/></svg> Mind Map</button>
+          <button type="button" class="nmm-mode-tab nmm-layout-tab" data-layout="tol"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 2.5v19M6 6.5h12M6 11.5h12M6 16.5h12M6 6.5v10M18 6.5v10"/><g fill="currentColor" stroke="none"><circle cx="12" cy="2.5" r="1.8"/><circle cx="6" cy="6.5" r="1.8"/><circle cx="18" cy="6.5" r="1.8"/><circle cx="6" cy="11.5" r="1.8"/><circle cx="18" cy="11.5" r="1.8"/><circle cx="12" cy="14.5" r="1.8"/><circle cx="6" cy="16.5" r="1.8"/><circle cx="18" cy="16.5" r="1.8"/><circle cx="12" cy="21.5" r="1.8"/></g></svg> Tree of Life</button>
+        </div>
+        <p id="nmm-layout-hint" class="nmm-new-hint"></p>
+      </div>
+
+      <div class="nmm-field">
         <label>Start from</label>
-        <div class="nmm-mode-tabs">
-          <button class="nmm-mode-tab active" data-mode="ai">&#10022; AI Organize</button>
-          <button class="nmm-mode-tab" data-mode="outline">&#9776; Outline</button>
-          <button class="nmm-mode-tab" data-mode="treeoflife">&#11041; Tree of Life</button>
-          <button class="nmm-mode-tab" data-mode="blank">&#9633; Blank</button>
+        <div class="nmm-mode-tabs nmm-tabs-3">
+          <button type="button" class="nmm-mode-tab nmm-start-tab active" data-mode="ai">&#10022; AI Organize</button>
+          <button type="button" class="nmm-mode-tab nmm-start-tab" data-mode="outline">&#9776; Outline</button>
+          <button type="button" class="nmm-mode-tab nmm-start-tab" data-mode="blank">&#9633; Blank</button>
         </div>
       </div>
 
       <div id="nmm-mode-ai" class="nmm-mode-section">
-        <div style="background:rgba(11,191,191,0.07);border-left:2px solid #0BBFBF;border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#0a8a8a;line-height:1.6;margin-bottom:10px">
-          Paste your notes. Navigator will ask a few questions to understand your priorities, then organize everything with tags and dates.
-        </div>
         <div class="nmm-field">
           <label>Paste your notes</label>
           <textarea id="nmm-ai-notes" class="nmm-input" rows="5" placeholder="Paste anything. Bullet points, paragraphs, goals, tasks, ideas."></textarea>
+          <p class="nmm-new-hint">Navigator will ask a few questions about your priorities, then organize everything with tags and dates.</p>
         </div>
-        <button type="button" class="nmm-btn nmm-btn-primary" id="nmm-ai-analyze-btn" style="width:100%;margin-bottom:10px">Analyze notes &#8594;</button>
-        <div id="nmm-ai-questions-wrap" style="display:none">
-          <div id="nmm-ai-questions-list"></div>
-        </div>
-        <div id="nmm-ai-status" style="display:none;font-size:11px;color:#0BBFBF;margin-bottom:8px;text-align:center">Organizing your content...</div>
       </div>
 
       <div id="nmm-mode-outline" class="nmm-mode-section" style="display:none">
         <div class="nmm-field">
           <label>Paste your outline</label>
           <textarea id="nmm-new-outline" class="nmm-input" rows="6" placeholder="Vision&#10;  Goal one&#10;    Detail A&#10;    Detail B&#10;  Goal two&#10;Foundation"></textarea>
-          <p style="font-size:10px;color:#aaa;margin-top:4px">Indent with spaces or tabs to create hierarchy.</p>
+          <p class="nmm-new-hint">Indent with spaces or tabs to create hierarchy.</p>
         </div>
-      </div>
-
-      <div id="nmm-mode-treeoflife" class="nmm-mode-section" style="display:none">
-        <div class="nmm-tol-hint">
-          Tree of Life maps your content across 10 Sefirot positions. Paste your notes and Navigator will ask questions, then assign each topic to the right position with tags and dates.
-        </div>
-        <div class="nmm-field" style="margin-top:10px">
-          <label>Paste your notes</label>
-          <textarea id="nmm-tol-notes" class="nmm-input" rows="5" placeholder="Paste anything. Navigator will map it to the Tree of Life."></textarea>
-        </div>
-        <button type="button" class="nmm-btn nmm-btn-primary" id="nmm-tol-analyze-btn" style="width:100%;margin-bottom:10px">Analyze notes &#8594;</button>
-        <div id="nmm-tol-questions-wrap" style="display:none">
-          <div id="nmm-tol-questions-list"></div>
-        </div>
-        <div id="nmm-tol-status" style="display:none;font-size:11px;color:#0BBFBF;margin-bottom:8px;text-align:center">Organizing your content...</div>
       </div>
 
       <div id="nmm-mode-blank" class="nmm-mode-section" style="display:none">
-        <div style="padding:16px 0;text-align:center;font-size:12px;color:#aaa">
-          Start with an empty canvas. Add nodes freely in the editor.
-        </div>
+        <p class="nmm-new-hint">Start with an empty canvas. Add cards freely in the editor.</p>
+      </div>
+      </div><!-- /details -->
+
+      <div id="nmm-new-step-question" style="display:none">
+        <p id="nmm-q-progress" class="nmm-q-progress"></p>
+        <div class="nmm-q-bar"><span id="nmm-q-bar-fill"></span></div>
+        <label id="nmm-q-text" class="nmm-q-text" for="nmm-q-answer"></label>
+        <textarea id="nmm-q-answer" class="nmm-input" rows="4" placeholder="Your answer..."></textarea>
+        <p class="nmm-new-hint">Not sure? Leave it blank and press Next.</p>
       </div>
 
-      <div class="nmm-modal-actions">
-        <button class="nmm-btn" id="nmm-new-cancel">Cancel</button>
-        <button class="nmm-btn nmm-btn-primary" id="nmm-new-confirm">Create Map &#8594;</button>
+      <div id="nmm-new-step-working" class="nmm-new-working" style="display:none">
+        <div class="nmm-spinner"></div>
+        <p>Organizing your map...</p>
+        <p class="nmm-new-hint">This can take up to a minute. Please keep this page open.</p>
+      </div>
+
+      <div class="nmm-modal-actions" id="nmm-new-actions">
+        <button type="button" class="nmm-btn" id="nmm-new-cancel">Cancel</button>
+        <button type="button" class="nmm-btn nmm-btn-primary" id="nmm-new-confirm">Next &#8594;</button>
       </div>
     </div>
   </div>
