@@ -16,6 +16,7 @@ WordPress plugin `navigator-mindmaps`, live on navigatorproject.org. Mind maps, 
 | `assets/js/core.js` | `NMMCore`: `api()`, `patchNode()`, nonce refresh, map-filter dropdown, `esc()`, tag colors, lazy html2canvas |
 | `assets/js/canvas.js` | `NMMCanvas.create()`: map rendering shared by the editor and the share view (nodes, lines, motif, PNG export) |
 | `assets/js/editor.js` | Editor: save/draft/conflict logic, drag, modals, outline import, .ics export, Export AI (`promptText()`: map → described text outline) |
+| `assets/js/outline.js` | `NMMOutline.create()`: the phone list view (below 700px, List / Map switch) for the editor and share view; redrawn from the editor's wrapped `C.render` |
 | `assets/js/{view,kanban,timeline,manager,landing}.js` | One script per page |
 | `assets/mindmaps.css` | All styles. App UI uses `--nmm-font` (Fira Sans); map cards stay Barlow Condensed because their size drives saved layouts |
 

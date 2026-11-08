@@ -33,6 +33,16 @@ const C = NMMCanvas.create({
 });
 const find = C.find;
 
+// Phones: the list view follows every redraw of the canvas
+const outline = NMMOutline.create({
+  root: root, getNodes: function() { return nodes; }, editable: true,
+  onEdit: function(id) { nmmOpenNodeModal(id); },
+  onAdd: function(id) { nmmAddChild(id); },
+  onShowMap: function() { C.render(); C.autoCenter(); }
+});
+const drawCanvas = C.render;
+C.render = function() { drawCanvas(); outline.render(); };
+
 // ============================================================
 // UNDO
 // ============================================================

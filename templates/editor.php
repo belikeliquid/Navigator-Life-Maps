@@ -62,6 +62,13 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button onclick="nmmSave();nmmToggleMobileMenu()">Save</button>
   </div>
 
+  <!-- Phones: List / Map switch and the list view (assets/js/outline.js) -->
+  <div class="nmm-view-switch" role="group" aria-label="Show the map as">
+    <button type="button" data-view="list">☰ List</button>
+    <button type="button" data-view="map">◈ Map</button>
+  </div>
+  <div class="nmm-outline"></div>
+
   <div id="nmm-canvas-wrap" class="nmm-canvas-wrap">
     <div id="nmm-bg-layer" class="nmm-bg-layer"></div>
     <div id="nmm-bg-overlay" class="nmm-bg-overlay"></div>

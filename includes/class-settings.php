@@ -269,6 +269,13 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.8.1 — Maps on phones <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        On a phone, a map now opens as a list: each island is a heading with its main branches as cards, and tapping a card opens the cards under it. Cards show their notes, date and Kanban stage, with Edit and + Card buttons. A List / Map switch shows the canvas instead, and the phone remembers the choice. The share view gets the same list, read only.<br>
+                        Dialogs fill the screen on phones, with the title at the top and the buttons always at the bottom, so nothing is cut off and the page no longer shows through. Text boxes use larger type, so iPhones no longer zoom in when you tap one.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.8.0 — Share a map with other members <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         Share on a map card now opens a Share dialog: enter another member's email and they can open and edit the map too, as many people as you like (up to 25). The reply is the same whether or not the email has an account, so it can't be used to find out who is a member. A matching member gets an email with a link.<br>

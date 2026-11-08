@@ -18,6 +18,11 @@ const C = NMMCanvas.create({
   }
 });
 
+const outline = NMMOutline.create({
+  root: root, getNodes: function() { return nodes; }, editable: false,
+  onShowMap: function() { C.render(); C.autoCenter(); }
+});
+
 async function loadMap() {
   try {
     // The share endpoint is public; no nonce, since a cached page could carry a stale one.
@@ -29,6 +34,7 @@ async function loadMap() {
     document.getElementById('nmm-view-title').textContent = map.title || '';
     await C.loadLinkedIslands(map.islands, nodes);
     C.render();
+    outline.render();
   } catch(e) { showError(); }
 }
 
