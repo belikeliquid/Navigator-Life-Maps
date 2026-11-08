@@ -6,8 +6,30 @@ const REST  = NMM.restUrl;
 function showError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
 function hideError(el) { el.style.display = 'none'; }
 
-async function afterAuth() {
-  window.location.href = NMM.homeUrl + '/maps/';
+// Opened from an invitation email: /maps/?invite=TOKEN
+const INVITE = new URLSearchParams(location.search).get('invite') || '';
+let inviteOk = false;
+async function afterAuth(data) {
+  window.location.href = data && data.map_id ? NMM.editorUrl + '?map_id=' + data.map_id : NMM.homeUrl + '/maps/';
+}
+if (INVITE) {
+  fetch(REST + 'invite/' + encodeURIComponent(INVITE)).then(function(r) { return r.json(); }).then(function(inv) {
+    const banner = document.getElementById('nmm-invite-banner');
+    banner.style.display = '';
+    if (!inv || !inv.valid) {
+      banner.classList.add('nmm-invite-expired');
+      banner.textContent = 'This invitation has expired or was already used. Ask the person who invited you to share the map again.';
+      return;
+    }
+    inviteOk = true;
+    const esc = NMMCore.esc;
+    banner.innerHTML = '<strong>' + esc(inv.by) + ' invited you to collaborate on “' + esc(inv.map_title) + '”.</strong>' +
+      '<span>Create your free account to open it (no invitation code needed), or log in if you already have one.</span>';
+    const email = document.getElementById('nmm-signup-email');
+    if (email && !email.value) email.value = inv.email;
+    const code = document.getElementById('nmm-signup-invite-field');
+    if (code) code.style.display = 'none';
+  }).catch(function() {});
 }
 
 // LOGIN
@@ -23,9 +45,9 @@ document.getElementById('nmm-login-btn').addEventListener('click', function() {
   fetch(REST + 'auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' }, // no nonce: this page acts for nobody yet, and an old one would be refused
-    body: JSON.stringify({ username: user, password: pass, turnstile_token: tsToken })
+    body: JSON.stringify({ username: user, password: pass, turnstile_token: tsToken, invite: INVITE })
   }).then(function(r){ return r.json(); }).then(function(data) {
-    if (data.success) { afterAuth(); }
+    if (data.success) { afterAuth(data); }
     else { showError(err, data.message || 'Login failed. Please check your details.'); btn.textContent = 'Log in'; btn.disabled = false; resetTurnstile('login'); }
   }).catch(function(){ showError(err, 'Connection error. Please try again.'); btn.textContent = 'Log in'; btn.disabled = false; resetTurnstile('login'); });
 });
@@ -68,7 +90,7 @@ document.getElementById('nmm-signup-btn').addEventListener('click', function() {
   const inviteEl = document.getElementById('nmm-signup-invite');
   const invite   = inviteEl ? inviteEl.value.trim() : '';
   hideError(err);
-  if (!user || !email || !pass || (inviteEl && !invite)) { showError(err, 'Please fill in all fields.'); return; }
+  if (!user || !email || !pass || (inviteEl && !invite && !inviteOk)) { showError(err, 'Please fill in all fields.'); return; }
 
   const tsToken = turnstileToken('signup');
   if (tsEls.signup && !tsToken) { showError(err, TS_WAIT); return; }
@@ -77,9 +99,9 @@ document.getElementById('nmm-signup-btn').addEventListener('click', function() {
   fetch(REST + 'auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' }, // no nonce: this page acts for nobody yet, and an old one would be refused
-    body: JSON.stringify({ username: user, email: email, password: pass, invite_code: invite, turnstile_token: tsToken })
+    body: JSON.stringify({ username: user, email: email, password: pass, invite_code: invite, invite: INVITE, turnstile_token: tsToken })
   }).then(function(r){ return r.json(); }).then(function(data) {
-    if (data.success) { afterAuth(); }
+    if (data.success) { afterAuth(data); }
     else { showError(err, data.message || 'Registration failed. Please try again.'); btn.textContent = 'Create account'; btn.disabled = false; resetTurnstile('signup'); }
   }).catch(function(){ showError(err, 'Connection error.'); btn.textContent = 'Create account'; btn.disabled = false; resetTurnstile('signup'); });
 });

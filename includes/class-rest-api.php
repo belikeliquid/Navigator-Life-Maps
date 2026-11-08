@@ -6,6 +6,7 @@ class NMM_REST_API {
     public static function register_routes() {
         add_action( 'rest_api_init', [ __CLASS__, 'routes' ] );
         add_action( 'nmm_share_email', [ __CLASS__, 'send_share_email' ], 10, 3 );
+        add_action( 'nmm_invite_email', [ __CLASS__, 'send_invite_email' ], 10, 4 );
     }
 
     public static function routes() {
@@ -37,6 +38,13 @@ class NMM_REST_API {
         ]);
         register_rest_route( $namespace, '/maps/(?P<id>\d+)/copy', [
             'methods' => 'POST', 'callback' => [ __CLASS__, 'copy_map' ], 'permission_callback' => [ __CLASS__, 'auth' ],
+        ]);
+        // Invitations for people without an account: the link's token is the proof they got the email
+        register_rest_route( $namespace, '/invite/(?P<token>[A-Za-z0-9]{20,64})', [
+            'methods' => 'GET', 'callback' => [ __CLASS__, 'get_invite' ], 'permission_callback' => '__return_true',
+        ]);
+        register_rest_route( $namespace, '/invite/accept', [
+            'methods' => 'POST', 'callback' => [ __CLASS__, 'accept_invite' ], 'permission_callback' => [ __CLASS__, 'auth' ],
         ]);
         register_rest_route( $namespace, '/maps/(?P<id>\d+)/leave', [
             'methods' => 'POST', 'callback' => [ __CLASS__, 'leave_map' ], 'permission_callback' => [ __CLASS__, 'auth' ],
@@ -292,21 +300,30 @@ class NMM_REST_API {
         if ( ! is_email( $email ) )
             return new WP_Error( 'bad_email', 'Please enter a valid email address.', [ 'status' => 400 ] );
 
-        $done   = 'If someone has an account with that email, they can now open and edit this map.';
+        $done   = 'Thanks. We\'ve let them know: a member can open the map from their maps list, and anyone else gets an invitation to join.';
         $people = self::people( $post->ID );
         if ( in_array( $email, array_column( $people, 'email' ), true ) ) return self::people_response( $post->ID, $done );
         if ( count( $people ) >= self::SHARE_MAX )
             return new WP_Error( 'too_many', 'A map can be shared with up to ' . self::SHARE_MAX . ' people.', [ 'status' => 400 ] );
+        if ( ! self::count_share() )
+            return new WP_Error( 'share_limit', 'You have shared with a lot of people today. Please try again tomorrow.', [ 'status' => 429 ] );
 
         $user = get_user_by( 'email', $email );
         $uid  = $user ? (int) $user->ID : 0;
-        if ( $uid === (int) $post->post_author ) $uid = 0;
+        $self = $uid === (int) $post->post_author;
+        if ( $self ) $uid = 0;
         $people[] = [ 'email' => $email, 'user' => $uid ];
         self::save_people( $post->ID, $people );
+        // Emails go out through WP cron, so the reply takes the same time whichever one is sent
         if ( $uid && ! in_array( $uid, self::editors( $post->ID ), true ) ) {
             add_post_meta( $post->ID, 'nmm_editor', $uid );
-            // Sent by WP cron, so the reply takes the same time whether or not the email matched
             wp_schedule_single_event( time(), 'nmm_share_email', [ $post->ID, $uid, get_current_user_id() ] );
+        } elseif ( ! $uid && ! $self ) {
+            $token = wp_generate_password( 32, false );
+            update_post_meta( $post->ID, self::invite_key( $token ), wp_slash( wp_json_encode( [
+                'email' => $email, 'by' => get_current_user_id(), 'expires' => time() + self::INVITE_DAYS * DAY_IN_SECONDS,
+            ] ) ) );
+            wp_schedule_single_event( time(), 'nmm_invite_email', [ $post->ID, $email, get_current_user_id(), $token ] );
         }
         return self::people_response( $post->ID, $done );
     }
@@ -323,6 +340,9 @@ class NMM_REST_API {
             else $keep[] = $p;
         }
         self::save_people( $post->ID, $keep );
+        foreach ( self::invites( $post->ID ) as $key => $inv ) {
+            if ( $inv['email'] === $email ) delete_post_meta( $post->ID, $key );
+        }
         $still = array_map( 'intval', array_column( $keep, 'user' ) );
         foreach ( array_filter( $gone ) as $uid ) {
             if ( ! in_array( $uid, $still, true ) ) delete_post_meta( $post->ID, 'nmm_editor', $uid );
@@ -348,13 +368,111 @@ class NMM_REST_API {
         $sharer = get_userdata( $sharer_id );
         $name   = $sharer ? $sharer->display_name : 'Someone';
         $title  = wp_strip_all_tags( $post->post_title );
-        $body   = 'Hi ' . $user->display_name . ",\n\n" .
-                  $name . ' shared the map "' . $title . '" with you on Navigator Life Maps, so you can work on it together. ' .
-                  "Changes either of you make are saved for both.\n\n" .
-                  'Open the map: ' . home_url( '/map-editor/?map_id=' . $map_id ) . "\n" .
-                  'Your maps: ' . home_url( '/maps/' ) . "\n\n" .
-                  "Navigator Project\n";
-        wp_mail( $user->user_email, $name . ' shared a map with you: ' . $title, $body );
+        NMM_Mail::send( $user->user_email, $name . ' shared a Life Map with you: ' . $title, [
+            'preheader'  => $name . ' wants to work on "' . $title . '" with you.',
+            'heading'    => $name . ' shared a Life Map with you',
+            'paragraphs' => [ 'Hi ' . $user->display_name . ',', $name . ' shared this map with you so you can work on it together. You can both open it, add to it and move it forward, and every change is saved for both of you.' ],
+            'map_title'  => $title,
+            'button'     => 'Open the map',
+            'url'        => home_url( '/map-editor/?map_id=' . $map_id ),
+            'note'       => 'It is also in your maps list, marked "Shared by ' . $name . '".',
+            'reason'     => 'You received this because ' . $name . ' shared a map with you on Navigator.',
+        ] );
+    }
+
+    // ---- Invitations ----
+    // The token is sent only in the email; the map keeps a hash of it (meta nmm_inv_<sha256>),
+    // with the address, who invited and when it expires. Accepting needs the token, so signing
+    // up with someone else's address gets nothing.
+    const INVITE_DAYS = 14;
+    const SHARE_DAILY = 20;
+
+    private static function invite_key( $token ) { return 'nmm_inv_' . hash( 'sha256', $token ); }
+    private static function invites( $post_id ) {
+        $out = [];
+        foreach ( get_post_meta( $post_id ) as $key => $vals ) {
+            if ( strpos( $key, 'nmm_inv_' ) !== 0 ) continue;
+            $inv = json_decode( $vals[0], true );
+            if ( is_array( $inv ) ) $out[ $key ] = $inv;
+        }
+        return $out;
+    }
+    // The map an invitation token belongs to, with its details, or null (expired ones are cleared)
+    private static function find_invite( $token ) {
+        global $wpdb;
+        if ( ! is_string( $token ) || ! preg_match( '/^[A-Za-z0-9]{20,64}$/', $token ) ) return null;
+        $key = self::invite_key( $token );
+        $row = $wpdb->get_row( $wpdb->prepare( "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s LIMIT 1", $key ) );
+        if ( ! $row ) return null;
+        $inv  = json_decode( $row->meta_value, true );
+        $post = get_post( (int) $row->post_id );
+        if ( ! is_array( $inv ) || ! $post || $post->post_type !== 'nmm_mindmap' || $post->post_status !== 'publish' ) return null;
+        if ( (int) $inv['expires'] < time() ) { delete_post_meta( $post->ID, $key ); return null; }
+        return [ 'post' => $post, 'key' => $key, 'invite' => $inv ];
+    }
+    // At most SHARE_DAILY shares a day per person (admins excepted). Counted for every share, member
+    // or not, so hitting the limit gives nothing away. Returns false when the limit is reached.
+    private static function count_share() {
+        if ( current_user_can( 'manage_options' ) ) return true;
+        $uid = get_current_user_id();
+        $log = array_filter( (array) get_user_meta( $uid, 'nmm_share_log', true ), function ( $t ) { return (int) $t > time() - DAY_IN_SECONDS; } );
+        if ( count( $log ) >= self::SHARE_DAILY ) return false;
+        $log[] = time();
+        update_user_meta( $uid, 'nmm_share_log', array_values( $log ) );
+        return true;
+    }
+
+    public static function send_invite_email( $map_id, $email, $sharer_id, $token ) {
+        $found = self::find_invite( $token );
+        if ( ! $found || (int) $found['post']->ID !== (int) $map_id ) return; // cancelled before it went out
+        $sharer = get_userdata( $sharer_id );
+        $name   = $sharer ? $sharer->display_name : 'A Navigator member';
+        $title  = wp_strip_all_tags( $found['post']->post_title );
+        $until  = wp_date( 'F j', (int) $found['invite']['expires'] );
+        NMM_Mail::send( $email, $name . ' invited you to collaborate on a Life Map: ' . $title, [
+            'preheader'  => 'Join Navigator to open "' . $title . '" and work on it together.',
+            'heading'    => $name . ' invited you to collaborate on a Life Map',
+            'paragraphs' => [ 'Hi,', $name . ' would like to work on this map with you on Navigator. Join to open it, add your part and take action together. Your account is free, and this invitation takes you straight to the map.' ],
+            'map_title'  => $title,
+            'button'     => 'Join and open the map',
+            'url'        => home_url( '/maps/?invite=' . $token ),
+            'note'       => 'This invitation is just for you and works until ' . $until . '. Already have a Navigator account? Use the same button and log in. If you weren\'t expecting this, you can ignore this email.',
+            'reason'     => 'You received this because ' . $name . ' invited ' . $email . ' to a map on Navigator.',
+        ] );
+    }
+
+    // For the signup page banner. Says only what the person holding the email already knows.
+    public static function get_invite( $request ) {
+        $found = self::find_invite( $request['token'] );
+        if ( ! $found ) return rest_ensure_response( [ 'valid' => false ] );
+        $by = get_userdata( (int) $found['invite']['by'] );
+        return rest_ensure_response( [
+            'valid' => true, 'map_title' => $found['post']->post_title,
+            'by' => $by ? $by->display_name : 'A Navigator member', 'email' => $found['invite']['email'],
+        ] );
+    }
+
+    // Gives the current user access to the invitation's map. Used right after signup or login too.
+    public static function redeem_invite( $token, $uid ) {
+        $found = self::find_invite( $token );
+        if ( ! $found ) return new WP_Error( 'invite_invalid', 'This invitation has expired or was already used. Ask the person who invited you to share the map again.', [ 'status' => 404 ] );
+        $post = $found['post'];
+        delete_post_meta( $post->ID, $found['key'] );
+        if ( (int) $post->post_author !== (int) $uid && ! in_array( (int) $uid, self::editors( $post->ID ), true ) ) {
+            add_post_meta( $post->ID, 'nmm_editor', (int) $uid );
+        }
+        // The owner's list shows the invited address; link it to this account so Remove works
+        $people = self::people( $post->ID );
+        foreach ( $people as &$p ) { if ( $p['email'] === $found['invite']['email'] ) $p['user'] = (int) $uid; }
+        unset( $p );
+        self::save_people( $post->ID, $people );
+        return (int) $post->ID;
+    }
+    public static function invite_is_valid( $token ) { return (bool) self::find_invite( $token ); }
+    public static function accept_invite( $request ) {
+        $params = $request->get_json_params();
+        $id = self::redeem_invite( (string) ( $params['token'] ?? '' ), get_current_user_id() );
+        return is_wp_error( $id ) ? $id : rest_ensure_response( [ 'map_id' => $id ] );
     }
 
     public static function get_featured( $request ) {
@@ -712,6 +830,7 @@ Return JSON array only. Start with [ end with ].';
         $manage = self::can_manage( $post );
         $map['can_manage'] = $manage;
         $map['can_edit']   = self::can_access( $post );
+        $map['mine']       = is_user_logged_in() && (int) $post->post_author === get_current_user_id();
         $map['featured']   = self::is_featured( $post );
         if ( $manage ) {
             $map['share_key'] = get_post_meta( $post->ID, 'nmm_share_key', true );

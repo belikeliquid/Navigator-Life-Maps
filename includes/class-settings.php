@@ -271,6 +271,19 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.11.0 — Invitations and branded emails <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Sharing a map with someone who has no account now sends them an invitation to join, with a private link that works for 14 days. The link opens the signup page with a note about who invited them to which map, their email filled in and no invitation code needed; after signing up (or logging in, if they already had an account) they land in the map. Only the link grants access, so signing up with someone else's address gets nothing. The person sharing still sees the same reply either way, so the form never reveals who is a member.<br>
+                        The share and invitation emails are now designed: Navigator logo, the map, a clear button, a short description of Life Maps and the motto, with a plain-text version for email apps that need one.<br>
+                        Each member can share with up to 20 addresses a day (admins have no limit). Removing an address also cancels its invitation.<br>
+                        Help: a ? button at the top right of the maps list and every view opens the Life Maps guide, a side panel that answers the key questions (how it works and why we made it, the four views, what you can map, Guides and clients, sharing, your account). Type a question or tap one; related questions follow each answer.<br>
+                        The maps list now shows Next up too: the dated card most in need of a look across your own maps and the ones shared with you. Open card goes straight to it in the map.<br>
+                        The maps list header now reads Life Maps.<br>
+                        Export Prompt has a Send to Basecamp as a new project button; for now it says the direct link is coming soon.<br>
+                        Roadmap: Lanes… now has ↺ Reset roadmap, which sends every card back to Unsorted and asks for the lanes again; dates and stages are kept.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.10.0 — Roadmap <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         A fourth view, ▤ Roadmap, next to Mind Map, Kanban and Timeline (page /roadmap/). Each dated card is a bar from its start to its end date, coloured by Kanban stage; a card with no end date gets a 3-week bar that fades out. Weeks, Months and Quarters scales, a Today line and button.<br>

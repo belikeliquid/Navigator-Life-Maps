@@ -14,6 +14,7 @@ class NMM_Shortcodes {
     // Renders templates/<name>.php with $vars in scope and enqueues its script (assets/js/<name>.js).
     private static function render( $name, $vars = [] ) {
         wp_enqueue_script( 'nmm-' . $name );
+        if ( ! in_array( $name, [ 'landing', 'view' ], true ) ) wp_enqueue_script( 'nmm-help' ); // the ? panel
         extract( $vars );
         ob_start();
         include NMM_PATH . 'templates/' . $name . '.php';

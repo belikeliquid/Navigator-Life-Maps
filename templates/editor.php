@@ -23,6 +23,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button class="nmm-btn" id="nmm-more-btn" type="button">More ▾</button>
     <button class="nmm-btn nmm-btn-save" id="nmm-save-btn" onclick="nmmSave()">Save</button>
     <span id="nmm-save-status" class="nmm-save-status"></span>
+    <button type="button" class="nmm-btn nmm-help-btn" title="Help: how Life Maps works" aria-label="Help">?</button>
     <button class="nmm-btn nmm-mobile-menu-btn" id="nmm-mobile-menu-btn" onclick="nmmToggleMobileMenu()">☰</button>
   </div>
 
@@ -74,6 +75,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button onclick="nmmExportPNG();nmmToggleMobileMenu()">Export PNG</button>
     <button onclick="nmmOpenPromptExport();nmmToggleMobileMenu()">Export Prompt</button>
     <button onclick="nmmSave();nmmToggleMobileMenu()">Save</button>
+    <button onclick="nmmToggleMobileMenu();nmmOpenHelp()">? Help</button>
   </div>
 
   <!-- Phones: List / Map switch and the list view (assets/js/outline.js) -->
@@ -214,6 +216,10 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
       <div class="nmm-field">
         <label for="nmm-prompt-text">Prompt</label>
         <textarea id="nmm-prompt-text" class="nmm-input nmm-prompt-text" rows="16" spellcheck="false"></textarea>
+      </div>
+      <div class="nmm-prompt-send">
+        <button type="button" class="nmm-btn nmm-btn-basecamp" onclick="nmmSendToBasecamp()">Send to Basecamp as a new project</button>
+        <p id="nmm-prompt-soon" class="nmm-prompt-soon" role="status" hidden></p>
       </div>
       <div class="nmm-modal-actions">
         <button class="nmm-btn" onclick="nmmClosePromptExport()">Close</button>

@@ -16,6 +16,7 @@ function loadMaps() {
   api('GET', 'maps').then(function(maps) {
     allMaps = Array.isArray(maps) ? maps : [];
     filterMaps();
+    loadNextUp();
     showMapCount();
   }).catch(function() {
     loading.innerHTML = '<p style="color:#cc3333;font-family:inherit">Failed to load maps. Please refresh.</p>';
@@ -414,7 +415,7 @@ function shareMsg(text, isError) {
   var el = $share('nmm-share-msg');
   el.textContent = text; el.classList.toggle('nmm-share-error', !!isError);
 }
-var SHARE_HINT = 'They can open and edit this map from their own maps list. Only you can delete it or choose who it is shared with.';
+var SHARE_HINT = 'Members can open and edit it from their own maps list; anyone else gets an invitation to join. Only you can delete the map or choose who it is shared with.';
 function openShare(map) {
   shareMap = map;
   $share('nmm-share-title').textContent = map.title;
@@ -479,6 +480,37 @@ var logoutBtn = document.getElementById('nmm-logout-btn');
 if (logoutBtn) logoutBtn.addEventListener('click', function() {
   window.location.href = NMM.logoutUrl;
 });
+
+// Next up across your maps: the dated card most in need of a look, bottom right (computer screens).
+// Uses your own maps and the ones shared with you, not every map an admin can see.
+var managerNotice = NMMCore.notice({
+  root: document.getElementById('nmm-manager'), key: 'maps_list',
+  label: function(it) { return it.days < 0 ? 'Needs attention' : 'Next up'; },
+  detail: function(it) { return it.when + ' · ' + it.n._map_title; },
+  onOpen: function(it) { location.href = editorUrl + '?map_id=' + it.n._map_id + '&card=' + encodeURIComponent(it.n.id); }
+});
+function loadNextUp() {
+  if (!window.matchMedia('(min-width: 900px) and (hover: hover)').matches) return;
+  var mine = allMaps.filter(function(m) { return m.mine || m.shared_by; }).slice(0, 12);
+  Promise.all(mine.map(function(m) {
+    return api('GET', 'maps/' + m.id).then(function(full) {
+      return ((full && full.nodes) || []).map(function(n) { n._map_id = m.id; n._map_title = m.title; return n; });
+    }).catch(function() { return []; });
+  })).then(function(lists) {
+    managerNotice.update(NMMCore.attention([].concat.apply([], lists)).slice(0, 20));
+  });
+}
+
+// Opened from an invitation email while already signed in: accept it and open the map
+(function() {
+  var token = new URLSearchParams(location.search).get('invite');
+  if (!token) return;
+  history.replaceState(null, '', NMM.mapsUrl);
+  api('POST', 'invite/accept', { token: token }).then(function(res) {
+    if (res && res.map_id) location.href = editorUrl + '?map_id=' + res.map_id;
+    else alert((res && res.message) || 'This invitation could not be used.');
+  });
+})();
 
 loadMaps();
 })();

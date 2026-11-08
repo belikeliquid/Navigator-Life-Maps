@@ -16,6 +16,8 @@
     </div>
     <span class="nmm-sep"></span>
     <?php NMM_Shortcodes::view_tabs( 'kanban', NMM_Shortcodes::ids_from_url() ); ?>
+    <span class="nmm-toolbar-gap"></span>
+    <button type="button" class="nmm-btn nmm-btn-keep nmm-help-btn" title="Help: how Life Maps works" aria-label="Help">?</button>
   </div>
 
   <!-- Kanban body -->

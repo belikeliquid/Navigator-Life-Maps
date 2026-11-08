@@ -104,11 +104,19 @@ class NMM_Auth {
         wp_set_current_user( $user->ID );
         wp_set_auth_cookie( $user->ID, true );
 
+        // Logging in from an invitation link opens the shared map
+        $map_id = 0;
+        if ( ! empty( $params['invite'] ) ) {
+            $r = NMM_REST_API::redeem_invite( (string) $params['invite'], $user->ID );
+            if ( ! is_wp_error( $r ) ) $map_id = $r;
+        }
+
         return rest_ensure_response([
             'success'  => true,
             'user_id'  => $user->ID,
             'username' => $user->user_login,
             'email'    => $user->user_email,
+            'map_id'   => $map_id,
         ]);
     }
 
@@ -125,8 +133,10 @@ class NMM_Auth {
         if ( true !== $check ) {
             return rest_ensure_response([ 'success' => false, 'message' => $check ]);
         }
-        $invite = trim( (string) get_option( 'nmm_invite_code', '' ) );
-        if ( $invite && ! hash_equals( strtolower( $invite ), strtolower( trim( (string) ( $params['invite_code'] ?? '' ) ) ) ) ) {
+        // A member's invitation link stands in for the invitation code
+        $invited = ! empty( $params['invite'] ) && NMM_REST_API::invite_is_valid( (string) $params['invite'] );
+        $invite  = trim( (string) get_option( 'nmm_invite_code', '' ) );
+        if ( $invite && ! $invited && ! hash_equals( strtolower( $invite ), strtolower( trim( (string) ( $params['invite_code'] ?? '' ) ) ) ) ) {
             return rest_ensure_response([ 'success' => false, 'message' => 'That invitation code is not right. Signup is by invitation for now.' ]);
         }
 
@@ -165,7 +175,13 @@ class NMM_Auth {
         wp_set_current_user( $user_id );
         wp_set_auth_cookie( $user_id, true );
 
-        return rest_ensure_response([ 'success' => true, 'user_id' => $user_id, 'username' => $username ]);
+        $map_id = 0;
+        if ( $invited ) {
+            $r = NMM_REST_API::redeem_invite( (string) $params['invite'], $user_id );
+            if ( ! is_wp_error( $r ) ) $map_id = $r;
+        }
+
+        return rest_ensure_response([ 'success' => true, 'user_id' => $user_id, 'username' => $username, 'map_id' => $map_id ]);
     }
 
     public static function me( $request ) {

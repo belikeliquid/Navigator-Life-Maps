@@ -137,6 +137,7 @@ function showSetup(show) {
     '<button type="button" class="nmm-rm-preset nmm-rm-preset-branch" data-preset="_branch"><strong>Use the map\'s branches</strong><span>' +
       esc(roots().reduce(function(a, r) { return a.concat(childrenOf(r.id).map(function(b) { return b.title; })); }, []).slice(0, 6).join(' · ') || 'Each main branch becomes a lane') + '</span></button>';
   $('nmm-rm-setup-cancel').style.display = rm ? '' : 'none';
+  $('nmm-rm-reset').style.display = rm && editable ? '' : 'none';
 }
 $('nmm-rm-presets').addEventListener('click', function(e) {
   const b = e.target.closest('[data-preset]');
@@ -145,6 +146,18 @@ $('nmm-rm-presets').addEventListener('click', function(e) {
   else applyPreset(b.dataset.preset);
 });
 $('nmm-rm-setup-cancel').addEventListener('click', function() { render(); });
+// Start over: forget the lanes and every card's lane (dates stay), then choose lanes again
+$('nmm-rm-reset').addEventListener('click', async function() {
+  if (!confirm('Reset this roadmap? Every card goes back to Unsorted and you choose the lanes again. Dates, stages and the mind map stay as they are.')) return;
+  try {
+    const saved = await NMMCore.patchMap(map.id, function(m) {
+      m.nodes.forEach(function(n) { delete n.lane; });
+      delete m.settings.roadmap;
+    });
+    map = saved; nodes = saved.nodes || []; rm = null;
+    render();
+  } catch (err) { alert('Could not reset the roadmap: ' + err.message); }
+});
 $('nmm-rm-lanes-btn').addEventListener('click', function() { if (editable) { showSetup(true); $('nmm-rm-scroll').style.display = 'none'; $('nmm-rm-tray').style.display = 'none'; } });
 
 $('nmm-rm-group').addEventListener('click', function(e) {

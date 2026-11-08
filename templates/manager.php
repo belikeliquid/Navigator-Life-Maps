@@ -12,7 +12,7 @@
         <line x1="2" y1="14" x2="8" y2="14" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
         <line x1="20" y1="14" x2="26" y2="14" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-      <span class="nmm-logo-text">NAVIGATOR MAPS</span>
+      <span class="nmm-logo-text">LIFE MAPS</span>
     </div>
     <span class="nmm-sep"></span>
     <?php NMM_Shortcodes::view_tabs( '' ); ?>
@@ -23,6 +23,7 @@
     <?php endif; ?>
     <?php if ( is_user_logged_in() ) : ?>
     <button class="nmm-btn nmm-btn-keep" id="nmm-logout-btn" style="opacity:0.8">Log out</button>
+    <button type="button" class="nmm-btn nmm-btn-keep nmm-help-btn" title="Help: how Life Maps works" aria-label="Help">?</button>
     <?php endif; ?>
   </div>
 
@@ -188,7 +189,7 @@
       <div class="nmm-field" id="nmm-share-people-wrap" style="display:none">
         <label>Shared with</label>
         <ul class="nmm-share-people" id="nmm-share-people"></ul>
-        <p class="nmm-new-hint">An address with no account stays on this list but gives no access.</p>
+        <p class="nmm-new-hint">Invitations work for 14 days. Remove an address to take away access, or to cancel an invitation.</p>
       </div>
       <div class="nmm-field">
         <label>View-only link</label>

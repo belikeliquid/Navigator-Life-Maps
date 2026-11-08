@@ -18,6 +18,8 @@
       <button type="button" class="nmm-btn nmm-btn-keep" id="nmm-rm-lanes-btn" title="Choose a set of lanes">Lanes…</button>
       <button type="button" class="nmm-btn nmm-btn-keep" id="nmm-rm-today">Today</button>
     </div>
+    <span class="nmm-toolbar-gap"></span>
+    <button type="button" class="nmm-btn nmm-btn-keep nmm-help-btn" title="Help: how Life Maps works" aria-label="Help">?</button>
   </div>
   <div id="nmm-rm-picker-menu" class="nmm-menu" role="menu"></div>
   <div id="nmm-rm-lane-menu" class="nmm-menu" role="menu"></div>
@@ -30,7 +32,10 @@
       <h2>How should this roadmap be organized?</h2>
       <p>Lanes are the rows of the roadmap. Pick a set of phases to start from (you can rename, add, move and remove them later), or use the map's own main branches.</p>
       <div id="nmm-rm-presets" class="nmm-rm-presets"></div>
-      <button type="button" class="nmm-btn" id="nmm-rm-setup-cancel" style="display:none">Keep the current lanes</button>
+      <div class="nmm-rm-setup-actions">
+        <button type="button" class="nmm-btn" id="nmm-rm-setup-cancel" style="display:none">Keep the current lanes</button>
+        <button type="button" class="nmm-btn nmm-rm-reset" id="nmm-rm-reset" style="display:none" title="Every card goes back to Unsorted and you choose the lanes again">↺ Reset roadmap</button>
+      </div>
     </section>
 
     <!-- Cards without dates; drag one onto a lane (or tap it) to schedule it -->

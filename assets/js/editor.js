@@ -60,7 +60,12 @@ const nextUp = NMMCore.notice({
   root: root, key: 'map_' + MAP_ID,
   label: function(it) { return it.days < 0 ? 'Needs attention' : 'Next up'; },
   detail: function(it) { return it.when + ' · ' + NMMCore.longDate(it.n.date); },
-  onOpen: function(it) {
+  onOpen: function(it) { openCard(it.n); }
+});
+nextUp.open = openCard;
+function openCard(n) {
+  const it = { n: n };
+  {
     let p = find(it.n.parent), opened = false;
     while (p) { if (p.collapsed) { p.collapsed = false; opened = true; } p = find(p.parent); }
     selectedId = it.n.id;
@@ -69,7 +74,7 @@ const nextUp = NMMCore.notice({
     C.centerOn(it.n.id);
     nmmOpenNodeModal(it.n.id);
   }
-});
+}
 
 // ============================================================
 // UNDO
@@ -132,6 +137,12 @@ async function loadMap() {
   }
   C.autoCenter();
   if (changed) markDirty();
+  // Opened from the maps list's Next up: show that card and open it
+  const card = new URLSearchParams(location.search).get('card');
+  if (card && find(card)) {
+    history.replaceState(null, '', NMM.editorUrl + '?map_id=' + MAP_ID);
+    setTimeout(function() { nextUp.open(find(card)); }, 350);
+  }
 }
 
 // Map picker: rename this map, or jump to another (the list loads the first time it opens)
@@ -973,6 +984,12 @@ window.nmmOpenPromptExport = function() {
   $('nmm-prompt-modal').classList.add('open');
 };
 window.nmmUpdatePrompt = function() { $('nmm-prompt-text').value = promptText($('nmm-prompt-purpose').value); };
+// Sending straight to Basecamp is planned; until then the button says so and points to the prompt
+window.nmmSendToBasecamp = function() {
+  const p = $('nmm-prompt-soon');
+  p.innerHTML = '<strong>Coming soon.</strong> Check back shortly. For now, choose <em>Create a Basecamp project</em> above, then copy the prompt into Claude or Basecamp.';
+  p.hidden = false;
+};
 window.nmmClosePromptExport = function() { $('nmm-prompt-modal').classList.remove('open'); };
 window.nmmCopyPrompt = function() {
   const ta = $('nmm-prompt-text'), btn = $('nmm-prompt-copy');

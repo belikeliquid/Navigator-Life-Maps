@@ -22,6 +22,9 @@
     <p class="nmm-landing-motif">In the ocean of life, you are the navigator.</p>
   </div>
 
+  <!-- Shown when the page is opened from an invitation email (landing.js) -->
+  <div id="nmm-invite-banner" class="nmm-invite-banner" role="status" style="display:none"></div>
+
   <!-- Two columns: Login + Signup -->
   <div class="nmm-landing-cols">
 
@@ -63,7 +66,7 @@
         <input type="password" id="nmm-signup-pass" class="nmm-input" autocomplete="new-password" />
       </div>
       <?php if ( get_option('nmm_invite_code') ) : ?>
-      <div class="nmm-field">
+      <div class="nmm-field" id="nmm-signup-invite-field">
         <label>Invitation code</label>
         <input type="text" id="nmm-signup-invite" class="nmm-input" autocomplete="off" autocapitalize="none" spellcheck="false" />
       </div>
