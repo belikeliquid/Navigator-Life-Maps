@@ -436,6 +436,10 @@ wrap.addEventListener('touchend', function() { panState = null; });
 // ============================================================
 function toggleCollapse(id) { const n = find(id); if (n) { pushUndo(); n.collapsed = !n.collapsed; markDirty(); C.render(); } }
 window.nmmExpandAll   = function() { pushUndo(); nodes.forEach(function(n) { n.collapsed = false; }); markDirty(); C.render(); };
+window.nmmAnimate = function() {
+  if (document.getElementById('nmm-editor').classList.contains('nmm-list-mode')) document.querySelector('.nmm-view-switch [data-view="map"]').click();
+  C.animate({ restore: true });
+};
 window.nmmCollapseAll = function() { pushUndo(); nodes.forEach(function(n) { if (C.hasChildren(n.id)) n.collapsed = true; }); markDirty(); C.render(); };
 window.nmmCenter      = function() { C.autoCenter(); };
 

@@ -35,7 +35,8 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
   <div id="nmm-more-menu" class="nmm-menu" role="menu">
     <button type="button" role="menuitem" class="nmm-narrow-only" onclick="nmmCenter()">⊙ Center</button>
     <button type="button" role="menuitem" class="nmm-narrow-only" onclick="nmmExpandAll()">Expand all</button>
-    <button type="button" role="menuitem" class="nmm-narrow-only nmm-menu-split" onclick="nmmCollapseAll()">Collapse</button>
+    <button type="button" role="menuitem" class="nmm-narrow-only" onclick="nmmCollapseAll()">Collapse</button>
+    <button type="button" role="menuitem" class="nmm-menu-split" onclick="nmmAnimate()"><span>▶ Animate<small>Reveal the map one card at a time</small></span></button>
     <button type="button" role="menuitem" onclick="nmmOpenSettings()">Settings</button>
     <button type="button" role="menuitem" onclick="nmmOpenOutlineImport()">📋 Import an outline</button>
     <button type="button" role="menuitem" onclick="nmmOpenGCalModal()">→ Google Calendar</button>
@@ -66,6 +67,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button onclick="nmmCenter();nmmToggleMobileMenu()">⊙ Re-center</button>
     <button onclick="nmmExpandAll();nmmToggleMobileMenu()">Expand all</button>
     <button onclick="nmmCollapseAll();nmmToggleMobileMenu()">Collapse all</button>
+    <button onclick="nmmToggleMobileMenu();nmmAnimate()">▶ Animate</button>
     <button onclick="nmmOpenSettings();nmmToggleMobileMenu()">Settings</button>
     <button onclick="nmmOpenOutlineImport();nmmToggleMobileMenu()">📋 Import</button>
     <button onclick="nmmOpenGCalModal();nmmToggleMobileMenu()">→ GCal</button>

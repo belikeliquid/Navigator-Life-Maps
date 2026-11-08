@@ -830,6 +830,27 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-mobile-menu-btn { display: none; }
 
 /* ============================================================
+   ANIMATE — cards appear one at a time (canvas.js animate())
+   ============================================================ */
+@keyframes nmm-reveal { from { opacity: 0; transform: translateY(12px) scale(0.94); } to { opacity: 1; transform: none; } }
+@keyframes nmm-reveal-line { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.nmm-node.nmm-reveal { animation: nmm-reveal 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; box-shadow: 0 0 0 4px rgba(11,191,191,0.25), 0 10px 26px rgba(1,28,47,0.18); }
+.nmm-node.nmm-reveal .nmm-node-sub span { display: block; animation: nmm-reveal-line 0.4s ease-out both; }
+.nmm-anim-bar {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 950;
+  display: flex; align-items: center; gap: 4px; padding: 5px 6px 5px 14px;
+  background: var(--nmm-navy); border-radius: 999px; box-shadow: 0 12px 30px rgba(1,28,47,0.3); font-family: var(--nmm-font);
+}
+.nmm-anim-count { margin-right: 6px; font-size: 13px; color: rgba(255,255,255,0.75); white-space: nowrap; min-width: 52px; }
+.nmm-app .nmm-anim-bar button {
+  padding: 6px 12px; border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; background: transparent; cursor: pointer;
+  font-family: var(--nmm-font); font-size: 13px; font-weight: 500; color: white; white-space: nowrap;
+}
+.nmm-app .nmm-anim-bar button:hover { background: rgba(255,255,255,0.1); }
+.nmm-app .nmm-anim-bar [data-act="stop"] { background: var(--nmm-teal); border-color: var(--nmm-teal); color: var(--nmm-navy); font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .nmm-node.nmm-reveal, .nmm-node.nmm-reveal .nmm-node-sub span { animation: none; } }
+
+/* ============================================================
    HOVER CARD — the whole card in a readable window (mouse only)
    ============================================================ */
 .nmm-hovercard {

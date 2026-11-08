@@ -269,6 +269,12 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.9.1 — Animate <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        ▶ Animate (after Collapse in the share view, and in More in the editor) reveals the map one card at a time: each top-level branch in turn, then its cards one by one, with their notes fading in line by line. The view follows the newest card. A bar at the bottom counts the cards and has 2×, Skip to end and Stop; Escape or a click on the map also ends it. In the editor, collapsed branches are put back as they were afterwards.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.9.0 — Hover cards, next up, sorting, featured maps <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         On a computer, resting the mouse on a card in the mind map, Kanban or timeline opens it in a larger, easy to read window: title, date, stage, every note and where it sits in the map.<br>

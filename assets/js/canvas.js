@@ -7,7 +7,9 @@
  * Moving around: drag empty space or use the arrow keys (Shift for bigger steps).
  * Zoom: Ctrl/⌘ + scroll (and trackpad pinch), two-finger pinch on touch screens,
  * and the − / % / + / Fit buttons or the + / − keys. Node x, y stay in unzoomed canvas pixels;
- * toCanvas() turns a pointer position into those. */
+ * toCanvas() turns a pointer position into those.
+ * Animate: animate() reveals the map card by card, each top-level branch in turn, down through its
+ * cards; a Stop / speed bar shows meanwhile, and Escape or a click on the map ends it. */
 (function() {
   const esc = NMMCore.esc;
   const LINE_STYLES = [
@@ -32,7 +34,9 @@
       while (n && n.parent) { d++; n = find(n.parent); }
       return d;
     }
+    let revealed = null, anim = null; // set while animating
     function isVisible(id) {
+      if (revealed && !revealed.has(id)) return false;
       const n = find(id);
       if (!n) return false;
       if (!n.parent) return true;
@@ -143,6 +147,100 @@
       wrap.scrollLeft = Math.max(0, (n.x + el.offsetWidth / 2) * zoom - wrap.clientWidth / 2);
       wrap.scrollTop  = Math.max(0, (n.y + el.offsetHeight / 2) * zoom - wrap.clientHeight / 2);
     }
+    // ---- Animate ----
+    const STILL = window.matchMedia('(prefers-reduced-motion: reduce)');
+    function readingOrder(list, parentId) {
+      return list.filter(function(n) { return (n.parent || null) === parentId; })
+        .sort(function(a, b) { return Math.round(a.y / 100) - Math.round(b.y / 100) || a.x - b.x; });
+    }
+    // Keep the newest card in view without jumping when it already is
+    function follow(el) {
+      const r = el.getBoundingClientRect(), w = wrap.getBoundingClientRect(), m = 60;
+      if (r.left >= w.left + m && r.right <= w.right - m && r.top >= w.top + m && r.bottom <= w.bottom - m) return;
+      glideTo(wrap.scrollLeft + (r.left + r.width / 2) - (w.left + w.width / 2),
+              wrap.scrollTop + (r.top + r.height / 2) - (w.top + w.height / 2));
+    }
+    // A short eased glide; a timer makes sure it lands even where animation frames don't run
+    let glide = null;
+    function glideTo(x, y) {
+      x = Math.max(0, Math.min(x, wrap.scrollWidth - wrap.clientWidth));
+      y = Math.max(0, Math.min(y, wrap.scrollHeight - wrap.clientHeight));
+      if (glide) { cancelAnimationFrame(glide.raf); clearTimeout(glide.end); }
+      if (STILL.matches) { wrap.scrollLeft = x; wrap.scrollTop = y; return; }
+      const x0 = wrap.scrollLeft, y0 = wrap.scrollTop, t0 = performance.now(), dur = 450;
+      glide = {};
+      (function frame(now) {
+        const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+        wrap.scrollLeft = x0 + (x - x0) * e; wrap.scrollTop = y0 + (y - y0) * e;
+        if (p < 1) glide.raf = requestAnimationFrame(frame);
+      })(t0);
+      glide.end = setTimeout(function() { cancelAnimationFrame(glide.raf); wrap.scrollLeft = x; wrap.scrollTop = y; glide = null; }, dur + 60);
+    }
+    // o.restore: put the collapsed flags back afterwards (the editor saves them); o.onStop()
+    function animate(o) {
+      o = o || {};
+      if (anim) stopAnimation();
+      const list = nodes(), ids = {};
+      list.forEach(function(n) { ids[n.id] = true; });
+      const order = [];
+      (function walk(items) {
+        items.forEach(function(n) { order.push(n); walk(readingOrder(list, n.id)); });
+      })(list.filter(function(n) { return !n.parent || !ids[n.parent]; })
+        .sort(function(a, b) { return (a._readonly ? 1 : 0) - (b._readonly ? 1 : 0) || a.y - b.y || a.x - b.x; }));
+      if (!order.length) return;
+
+      const saved = list.map(function(n) { return [n, n.collapsed]; });
+      list.forEach(function(n) { n.collapsed = false; });
+      revealed = new Set();
+      const bar = document.createElement('div');
+      bar.className = 'nmm-anim-bar'; bar.setAttribute('role', 'group'); bar.setAttribute('aria-label', 'Animation');
+      bar.innerHTML = '<span class="nmm-anim-count" aria-live="polite"></span>' +
+        '<button type="button" data-act="speed" title="Play faster">2×</button>' +
+        '<button type="button" data-act="skip" title="Show everything now">Skip to end</button>' +
+        '<button type="button" data-act="stop">■ Stop</button>';
+      wrap.parentNode.appendChild(bar);
+      anim = { i: 0, timer: null, speed: 1, bar: bar, saved: saved, o: o };
+      bar.addEventListener('click', function(e) {
+        const b = e.target.closest('[data-act]');
+        if (!b) return;
+        if (b.dataset.act === 'speed') { anim.speed = anim.speed === 1 ? 2 : 1; b.textContent = anim.speed === 1 ? '2×' : '1×'; b.title = anim.speed === 1 ? 'Play faster' : 'Normal speed'; }
+        else stopAnimation(b.dataset.act === 'stop');
+      });
+      render();
+
+      function step() {
+        const n = order[anim.i++];
+        revealed.add(n.id);
+        render();
+        const el = getEl(n.id);
+        if (el) {
+          el.classList.add('nmm-reveal');
+          el.querySelectorAll('.nmm-node-sub span').forEach(function(s, k) { s.style.animationDelay = (0.35 + k * 0.16) + 's'; });
+          follow(el);
+        }
+        bar.querySelector('.nmm-anim-count').textContent = anim.i + ' of ' + order.length;
+        if (anim.i >= order.length) { anim.timer = setTimeout(function() { stopAnimation(); }, 1200); return; }
+        const d = depth(n.id), subs = (n.subs || []).length;
+        const wait = (d === 0 ? 1100 : d === 1 ? 1000 : 750) + Math.min(subs, 5) * 160;
+        anim.timer = setTimeout(step, wait / anim.speed);
+      }
+      anim.timer = setTimeout(step, 300);
+    }
+    // stopped: the person ended it; either way everything is shown again
+    function stopAnimation() {
+      if (!anim) return;
+      clearTimeout(anim.timer);
+      anim.bar.remove();
+      revealed = null;
+      if (anim.o.restore) anim.saved.forEach(function(p) { p[0].collapsed = p[1]; });
+      const done = anim.o.onStop;
+      anim = null;
+      render();
+      if (done) done();
+    }
+    if (wrap) wrap.addEventListener('mousedown', function(e) { if (anim && !e.target.closest('.nmm-anim-bar')) stopAnimation(); }, true);
+    document.addEventListener('keydown', function(e) { if (anim && e.key === 'Escape') stopAnimation(); });
+
     function autoCenter() {
       setTimeout(centerNow, 300);
     }
@@ -305,7 +403,8 @@
     return {
       find: find, depth: depth, isVisible: isVisible, hasChildren: hasChildren, isDescendant: isDescendant,
       getEl: getEl, render: render, drawLines: drawLines, setSettings: setSettings, renderMotif: renderMotif,
-      autoCenter: autoCenter, centerOn: centerOn, exportPNG: exportPNG, loadLinkedIslands: loadLinkedIslands,
+      autoCenter: autoCenter, centerOn: centerOn, exportPNG: exportPNG,
+      animate: animate, stopAnimation: stopAnimation, isAnimating: function() { return !!anim; }, loadLinkedIslands: loadLinkedIslands,
       toCanvas: toCanvas, setZoom: setZoom, zoomToFit: zoomToFit
     };
   }

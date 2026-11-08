@@ -14,6 +14,7 @@ $share_key = isset($_GET['share']) ? sanitize_text_field($_GET['share']) : '';
       <button class="nmm-btn nmm-btn-primary nmm-btn-keep" id="nmm-view-copy" type="button" style="display:none" title="Make your own copy of this map to edit">Use this map</button>
       <button class="nmm-btn" onclick="nmmViewExpandAll()">Expand all</button>
       <button class="nmm-btn" onclick="nmmViewCollapseAll()">Collapse</button>
+      <button class="nmm-btn" id="nmm-view-animate" type="button" onclick="nmmViewAnimate()" title="Reveal the map one card at a time">▶ Animate</button>
       <button class="nmm-btn" onclick="nmmViewExportPNG()">Export PNG</button>
     </div>
   </div>

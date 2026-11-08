@@ -56,6 +56,12 @@ function showError() {
 window.nmmViewExpandAll   = function() { nodes.forEach(function(n) { n.collapsed = false; }); C.render(); };
 window.nmmViewCollapseAll = function() { nodes.forEach(function(n) { if (C.hasChildren(n.id)) n.collapsed = true; }); C.render(); };
 window.nmmViewExportPNG   = function() { C.exportPNG('mindmap_share.png'); };
+window.nmmViewAnimate     = function() {
+  const btn = document.getElementById('nmm-view-animate');
+  if (C.isAnimating()) { C.stopAnimation(); return; }
+  btn.textContent = '■ Stop';
+  C.animate({ onStop: function() { btn.textContent = '▶ Animate'; } });
+};
 
 loadMap();
 })();
