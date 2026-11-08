@@ -5,10 +5,9 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
 
   <div id="nmm-editor-toolbar" class="nmm-editor-toolbar">
     <a href="<?php echo home_url('/maps/'); ?>" class="nmm-btn nmm-btn-nav">← Maps</a>
-    <a href="<?php echo esc_url( home_url( '/kanban/?map_id=' . $map_id ) ); ?>" class="nmm-btn nmm-btn-kanban" title="This map as a Kanban board">⬡ Kanban</a>
-    <a href="<?php echo esc_url( home_url( '/timeline/?map_id=' . $map_id ) ); ?>" class="nmm-btn nmm-btn-kanban" title="This map on a timeline">◷ Timeline</a>
+    <button type="button" class="nmm-map-picker" id="nmm-map-picker" title="Rename this map or open another"><span id="nmm-map-title-display" class="nmm-map-title-display"></span><span aria-hidden="true">▾</span></button>
     <span class="nmm-sep"></span>
-    <span id="nmm-map-title-display" class="nmm-map-title-display" title="Click to rename"></span>
+    <?php NMM_Shortcodes::view_tabs( 'map', [ $map_id ] ); ?>
     <span class="nmm-sep"></span>
     <span class="nmm-harmony-group">
       <button class="nmm-btn nmm-btn-harmony" onclick="nmmHarmony()" title="Tidy the map in the chosen layout style">✦ Harmony</button>
@@ -17,18 +16,31 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button class="nmm-btn" id="nmm-undo-btn" onclick="nmmUndo()" title="Undo (Ctrl+Z)" disabled>↩ Undo</button>
     <span class="nmm-sep"></span>
     <button class="nmm-btn nmm-btn-primary" onclick="nmmAddRoot()">+ Island</button>
-    <button class="nmm-btn" onclick="nmmCenter()" title="Re-center map">⊙ Center</button>
-    <button class="nmm-btn" onclick="nmmExpandAll()">Expand all</button>
-    <button class="nmm-btn" onclick="nmmCollapseAll()">Collapse</button>
-    <span class="nmm-sep"></span>
-    <button class="nmm-btn" onclick="nmmOpenSettings()">Settings</button>
-    <button class="nmm-btn" onclick="nmmOpenOutlineImport()" title="Import an outline">📋 Import</button>
-    <button class="nmm-btn" onclick="nmmOpenGCalModal()">→ GCal</button>
-    <button class="nmm-btn" onclick="nmmExportPNG()">Export PNG</button>
-    <button class="nmm-btn" onclick="nmmOpenPromptExport()" title="The map as a text outline for Basecamp or AI">Export AI</button>
+    <button class="nmm-btn nmm-wide-only" onclick="nmmCenter()" title="Re-center map">⊙ Center</button>
+    <button class="nmm-btn nmm-wide-only" onclick="nmmExpandAll()">Expand all</button>
+    <button class="nmm-btn nmm-wide-only" onclick="nmmCollapseAll()">Collapse</button>
+    <span class="nmm-toolbar-gap"></span>
+    <button class="nmm-btn" id="nmm-more-btn" type="button">More ▾</button>
     <button class="nmm-btn nmm-btn-save" id="nmm-save-btn" onclick="nmmSave()">Save</button>
     <span id="nmm-save-status" class="nmm-save-status"></span>
     <button class="nmm-btn nmm-mobile-menu-btn" id="nmm-mobile-menu-btn" onclick="nmmToggleMobileMenu()">☰</button>
+  </div>
+
+  <!-- Menus opened from the toolbar; outside it so they aren't clipped -->
+  <div id="nmm-picker-menu" class="nmm-menu" role="menu">
+    <button type="button" role="menuitem" onclick="nmmRenameMap()">✎ Rename this map</button>
+    <div class="nmm-menu-label">Open another map</div>
+    <div id="nmm-picker-list"><span class="nmm-menu-note">Loading…</span></div>
+  </div>
+  <div id="nmm-more-menu" class="nmm-menu" role="menu">
+    <button type="button" role="menuitem" class="nmm-narrow-only" onclick="nmmCenter()">⊙ Center</button>
+    <button type="button" role="menuitem" class="nmm-narrow-only" onclick="nmmExpandAll()">Expand all</button>
+    <button type="button" role="menuitem" class="nmm-narrow-only nmm-menu-split" onclick="nmmCollapseAll()">Collapse</button>
+    <button type="button" role="menuitem" onclick="nmmOpenSettings()">Settings</button>
+    <button type="button" role="menuitem" onclick="nmmOpenOutlineImport()">📋 Import an outline</button>
+    <button type="button" role="menuitem" onclick="nmmOpenGCalModal()">→ Google Calendar</button>
+    <button type="button" role="menuitem" onclick="nmmExportPNG()">Export PNG</button>
+    <button type="button" role="menuitem" onclick="nmmOpenPromptExport()">Export AI <small>Text outline for Basecamp or AI</small></button>
   </div>
 
   <!-- Layout style menu (opened from the ▾ next to Harmony; outside the toolbar so it isn't clipped) -->

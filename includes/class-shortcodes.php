@@ -19,6 +19,33 @@ class NMM_Shortcodes {
         return ob_get_clean();
     }
 
+    // Map ids from ?map_id=1,2 (Kanban and timeline take several)
+    public static function ids_from_url() {
+        if ( empty( $_GET['map_id'] ) ) return [];
+        return array_values( array_filter( array_map( 'intval', explode( ',', sanitize_text_field( wp_unslash( $_GET['map_id'] ) ) ) ) ) );
+    }
+
+    // The view tabs every app page shares, always in this order and place, so they can be found
+    // without looking. $current: map / kanban / timeline, or '' on the maps list. $ids: the maps shown.
+    // NMMCore.setViewTabs() keeps the links in step when the map filter changes.
+    public static function view_tabs( $current, $ids = [] ) {
+        $ids = array_values( array_filter( array_map( 'intval', (array) $ids ) ) );
+        $q   = $ids ? '?map_id=' . implode( ',', $ids ) : '';
+        $tabs = [
+            'map'      => [ '◈', 'Mind Map', count( $ids ) === 1 ? home_url( '/map-editor/?map_id=' . $ids[0] ) : '' ],
+            'kanban'   => [ '⬡', 'Kanban',   home_url( '/kanban/' . $q ) ],
+            'timeline' => [ '◷', 'Timeline', home_url( '/timeline/' . $q ) ],
+        ];
+        echo '<nav class="nmm-view-tabs" aria-label="Views">';
+        foreach ( $tabs as $key => $t ) {
+            $attrs = 'class="nmm-vtab' . ( $key === $current ? ' active' : '' ) . '" data-view="' . $key . '"' . ( $key === $current ? ' aria-current="page"' : '' );
+            if ( $t[2] ) echo '<a ' . $attrs . ' href="' . esc_url( $t[2] ) . '">';
+            else echo '<a ' . $attrs . ' aria-disabled="true" title="Open one map to see its mind map">';
+            echo '<span aria-hidden="true">' . $t[0] . '</span> ' . $t[1] . '</a>';
+        }
+        echo '</nav>';
+    }
+
     // [navigator_maps] — landing if logged out, manager if logged in
     public static function maps_manager( $atts ) {
         return self::render( is_user_logged_in() ? 'manager' : 'landing' );

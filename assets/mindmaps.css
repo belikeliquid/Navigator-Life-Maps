@@ -830,6 +830,79 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-mobile-menu-btn { display: none; }
 
 /* ============================================================
+   SHARED TOOLBAR — 1) where am I: ← Maps + map picker, 2) view tabs, always
+   Mind Map · Kanban · Timeline in the same place, 3) this view's tools, then More and Save
+   ============================================================ */
+.nmm-view-tabs {
+  display: inline-flex; flex-shrink: 0; gap: 2px; padding: 3px;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; background: rgba(255,255,255,0.04);
+}
+.nmm-app .nmm-vtab {
+  display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 999px;
+  font-family: var(--nmm-font); font-size: 13px; font-weight: 500; line-height: 1; white-space: nowrap;
+  color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;
+}
+.nmm-app a.nmm-vtab[href]:hover { background: rgba(255,255,255,0.1); color: white; }
+.nmm-app .nmm-vtab.active { background: var(--nmm-teal); color: var(--nmm-navy); font-weight: 600; cursor: default; }
+.nmm-app .nmm-vtab[aria-disabled="true"] { opacity: 0.4; cursor: not-allowed; }
+.nmm-toolbar-gap { flex: 1 0 8px; }
+.nmm-app .nmm-map-picker {
+  display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; min-width: 0;
+  padding: 4px 8px; border: 0; border-radius: 8px; background: transparent; color: white; cursor: pointer;
+  font-family: var(--nmm-font); font-size: 13px;
+}
+.nmm-app .nmm-map-picker:hover { background: rgba(255,255,255,0.1); }
+.nmm-map-picker .nmm-map-title-display { padding: 0; min-width: 0; cursor: pointer; }
+.nmm-map-picker .nmm-map-title-display:hover { background: none; }
+.nmm-menu {
+  display: none; position: fixed; z-index: 1000; min-width: 220px; max-width: min(320px, calc(100vw - 16px));
+  max-height: 70vh; overflow-y: auto; padding: 6px; background: var(--nmm-white);
+  border-radius: 12px; box-shadow: 0 12px 30px rgba(1,28,47,0.22); font-family: var(--nmm-font);
+}
+.nmm-menu.open { display: block; }
+.nmm-app .nmm-menu button, .nmm-app .nmm-menu a {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px; margin: 0; border: 0; border-radius: 8px;
+  background: transparent; text-align: left; text-decoration: none; cursor: pointer;
+  font-family: var(--nmm-font); font-size: 14px; font-weight: 500; color: var(--nmm-navy);
+}
+.nmm-app .nmm-menu button:hover, .nmm-app .nmm-menu a:hover { background: var(--nmm-sand2); }
+.nmm-menu small { margin-left: auto; padding-left: 8px; font-size: 11.5px; color: var(--nmm-light); font-weight: 400; }
+.nmm-menu-label { padding: 10px 12px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nmm-light); border-top: 1px solid var(--nmm-border); margin-top: 4px; }
+.nmm-menu-note { display: block; padding: 8px 12px; font-size: 13px; color: var(--nmm-light); }
+.nmm-menu-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+/* Narrower screens: Center, Expand all and Collapse move into More so Save stays in view */
+.nmm-app .nmm-menu .nmm-narrow-only { display: none; }
+@media (max-width: 1200px) {
+  .nmm-editor-toolbar .nmm-wide-only { display: none; }
+  .nmm-app .nmm-menu .nmm-narrow-only { display: flex; }
+  .nmm-menu .nmm-menu-split { border-bottom: 1px solid var(--nmm-border); border-radius: 8px 8px 0 0; margin-bottom: 4px; }
+}
+.nmm-tl-tools { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.nmm-tl-tools label { font-size: 10px; color: rgba(255,255,255,0.6); letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Phones and small tablets: row 1 = ← Maps, picker and the few kept buttons; row 2 = view tabs */
+@media (max-width: 768px) {
+  .nmm-editor-toolbar { flex-wrap: wrap; height: auto; min-height: 60px; padding: 8px 10px; row-gap: 8px; overflow: visible; }
+  .nmm-editor-toolbar .nmm-btn-keep { display: inline-flex; }
+  .nmm-editor-toolbar .nmm-view-tabs { order: 10; flex: 1 0 100%; }
+  .nmm-editor-toolbar .nmm-vtab { flex: 1; justify-content: center; }
+  .nmm-editor-toolbar .nmm-tl-tools { order: 11; flex: 1 0 100%; flex-wrap: wrap; }
+  .nmm-editor-toolbar .nmm-toolbar-gap { display: none; }
+  .nmm-editor-toolbar .nmm-btn-save { margin-left: auto; }
+  .nmm-editor-toolbar .nmm-harmony-group { display: none; } /* in the ☰ menu */
+  .nmm-editor-toolbar .nmm-save-status:empty { display: none; }
+  .nmm-editor-toolbar .nmm-kb-filter-wrap { min-width: 0; flex: 0 1 auto; }
+  .nmm-editor-toolbar .nmm-kb-filter-wrap .nmm-btn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .nmm-manager .nmm-editor-toolbar .nmm-map-count { margin-left: auto; }
+  .nmm-canvas-wrap { height: calc(100vh - 112px); }
+  .admin-bar .nmm-canvas-wrap { height: calc(100vh - 158px); }
+}
+@media (max-width: 480px) {
+  .nmm-manager .nmm-logo-text { display: none; }
+  .nmm-map-picker .nmm-map-title-display { max-width: 130px; }
+}
+
+/* ============================================================
    PHONES — list view of a map (outline.js) and full-screen dialogs
    ============================================================ */
 .nmm-view-switch, .nmm-outline { display: none; }
@@ -845,6 +918,19 @@ body:has(.nmm-app) .entry-content > *:first-child {
   .nmm-app .nmm-view-switch button.active { background: var(--nmm-navy); color: white; }
   .nmm-list-mode .nmm-canvas-wrap, .nmm-list-mode .nmm-zoom, .nmm-list-mode .nmm-motif { display: none !important; }
   .nmm-list-mode .nmm-outline { display: block; padding: 12px 16px 48px; }
+}
+/* The theme styles every ul/li inside page content; these selectors outrank .entry-content-wrapper ul */
+.nmm-app .nmm-outline ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.nmm-app .nmm-outline li { margin: 0; padding: 0; }
+.nmm-app .nmm-outline ul.nmm-ol-subs { list-style: disc outside; margin: 6px 0 0; padding-left: 18px; }
+.nmm-app .nmm-outline .nmm-ol-subs li { padding: 1px 0; }
+.nmm-app .nmm-outline .nmm-ol-list .nmm-ol-list { margin: 6px 0 2px 14px; padding-left: 10px; }
+.nmm-app .nmm-outline .nmm-ol-item + .nmm-ol-item { margin-top: 8px; }
+.nmm-app .nmm-ol-head h2 { text-transform: none; }
+@media (max-width: 700px) {
+  .nmm-view-header { flex-wrap: wrap; height: auto; min-height: 56px; padding: 8px 16px; gap: 8px 12px; }
+  .nmm-view-actions { max-width: 100%; overflow-x: auto; }
+  .nmm-list-mode .nmm-view-actions { display: none; } /* expand, collapse and PNG act on the canvas */
 }
 .nmm-ol-section { margin-bottom: 22px; }
 .nmm-ol-head {
@@ -950,7 +1036,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   /* Show hamburger, hide most toolbar buttons */
   .nmm-mobile-menu-btn { display: inline-flex; }
   .nmm-editor-toolbar .nmm-sep,
-  .nmm-editor-toolbar .nmm-btn:not(.nmm-btn-nav):not(.nmm-btn-save):not(.nmm-mobile-menu-btn):not(#nmm-undo-btn) {
+  .nmm-editor-toolbar .nmm-btn:not(.nmm-btn-nav):not(.nmm-btn-save):not(.nmm-mobile-menu-btn):not(#nmm-undo-btn):not(.nmm-btn-keep) {
     display: none;
   }
 
@@ -997,7 +1083,6 @@ body:has(.nmm-app) .entry-content > *:first-child {
 }
 
 @media (max-width: 480px) {
-  .nmm-map-title-display { display: none; }
   .nmm-modal-actions { flex-wrap: wrap; }
   .nmm-modal-actions button { min-width: calc(50% - 4px); }
 }

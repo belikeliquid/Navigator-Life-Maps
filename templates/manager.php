@@ -15,15 +15,14 @@
       <span class="nmm-logo-text">NAVIGATOR MAPS</span>
     </div>
     <span class="nmm-sep"></span>
-    <a href="<?php echo home_url('/kanban/'); ?>" class="nmm-btn nmm-btn-kanban">⬡ Kanban</a>
-    <a href="<?php echo home_url('/timeline/'); ?>" class="nmm-btn nmm-btn-kanban">◷ Timeline</a>
-    <span style="flex:1"></span>
+    <?php NMM_Shortcodes::view_tabs( '' ); ?>
+    <span class="nmm-toolbar-gap"></span>
     <?php if ( current_user_can('nmm_edit_maps') || current_user_can('edit_posts') || current_user_can('manage_options') ) : ?>
     <span id="nmm-map-count" class="nmm-map-count" style="display:none"></span>
-    <button class="nmm-btn nmm-btn-primary" id="nmm-new-map-btn">+ New Map</button>
+    <button class="nmm-btn nmm-btn-primary nmm-btn-keep" id="nmm-new-map-btn">+ New Map</button>
     <?php endif; ?>
     <?php if ( is_user_logged_in() ) : ?>
-    <button class="nmm-btn" id="nmm-logout-btn" style="opacity:0.8">Log out</button>
+    <button class="nmm-btn nmm-btn-keep" id="nmm-logout-btn" style="opacity:0.8">Log out</button>
     <?php endif; ?>
   </div>
 

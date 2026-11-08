@@ -49,14 +49,7 @@ function updateLinks() {
   const all = selectedMapIds.length === allMaps.length;
   const ids = all ? [] : selectedMapIds;
   history.replaceState(null, '', NMMCore.pageUrl(NMM.kanbanUrl, ids));
-  $('nmm-kb-timeline-link').href = NMMCore.pageUrl(NMM.timelineUrl, ids);
-  const mapLink = $('nmm-kb-map-link');
-  if (selectedMapIds.length === 1) {
-    mapLink.href = NMM.editorUrl + '?map_id=' + selectedMapIds[0];
-    mapLink.style.display = '';
-  } else {
-    mapLink.style.display = 'none';
-  }
+  NMMCore.setViewTabs(ids, selectedMapIds);
 }
 
 function selectedNodes() {

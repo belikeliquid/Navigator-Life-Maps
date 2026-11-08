@@ -84,6 +84,45 @@
 
   // Only cards marked as Kanban tasks appear on the board. Cards saved before the
   // checkbox existed have no `task` field: a tag made them a task.
+  // Keep the shared view tabs pointing at the maps on screen. linkIds: [] means all maps;
+  // shownIds: the maps actually showing, so Mind Map works whenever exactly one is.
+  function setViewTabs(linkIds, shownIds) {
+    shownIds = shownIds || linkIds;
+    document.querySelectorAll('.nmm-view-tabs .nmm-vtab').forEach(function(a) {
+      const v = a.dataset.view;
+      if (v === 'map') {
+        if (shownIds.length === 1) {
+          a.href = NMM.editorUrl + '?map_id=' + shownIds[0]; a.removeAttribute('aria-disabled'); a.removeAttribute('title');
+        } else if (!a.classList.contains('active')) {
+          a.removeAttribute('href'); a.setAttribute('aria-disabled', 'true');
+          a.title = shownIds.length ? 'Pick one map to open its mind map' : 'Open one map to see its mind map';
+        }
+      } else {
+        a.href = pageUrl(v === 'kanban' ? NMM.kanbanUrl : NMM.timelineUrl, linkIds);
+      }
+    });
+  }
+
+  // A menu that opens under its button (fixed, so toolbars can't clip it) and closes on a pick,
+  // a click elsewhere or Escape. onOpen runs each time it opens.
+  function dropdown(button, menu, onOpen) {
+    button.setAttribute('aria-haspopup', 'true'); button.setAttribute('aria-expanded', 'false');
+    function close() { menu.classList.remove('open'); button.setAttribute('aria-expanded', 'false'); }
+    button.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (menu.classList.contains('open')) { close(); return; }
+      document.querySelectorAll('.nmm-menu.open').forEach(function(m) { m.classList.remove('open'); });
+      menu.classList.add('open'); button.setAttribute('aria-expanded', 'true');
+      if (onOpen) onOpen();
+      const r = button.getBoundingClientRect();
+      menu.style.top = r.bottom + 6 + 'px';
+      menu.style.left = Math.max(8, Math.min(r.left, innerWidth - menu.offsetWidth - 8)) + 'px';
+    });
+    document.addEventListener('click', function(e) { if (!menu.contains(e.target)) close(); });
+    menu.addEventListener('click', function(e) { if (e.target.closest('button, a')) close(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
+  }
+
   function isTask(n) { return n.task === undefined ? !!n.tag : !!n.task; }
 
   const TAG_COLORS = {
@@ -156,6 +195,7 @@
     api: api, refreshNonce: refreshNonce, patchNode: patchNode,
     mapIdsFromUrl: mapIdsFromUrl, pageUrl: pageUrl, esc: esc,
     loadHtml2Canvas: loadHtml2Canvas, mapFilter: mapFilter,
-    TAG_COLORS: TAG_COLORS, SEFIROT_LABELS: SEFIROT_LABELS, isTask: isTask
+    TAG_COLORS: TAG_COLORS, SEFIROT_LABELS: SEFIROT_LABELS, isTask: isTask,
+    setViewTabs: setViewTabs, dropdown: dropdown
   };
 })();

@@ -61,10 +61,7 @@ async function loadSelected() {
 function updateLinks() {
   const ids = selectedMapIds.length === allMaps.length ? [] : selectedMapIds;
   history.replaceState(null, '', NMMCore.pageUrl(NMM.timelineUrl, ids));
-  $('nmm-tl-kanban-link').href = NMMCore.pageUrl(NMM.kanbanUrl, ids);
-  const mapLink = $('nmm-tl-map-link');
-  mapLink.style.display = selectedMapIds.length === 1 ? '' : 'none';
-  if (selectedMapIds.length === 1) mapLink.href = NMM.editorUrl + '?map_id=' + selectedMapIds[0];
+  NMMCore.setViewTabs(ids, selectedMapIds);
 }
 
 $('nmm-tl-apply-btn').addEventListener('click', function() {

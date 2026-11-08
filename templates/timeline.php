@@ -1,32 +1,11 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <div id="nmm-timeline" class="nmm-app">
 
+  <!-- Toolbar: ← Maps, map picker | view tabs (same order on every page) | dates -->
   <div class="nmm-editor-toolbar">
     <a href="<?php echo esc_url( home_url( '/maps/' ) ); ?>" class="nmm-btn nmm-btn-nav">← Maps</a>
-    <div class="nmm-logo">
-      <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="14" r="12" stroke="#0BBFBF" stroke-width="1.5"/>
-        <circle cx="14" cy="14" r="3" fill="#0BBFBF"/>
-        <line x1="14" y1="2" x2="14" y2="8" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
-        <line x1="14" y1="20" x2="14" y2="26" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
-        <line x1="2" y1="14" x2="8" y2="14" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
-        <line x1="20" y1="14" x2="26" y2="14" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-      <span class="nmm-logo-text">NAVIGATOR TIMELINE</span>
-    </div>
-    <span class="nmm-sep"></span>
-    <div class="nmm-tl-date-wrap">
-      <label style="font-size:10px;color:rgba(255,255,255,0.6);letter-spacing:0.06em;text-transform:uppercase">From</label>
-      <input type="date" id="nmm-tl-start" class="nmm-tl-date-input" />
-    </div>
-    <div class="nmm-tl-date-wrap">
-      <label style="font-size:10px;color:rgba(255,255,255,0.6);letter-spacing:0.06em;text-transform:uppercase">To</label>
-      <input type="date" id="nmm-tl-end" class="nmm-tl-date-input" />
-    </div>
-    <button class="nmm-btn nmm-btn-primary" id="nmm-tl-apply-btn">Apply</button>
-    <span class="nmm-sep"></span>
     <div class="nmm-kb-filter-wrap" id="nmm-tl-filter-wrap">
-      <button class="nmm-btn" id="nmm-tl-filter-btn">⊞ All maps ▾</button>
+      <button class="nmm-btn nmm-btn-keep" id="nmm-tl-filter-btn">⊞ All maps ▾</button>
       <div class="nmm-kb-filter-panel" id="nmm-tl-filter-panel" style="display:none">
         <div class="nmm-kb-filter-actions">
           <button data-select="all">Select all</button>
@@ -35,8 +14,20 @@
         <div id="nmm-tl-filter-list"></div>
       </div>
     </div>
-    <a href="#" id="nmm-tl-map-link" class="nmm-btn nmm-btn-kanban" style="display:none" title="Open this map">◈ Mind Map</a>
-    <a href="<?php echo esc_url( home_url( '/kanban/' ) ); ?>" id="nmm-tl-kanban-link" class="nmm-btn nmm-btn-kanban">⬡ Kanban</a>
+    <span class="nmm-sep"></span>
+    <?php NMM_Shortcodes::view_tabs( 'timeline', NMM_Shortcodes::ids_from_url() ); ?>
+    <span class="nmm-sep"></span>
+    <div class="nmm-tl-tools">
+      <div class="nmm-tl-date-wrap">
+        <label for="nmm-tl-start">From</label>
+        <input type="date" id="nmm-tl-start" class="nmm-tl-date-input" />
+      </div>
+      <div class="nmm-tl-date-wrap">
+        <label for="nmm-tl-end">To</label>
+        <input type="date" id="nmm-tl-end" class="nmm-tl-date-input" />
+      </div>
+      <button class="nmm-btn nmm-btn-primary nmm-btn-keep" id="nmm-tl-apply-btn">Apply</button>
+    </div>
   </div>
 
   <!-- Timeline canvas -->

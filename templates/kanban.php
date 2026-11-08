@@ -1,24 +1,11 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <div id="nmm-kanban" class="nmm-app">
 
-  <!-- Header toolbar — matches editor style exactly -->
+  <!-- Toolbar: ← Maps, map picker | view tabs (same order on every page) -->
   <div class="nmm-editor-toolbar">
     <a href="<?php echo esc_url( home_url( '/maps/' ) ); ?>" class="nmm-btn nmm-btn-nav">← Maps</a>
-    <div class="nmm-logo">
-      <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="14" r="12" stroke="#0BBFBF" stroke-width="1.5"/>
-        <circle cx="14" cy="14" r="3" fill="#0BBFBF"/>
-        <line x1="14" y1="2" x2="14" y2="8" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
-        <line x1="14" y1="20" x2="14" y2="26" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
-        <line x1="2" y1="14" x2="8" y2="14" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
-        <line x1="20" y1="14" x2="26" y2="14" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-      <span class="nmm-logo-text">NAVIGATOR KANBAN</span>
-    </div>
-    <span class="nmm-sep"></span>
-    <!-- Multi-select map filter -->
     <div class="nmm-kb-filter-wrap" id="nmm-kb-filter-wrap">
-      <button class="nmm-btn" id="nmm-kb-filter-btn">⊞ All maps ▾</button>
+      <button class="nmm-btn nmm-btn-keep" id="nmm-kb-filter-btn">⊞ All maps ▾</button>
       <div class="nmm-kb-filter-panel" id="nmm-kb-filter-panel" style="display:none">
         <div class="nmm-kb-filter-actions">
           <button data-select="all">Select all</button>
@@ -27,8 +14,8 @@
         <div id="nmm-kb-filter-list"></div>
       </div>
     </div>
-    <a href="#" id="nmm-kb-map-link" class="nmm-btn nmm-btn-kanban" style="display:none" title="Open this map">◈ Mind Map</a>
-    <a href="<?php echo esc_url( home_url( '/timeline/' ) ); ?>" id="nmm-kb-timeline-link" class="nmm-btn nmm-btn-kanban">◷ Timeline</a>
+    <span class="nmm-sep"></span>
+    <?php NMM_Shortcodes::view_tabs( 'kanban', NMM_Shortcodes::ids_from_url() ); ?>
   </div>
 
   <!-- Kanban body -->

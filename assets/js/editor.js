@@ -87,12 +87,7 @@ async function loadMap() {
   const arrange = new URLSearchParams(location.search).has('arrange');
   if (new URLSearchParams(location.search).has('outline') || arrange) history.replaceState(null, '', NMM.editorUrl + '?map_id=' + MAP_ID);
 
-  const titleEl = $('nmm-map-title-display');
-  titleEl.textContent = mapTitle;
-  titleEl.onclick = function() {
-    const t = prompt('Rename map:', mapTitle);
-    if (t && t.trim()) { mapTitle = t.trim(); this.textContent = mapTitle; markDirty(); }
-  };
+  $('nmm-map-title-display').textContent = mapTitle;
 
   C.setSettings(settings);
   showLayoutStyle();
@@ -108,6 +103,24 @@ async function loadMap() {
   C.autoCenter();
   if (changed) markDirty();
 }
+
+// Map picker: rename this map, or jump to another (the list loads the first time it opens)
+window.nmmRenameMap = function() {
+  const t = prompt('Rename map:', mapTitle);
+  if (t && t.trim()) { mapTitle = t.trim(); $('nmm-map-title-display').textContent = mapTitle; markDirty(); }
+};
+let pickerLoaded = false;
+NMMCore.dropdown($('nmm-map-picker'), $('nmm-picker-menu'), function() {
+  if (pickerLoaded) return;
+  pickerLoaded = true;
+  api('GET', 'maps').then(function(maps) {
+    const others = (Array.isArray(maps) ? maps : []).filter(function(m) { return m.id !== MAP_ID; });
+    $('nmm-picker-list').innerHTML = others.length
+      ? others.map(function(m) { return '<a role="menuitem" href="' + NMM.editorUrl + '?map_id=' + m.id + '"><span class="nmm-menu-dot" style="background:' + NMMCore.esc(m.color || '#0BBFBF') + '"></span>' + NMMCore.esc(m.title) + '</a>'; }).join('')
+      : '<span class="nmm-menu-note">No other maps yet</span>';
+  }).catch(function() { pickerLoaded = false; $('nmm-picker-list').innerHTML = '<span class="nmm-menu-note">Could not load your maps</span>'; });
+});
+NMMCore.dropdown($('nmm-more-btn'), $('nmm-more-menu'));
 
 function renderEmpty() {
   $('nmm-canvas').innerHTML = '<div style="padding:60px;text-align:center;color:#999;font-size:18px;">Map not found. <a href="' + NMM.mapsUrl + '">Return to maps</a>.</div>';

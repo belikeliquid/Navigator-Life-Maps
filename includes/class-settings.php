@@ -269,6 +269,13 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.8.2 — One toolbar for every view <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Every page now shares one toolbar laid out the same way. On the left, where you are: ← Maps and the map picker (in the editor it shows the map name, to rename it or open another map). Next, the view tabs, always Mind Map · Kanban · Timeline in the same order and place, with the current one highlighted; Mind Map greys out while several maps are selected. Then the tools for that view, with the less used editor tools (Settings, Import, Google Calendar, Export PNG, Export AI) in a More menu, and Save at the far right. On phones the view tabs get their own row, and the timeline dates and Apply no longer disappear.<br>
+                        The site theme added bullet points and an indent to the phone list cards, and capitalised island headings; both are gone. On a phone the share view header wraps instead of running off the screen, and its canvas buttons hide while the list is showing.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.8.1 — Maps on phones <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         On a phone, a map now opens as a list: each island is a heading with its main branches as cards, and tapping a card opens the cards under it. Cards show their notes, date and Kanban stage, with Edit and + Card buttons. A List / Map switch shows the canvas instead, and the phone remembers the choice. The share view gets the same list, read only.<br>

@@ -42,6 +42,8 @@ Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. 
 
 **Saving.** Every write sends the whole node array. `nmm_rev` increments on each save. The editor sends `base_rev` and gets a 409 if the map changed since it loaded; it then merges card by card against `baseBody` (`mergeBodies()`) and saves again. On shared maps it polls every 15 s while idle and shows other people's saves; Kanban/timeline/maps list use `NMMCore.patchNode()` (fresh GET, then PUT, no `base_rev`). The editor autosaves 2 s after a change and keeps a localStorage draft (`nmm_draft_<id>`) until the save is confirmed.
 
+**Toolbar.** Every app page uses the same order: ← Maps and the map picker, then `NMM_Shortcodes::view_tabs($current, $ids)` (Mind Map · Kanban · Timeline, kept current by `NMMCore.setViewTabs()`), then that view's tools, More and Save. Menus use `NMMCore.dropdown()` and sit outside the toolbar. Below 768px most `.nmm-btn` in a toolbar hide (the ☰ menu has them); add `.nmm-btn-keep` to keep one.
+
 ## Gotchas
 
 - Enfold restyles `<button>`; app CSS targets `.nmm-app`.
