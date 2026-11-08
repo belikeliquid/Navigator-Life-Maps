@@ -3,13 +3,13 @@
  * Plugin Name: Navigator Mind Maps
  * Plugin URI: https://navigatorproject.org
  * Description: Visual mind mapping tool for Navigator Leadership Group. Multi-map manager, Kanban view, Tree of Life template, outline import, and WordPress user auth.
- * Version: 1.8.2
+ * Version: 1.9.0
  * Author: Liquid Media / Navigator Leadership Group
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'NMM_VERSION', '1.8.2' );
+define( 'NMM_VERSION', '1.9.0' );
 define( 'NMM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NMM_URL', plugin_dir_url( __FILE__ ) );
 

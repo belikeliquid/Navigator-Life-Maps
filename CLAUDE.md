@@ -15,7 +15,7 @@ WordPress plugin `navigator-mindmaps`, live on navigatorproject.org. Mind maps, 
 | `templates/*.php` | Markup only. No inline scripts |
 | `assets/js/core.js` | `NMMCore`: `api()`, `patchNode()`, nonce refresh, map-filter dropdown, `esc()`, tag colors, lazy html2canvas |
 | `assets/js/canvas.js` | `NMMCanvas.create()`: map rendering shared by the editor and the share view (nodes, lines, motif, PNG export) |
-| `assets/js/editor.js` | Editor: save/draft/conflict logic, drag, modals, outline import, .ics export, Export AI (`promptText()`: map → described text outline) |
+| `assets/js/editor.js` | Editor: save/draft/conflict logic, drag, modals, outline import, .ics export, Export Prompt (`promptText()`: map → described text outline) |
 | `assets/js/outline.js` | `NMMOutline.create()`: the phone list view (below 700px, List / Map switch) for the editor and share view; redrawn from the editor's wrapped `C.render` |
 | `assets/js/{view,kanban,timeline,manager,landing}.js` | One script per page |
 | `assets/mindmaps.css` | All styles. App UI uses `--nmm-font` (Fira Sans); map cards stay Barlow Condensed because their size drives saved layouts |
@@ -37,6 +37,10 @@ Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. 
 **Timeline.** `timeline.js` measures each card, then `fitDistance()` puts it in the nearest free spot above or below the line. Width follows the busiest stretch of dates (capped). Dates are whole-day numbers (`dayNum`). Cards outside the range are hidden and counted in the range note.
 
 **Sharing.** `nmm_editor` post meta, one row per user id, grants editing (and lets `get_maps` find shared maps). `nmm_people` (JSON `[{email, user}]`) keeps every address the owner typed, matched or not, so replies never reveal whether an account exists; only the owner sees it (`/maps/<id>/people`). Unmatched addresses never grant access later, because signup doesn't verify email. The share email goes out through WP cron (`nmm_share_email`). `format_map` adds `can_manage`, `people` (count, owner only), `shared_by` (for members) and `edited_by`; `share_key` is owner only.
+
+**Featured.** `nmm_featured` meta (admins set it through `featured` on PUT). `can_read()` lets any signed-in member GET a featured map; writing still needs `can_access()`. `/featured` lists them, `/maps/<id>/copy` makes a copy for the current user (limit applies, islands not copied). `format_map` adds `created`, `featured`, `can_edit`; the editor sends `can_edit: false` maps to the read-only view, which shows "Use this map".
+
+**Hover cards and notices.** `NMMCore.hoverCard()` (mouse only) and `NMMCore.notice()` (screens 900px+) are shared by the editor, view, Kanban and timeline. `NMMCore.attention()` sorts dated, not-done cards by days from today; Kanban keeps only overdue ones and those due within 2 days still in Triage or Start.
 
 **Kanban limits.** Sprint 3; Start, Doing and Review 5 each. `limit_stages()` in `class-rest-api.php` enforces them on AI maps (overflow goes to Triage with `task: true`, soonest date stays). `LIMITS` in `kanban.js` only warns, counting the cards on the board across the selected maps. Keep the two in step.
 

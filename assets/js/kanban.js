@@ -80,7 +80,31 @@ function renderBoard() {
     (zone || triage).appendChild(makeCard(n));
   });
   showColumnCounts();
+  attentionNotice.update(needsAttention(nodes));
 }
+
+// Cards that need a decision: overdue and not done, or due within 2 days and not started yet.
+// The notice asks for the date or the stage to be brought up to date.
+function needsAttention(nodes) {
+  return NMMCore.attention(nodes).filter(function(it) {
+    return it.days < 0 || (it.days <= 2 && (!it.n.tag || it.n.tag === 'start'));
+  });
+}
+const STAGE_NAMES = { '': 'Triage', start: 'Start', doing: 'Doing', sprint: 'Sprint', review: 'Review' };
+const attentionNotice = NMMCore.notice({
+  root: root, key: 'kanban_' + location.search,
+  label: function() { return 'Needs attention'; },
+  detail: function(it) {
+    const stage = STAGE_NAMES[it.n.tag || ''] || 'Triage';
+    return it.when + ', still in ' + stage + '. ' + (it.days < 0 ? 'Move it along, or give it a new date.' : 'Start it, or give it a new date.');
+  },
+  onOpen: function(it) { openKbEdit(it.n); }
+});
+NMMCore.hoverCard({ root: root, selector: '.nmm-kb-card', info: function(el) {
+  const n = findNode(+el.dataset.mapId, el.dataset.nodeId);
+  return n && { title: n.title, subs: n.subs, date: n.date, tag: n.tag, sefirot: n.sefirot,
+    where: [selectedMapIds.length > 1 ? n._map_title : '', pathOf(n)].filter(Boolean).join(' · ') };
+} });
 
 function showColumnCounts() {
   document.querySelectorAll('.nmm-kb-col').forEach(function(col) {

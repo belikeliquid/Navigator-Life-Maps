@@ -64,6 +64,11 @@ function updateLinks() {
   NMMCore.setViewTabs(ids, selectedMapIds);
 }
 
+NMMCore.hoverCard({ root: root, selector: '.nmm-tl-node', info: function(el) {
+  const n = el._node;
+  return n && { title: n.title, subs: n.subs, date: n.date, tag: n.tag, sefirot: n.sefirot, where: n._map_title };
+} });
+
 $('nmm-tl-apply-btn').addEventListener('click', function() {
   const s = $('nmm-tl-start').value, e = $('nmm-tl-end').value;
   if (!s || !e) { alert('Please set both a start and end date.'); return; }
@@ -150,7 +155,7 @@ function renderTimeline() {
     el.className = 'nmm-tl-node';
     el.style.width = CARD_W + 'px';
     el.style.borderLeftColor = tc ? tc.bg : (n._map_color || '#0BBFBF');
-    if (subs.length) el.title = subs.join('\n');
+    el._node = n; // read by the hover card
     el.innerHTML =
       '<div class="nmm-tl-title">' + esc(n.title) + '</div>' +
       '<div class="nmm-tl-meta"><span data-date class="nmm-tl-date">' + esc(dayLabel(day, new Date(day * DAY_MS).getUTCFullYear() !== thisYear)) + '</span>' +

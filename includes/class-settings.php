@@ -269,9 +269,19 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.9.0 — Hover cards, next up, sorting, featured maps <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        On a computer, resting the mouse on a card in the mind map, Kanban or timeline opens it in a larger, easy to read window: title, date, stage, every note and where it sits in the map.<br>
+                        The mind map shows the dated card most in need of a look at the bottom right (overdue first, then the soonest); Open card shows it on the map and opens it. The Kanban board shows cards that need a decision: overdue, or due within two days and not started. Both can step through the list or be dismissed for the visit.<br>
+                        Export AI is now called Export Prompt.<br>
+                        The maps list can be sorted by Recently edited, Newest first, Oldest first, Title or Category, and remembers the choice.<br>
+                        Admins can mark a map as Featured in its details. Every member then sees it under Featured maps, can view it, and can use it to make their own copy (which counts toward their map limit).
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.8.2 — One toolbar for every view <span>▾</span></div>
                     <div class="nmm-accordion-body">
-                        Every page now shares one toolbar laid out the same way. On the left, where you are: ← Maps and the map picker (in the editor it shows the map name, to rename it or open another map). Next, the view tabs, always Mind Map · Kanban · Timeline in the same order and place, with the current one highlighted; Mind Map greys out while several maps are selected. Then the tools for that view, with the less used editor tools (Settings, Import, Google Calendar, Export PNG, Export AI) in a More menu, and Save at the far right. On phones the view tabs get their own row, and the timeline dates and Apply no longer disappear.<br>
+                        Every page now shares one toolbar laid out the same way. On the left, where you are: ← Maps and the map picker (in the editor it shows the map name, to rename it or open another map). Next, the view tabs, always Mind Map · Kanban · Timeline in the same order and place, with the current one highlighted; Mind Map greys out while several maps are selected. Then the tools for that view, with the less used editor tools (Settings, Import, Google Calendar, Export PNG, Export Prompt) in a More menu, and Save at the far right. On phones the view tabs get their own row, and the timeline dates and Apply no longer disappear.<br>
                         The site theme added bullet points and an indent to the phone list cards, and capitalised island headings; both are gone. On a phone the share view header wraps instead of running off the screen, and its canvas buttons hide while the list is showing.
                     </div>
                 </div>

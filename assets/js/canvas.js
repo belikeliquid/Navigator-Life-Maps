@@ -137,6 +137,12 @@
       return minX === Infinity ? null : { minX: minX, minY: minY, maxX: maxX, maxY: maxY };
     }
 
+    function centerOn(id) {
+      const el = getEl(id), n = find(id);
+      if (!el || !n || !wrap) return;
+      wrap.scrollLeft = Math.max(0, (n.x + el.offsetWidth / 2) * zoom - wrap.clientWidth / 2);
+      wrap.scrollTop  = Math.max(0, (n.y + el.offsetHeight / 2) * zoom - wrap.clientHeight / 2);
+    }
     function autoCenter() {
       setTimeout(centerNow, 300);
     }
@@ -299,7 +305,7 @@
     return {
       find: find, depth: depth, isVisible: isVisible, hasChildren: hasChildren, isDescendant: isDescendant,
       getEl: getEl, render: render, drawLines: drawLines, setSettings: setSettings, renderMotif: renderMotif,
-      autoCenter: autoCenter, exportPNG: exportPNG, loadLinkedIslands: loadLinkedIslands,
+      autoCenter: autoCenter, centerOn: centerOn, exportPNG: exportPNG, loadLinkedIslands: loadLinkedIslands,
       toCanvas: toCanvas, setZoom: setZoom, zoomToFit: zoomToFit
     };
   }

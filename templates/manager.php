@@ -29,7 +29,15 @@
   <!-- Search + filter bar -->
   <div class="nmm-manager-search-bar">
     <input type="text" id="nmm-search" class="nmm-search-input" placeholder="Search maps..." />
-    <select id="nmm-filter-category" class="nmm-select">
+    <label class="nmm-sort-label" for="nmm-sort">Sort by</label>
+    <select id="nmm-sort" class="nmm-select">
+      <option value="edited">Recently edited</option>
+      <option value="created">Newest first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="title">Title (A to Z)</option>
+      <option value="category">Category</option>
+    </select>
+    <select id="nmm-filter-category" class="nmm-select" aria-label="Category">
       <option value="">All categories</option>
       <option value="personal">Personal</option>
       <option value="client">Client</option>
@@ -40,6 +48,12 @@
 
   <!-- Maps grid -->
   <div class="nmm-manager-body">
+    <!-- Featured maps: chosen by an admin, readable by every member, copied with "Use this map" -->
+    <section id="nmm-featured" class="nmm-featured" style="display:none">
+      <h2 class="nmm-section-title">★ Featured maps <span>Ready-made maps to start from. Use one to make your own copy.</span></h2>
+      <div id="nmm-featured-grid" class="nmm-maps-grid"></div>
+      <h2 class="nmm-section-title nmm-section-mine">Your maps</h2>
+    </section>
     <div id="nmm-loading" class="nmm-loading"><div class="nmm-spinner"></div><span>Loading your maps...</span></div>
     <div id="nmm-maps-grid" class="nmm-maps-grid" style="display:none"></div>
     <div id="nmm-empty" class="nmm-empty-state" style="display:none">
@@ -210,6 +224,9 @@
         <label>Motif (leave blank for random quotes)</label>
         <input type="text" id="nmm-edit-motif" class="nmm-input" placeholder="Leave blank to use random quote pool" />
       </div>
+      <?php if ( current_user_can( 'manage_options' ) ) : ?>
+      <label class="nmm-check" id="nmm-edit-featured-row"><input type="checkbox" id="nmm-edit-featured" /> Featured map <small>Every member can view it and copy it to make their own</small></label>
+      <?php endif; ?>
       <div class="nmm-modal-actions">
         <button class="nmm-btn" id="nmm-edit-cancel">Cancel</button>
         <button class="nmm-btn nmm-btn-primary" id="nmm-edit-confirm">Save</button>

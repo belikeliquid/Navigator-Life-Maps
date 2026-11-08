@@ -31,6 +31,13 @@ class NMM_REST_API {
         register_rest_route( $namespace, '/maps/(?P<id>\d+)/people/remove', [
             'methods' => 'POST', 'callback' => [ __CLASS__, 'remove_person' ], 'permission_callback' => [ __CLASS__, 'auth' ],
         ]);
+        // Featured maps: an admin marks them; every member can read and copy them
+        register_rest_route( $namespace, '/featured', [
+            'methods' => 'GET', 'callback' => [ __CLASS__, 'get_featured' ], 'permission_callback' => '__return_true',
+        ]);
+        register_rest_route( $namespace, '/maps/(?P<id>\d+)/copy', [
+            'methods' => 'POST', 'callback' => [ __CLASS__, 'copy_map' ], 'permission_callback' => [ __CLASS__, 'auth' ],
+        ]);
         register_rest_route( $namespace, '/maps/(?P<id>\d+)/leave', [
             'methods' => 'POST', 'callback' => [ __CLASS__, 'leave_map' ], 'permission_callback' => [ __CLASS__, 'auth' ],
         ]);
@@ -91,6 +98,14 @@ class NMM_REST_API {
         return self::can_manage( $post ) || ( $post->post_type === 'nmm_mindmap' && self::is_editor( $post ) );
     }
 
+    // Featured maps can be read (not changed) by anyone signed in
+    private static function is_featured( $post ) {
+        return (bool) get_post_meta( $post->ID, 'nmm_featured', true );
+    }
+    private static function can_read( $post ) {
+        return self::can_access( $post ) || ( is_user_logged_in() && $post->post_type === 'nmm_mindmap' && self::is_featured( $post ) );
+    }
+
     // Members a map is shared with: one nmm_editor meta row per user id, so maps can be looked up by it.
     private static function editors( $post_id ) {
         return array_map( 'intval', get_post_meta( $post_id, 'nmm_editor', false ) );
@@ -125,7 +140,7 @@ class NMM_REST_API {
 
     public static function get_map( $request ) {
         $post = get_post( $request['id'] );
-        if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::can_access( $post ) )
+        if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::can_read( $post ) )
             return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
         return rest_ensure_response( self::format_map( $post, true ) );
     }
@@ -170,6 +185,10 @@ class NMM_REST_API {
         if ( isset( $params['settings'] ) ) update_post_meta( $post->ID, 'nmm_settings', wp_slash( json_encode( $params['settings'] ) ) );
         if ( isset( $params['category'] ) ) update_post_meta( $post->ID, 'nmm_category', sanitize_text_field( $params['category'] ) );
         if ( isset( $params['color'] ) )    update_post_meta( $post->ID, 'nmm_color',    sanitize_hex_color( $params['color'] ) );
+        if ( isset( $params['featured'] ) && current_user_can( 'manage_options' ) ) {
+            if ( $params['featured'] ) update_post_meta( $post->ID, 'nmm_featured', 1 );
+            else delete_post_meta( $post->ID, 'nmm_featured' );
+        }
         // Linked islands belong to the owner, so only they can change which are linked
         if ( isset( $params['islands'] ) && self::can_manage( $post ) ) update_post_meta( $post->ID, 'nmm_islands', wp_slash( json_encode( $params['islands'] ) ) );
         return rest_ensure_response( self::format_map( get_post( $post->ID ), true ) );
@@ -336,6 +355,35 @@ class NMM_REST_API {
                   'Your maps: ' . home_url( '/maps/' ) . "\n\n" .
                   "Navigator Project\n";
         wp_mail( $user->user_email, $name . ' shared a map with you: ' . $title, $body );
+    }
+
+    public static function get_featured( $request ) {
+        if ( ! is_user_logged_in() ) return rest_ensure_response( [] );
+        $posts = get_posts( [ 'post_type' => 'nmm_mindmap', 'post_status' => 'publish', 'numberposts' => 50,
+            'meta_key' => 'nmm_featured', 'meta_value' => '1', 'orderby' => 'title', 'order' => 'ASC' ] );
+        return rest_ensure_response( array_map( function ( $p ) {
+            $m = self::format_map( $p );
+            $nodes = json_decode( get_post_meta( $p->ID, 'nmm_nodes', true ) ?: '[]', true );
+            $m['cards'] = is_array( $nodes ) ? count( $nodes ) : 0;
+            return $m;
+        }, $posts ) );
+    }
+
+    // A new map of your own with the same cards and settings (linked islands stay with the original)
+    public static function copy_map( $request ) {
+        $post = get_post( $request['id'] );
+        if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::can_read( $post ) )
+            return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
+        $limit = NMM_Auth::limit_error();
+        if ( $limit ) return $limit;
+        $id = wp_insert_post( [ 'post_type' => 'nmm_mindmap', 'post_title' => $post->post_title, 'post_status' => 'publish', 'post_author' => get_current_user_id() ] );
+        if ( is_wp_error( $id ) ) return $id;
+        foreach ( [ 'nmm_nodes', 'nmm_settings', 'nmm_category', 'nmm_color' ] as $key ) {
+            $v = get_post_meta( $post->ID, $key, true );
+            if ( $v !== '' ) update_post_meta( $id, $key, wp_slash( $v ) );
+        }
+        update_post_meta( $id, 'nmm_share_key', substr( md5( $id . get_bloginfo( 'url' ) . microtime() ), 0, 12 ) );
+        return rest_ensure_response( self::format_map( get_post( $id ), true ) );
     }
 
     public static function get_shared_map( $request ) {
@@ -655,6 +703,7 @@ Return JSON array only. Start with [ end with ].';
             'id'        => $post->ID,
             'title'     => $post->post_title,
             'modified'  => $post->post_modified,
+            'created'   => $post->post_date,
             'rev'       => (int) get_post_meta( $post->ID, 'nmm_rev', true ),
             'category'  => get_post_meta( $post->ID, 'nmm_category', true ),
             'color'     => get_post_meta( $post->ID, 'nmm_color', true ) ?: '#0BBFBF',
@@ -662,6 +711,8 @@ Return JSON array only. Start with [ end with ].';
         // What the current user can do, and who else is on the map
         $manage = self::can_manage( $post );
         $map['can_manage'] = $manage;
+        $map['can_edit']   = self::can_access( $post );
+        $map['featured']   = self::is_featured( $post );
         if ( $manage ) {
             $map['share_key'] = get_post_meta( $post->ID, 'nmm_share_key', true );
             $map['people']    = count( self::people( $post->ID ) );

@@ -15,7 +15,7 @@ function loadMaps() {
   loading.style.display = 'flex'; grid.style.display = 'none'; empty.style.display = 'none';
   api('GET', 'maps').then(function(maps) {
     allMaps = Array.isArray(maps) ? maps : [];
-    renderMaps(allMaps);
+    filterMaps();
     showMapCount();
   }).catch(function() {
     loading.innerHTML = '<p style="color:#cc3333;font-family:inherit">Failed to load maps. Please refresh.</p>';
@@ -31,7 +31,8 @@ function renderMaps(maps) {
   empty.style.display = 'none'; grid.style.display = 'grid'; grid.innerHTML = '';
 
   maps.forEach(function(map) {
-    var cat      = map.category ? '<span class="nmm-card-cat">' + map.category + '</span>' : '';
+    var cat      = map.category ? '<span class="nmm-card-cat">' + esc(map.category) + '</span>' : '';
+    if (map.featured) cat = '<span class="nmm-card-cat nmm-card-star">★ Featured</span>' + cat;
     var modified = new Date(map.modified).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
     var openUrl  = editorUrl + '?map_id=' + map.id;
 
@@ -71,10 +72,13 @@ function renderMaps(maps) {
       document.getElementById('nmm-edit-category').value = this.dataset.category;
       // The list has no settings, so load the motif before it can be edited (saving a blank one would wipe it)
       var motifEl = document.getElementById('nmm-edit-motif'), confirmBtn = document.getElementById('nmm-edit-confirm');
+      var featuredEl = document.getElementById('nmm-edit-featured');
       motifEl.value = ''; motifEl.disabled = true; confirmBtn.disabled = true;
+      if (featuredEl) { featuredEl.checked = false; featuredEl.disabled = true; }
       api('GET', 'maps/' + this.dataset.id).then(function(full) {
         motifEl.value = (full.settings && full.settings.motif) || '';
         motifEl.disabled = false; confirmBtn.disabled = false;
+        if (featuredEl) { featuredEl.checked = !!full.featured; featuredEl.disabled = false; }
       });
       document.getElementById('nmm-edit-modal').classList.add('open');
     });
@@ -125,13 +129,54 @@ function renderMaps(maps) {
 // Search + filter
 var searchEl = document.getElementById('nmm-search');
 var filterEl = document.getElementById('nmm-filter-category');
+var sortEl   = document.getElementById('nmm-sort');
 if (searchEl) searchEl.addEventListener('input', filterMaps);
 if (filterEl) filterEl.addEventListener('change', filterMaps);
+if (sortEl) {
+  try { var saved = localStorage.getItem('nmm_maps_sort'); if (saved && sortEl.querySelector('option[value="' + saved + '"]')) sortEl.value = saved; } catch(e) {}
+  sortEl.addEventListener('change', function() { try { localStorage.setItem('nmm_maps_sort', sortEl.value); } catch(e) {} filterMaps(); });
+}
+var SORTS = {
+  edited:   function(a, b) { return String(b.modified).localeCompare(String(a.modified)); },
+  created:  function(a, b) { return String(b.created).localeCompare(String(a.created)); },
+  oldest:   function(a, b) { return String(a.created).localeCompare(String(b.created)); },
+  title:    function(a, b) { return a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true }); },
+  category: function(a, b) { return (a.category ? 0 : 1) - (b.category ? 0 : 1) || String(a.category).localeCompare(String(b.category)) || a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }); } // no category last
+};
 function filterMaps() {
   var q   = searchEl ? searchEl.value.toLowerCase() : '';
   var cat = filterEl ? filterEl.value : '';
-  renderMaps(allMaps.filter(function(m){ return (!q||m.title.toLowerCase().includes(q))&&(!cat||m.category===cat); }));
+  var list = allMaps.filter(function(m){ return (!q||m.title.toLowerCase().includes(q))&&(!cat||m.category===cat); });
+  renderMaps(list.slice().sort(SORTS[sortEl ? sortEl.value : 'edited'] || SORTS.edited));
 }
+
+// Featured maps: view them read only, or copy one to start your own
+function loadFeatured() {
+  var wrap = document.getElementById('nmm-featured'), grid = document.getElementById('nmm-featured-grid');
+  if (!wrap) return;
+  api('GET', 'featured').then(function(list) {
+    list = Array.isArray(list) ? list : [];
+    wrap.style.display = list.length ? '' : 'none';
+    grid.innerHTML = '';
+    list.forEach(function(map) {
+      var card = document.createElement('div');
+      card.className = 'nmm-card nmm-card-featured';
+      card.innerHTML =
+        '<div class="nmm-card-color-bar" style="background:' + esc(map.color || '#C9A45C') + '"></div>' +
+        '<div class="nmm-card-body"><div class="nmm-card-header"><h3 class="nmm-card-title">' + esc(map.title) + '</h3>' +
+          (map.category ? '<span class="nmm-card-cat">' + esc(map.category) + '</span>' : '') + '</div>' +
+          '<p class="nmm-card-meta">' + esc(map.cards ? map.cards + ' cards' : 'Ready-made map') + '</p></div>' +
+        '<div class="nmm-card-actions"><a class="nmm-btn nmm-btn-sm" href="' + NMM.shareUrl + '?map_id=' + map.id + '">View</a>' +
+          '<button type="button" class="nmm-btn nmm-btn-primary nmm-btn-sm">Use this map</button></div>';
+      card.querySelector('button').addEventListener('click', function() {
+        if (mapLimit && ownCount() >= mapLimit) { alert('You have reached your limit of ' + mapLimit + ' maps. Delete a map to make room for a copy.'); return; }
+        NMMCore.copyMap(map.id, this);
+      });
+      grid.appendChild(card);
+    });
+  }).catch(function() {});
+}
+loadFeatured();
 
 // New map modal
 // Map limit: 0 means none (admins). The server enforces it; this explains it up front.
@@ -326,6 +371,8 @@ document.getElementById('nmm-edit-confirm').addEventListener('click', function()
   var title    = document.getElementById('nmm-edit-title').value.trim();
   var category = document.getElementById('nmm-edit-category').value;
   var motif    = document.getElementById('nmm-edit-motif').value.trim();
+  var featuredEl = document.getElementById('nmm-edit-featured');
+  var featured = featuredEl ? featuredEl.checked : undefined;
   if (!title) { alert('Please enter a title.'); return; }
   var btn = this; btn.textContent = 'Saving...'; btn.disabled = true;
 
@@ -333,7 +380,9 @@ document.getElementById('nmm-edit-confirm').addEventListener('click', function()
   api('GET', 'maps/' + id).then(function(map) {
     var settings = map.settings || {};
     settings.motif = motif;
-    return api('PUT', 'maps/' + id, { title: title, category: category, nodes: map.nodes || [], settings: settings, islands: map.islands || [] });
+    var body = { title: title, category: category, nodes: map.nodes || [], settings: settings, islands: map.islands || [] };
+    if (featured !== undefined) body.featured = featured;
+    return api('PUT', 'maps/' + id, body);
   }).then(function() {
     btn.textContent = 'Save'; btn.disabled = false;
     document.getElementById('nmm-edit-modal').classList.remove('open');
@@ -349,7 +398,8 @@ document.getElementById('nmm-edit-confirm').addEventListener('click', function()
     }
     // Update allMaps
     var m = allMaps.find(function(x){ return String(x.id)===String(id); });
-    if (m) { m.title = title; m.category = category; }
+    if (m) { m.title = title; m.category = category; if (featured !== undefined) m.featured = featured; }
+    filterMaps(); loadFeatured();
   }).catch(function(){ btn.textContent = 'Save'; btn.disabled = false; alert('Save failed.'); });
 });
 

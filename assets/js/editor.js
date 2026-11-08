@@ -41,7 +41,35 @@ const outline = NMMOutline.create({
   onShowMap: function() { C.render(); C.autoCenter(); }
 });
 const drawCanvas = C.render;
-C.render = function() { drawCanvas(); outline.render(); };
+C.render = function() { drawCanvas(); outline.render(); if (nextUp) nextUp.update(NMMCore.attention(nodes)); };
+
+// Where a card sits in the map, for the hover card
+function pathTo(n) {
+  const names = [];
+  let p = find(n.parent);
+  while (p && names.length < 4) { names.unshift(p.title); p = find(p.parent); }
+  return names.join(' › ');
+}
+NMMCore.hoverCard({ root: root, selector: '.nmm-node', delay: 600, info: function(el) {
+  const n = find(el.dataset.id);
+  return n && { title: n.title, subs: n.subs, date: n.date, tag: n.tag, sefirot: n.sefirot, where: pathTo(n) };
+} });
+
+// Next up: the dated card most in need of a look, bottom right. Opening it shows the card on the map.
+const nextUp = NMMCore.notice({
+  root: root, key: 'map_' + MAP_ID,
+  label: function(it) { return it.days < 0 ? 'Needs attention' : 'Next up'; },
+  detail: function(it) { return it.when + ' · ' + NMMCore.longDate(it.n.date); },
+  onOpen: function(it) {
+    let p = find(it.n.parent), opened = false;
+    while (p) { if (p.collapsed) { p.collapsed = false; opened = true; } p = find(p.parent); }
+    selectedId = it.n.id;
+    C.render();
+    if (opened) markDirty();
+    C.centerOn(it.n.id);
+    nmmOpenNodeModal(it.n.id);
+  }
+});
 
 // ============================================================
 // UNDO
@@ -67,6 +95,8 @@ async function loadMap() {
   if (!MAP_ID) { renderEmpty(); return; }
   const map = await api('GET', 'maps/' + MAP_ID);
   if (!map || !map.id) { renderEmpty(); return; }
+  // A featured map someone else made: open it read only (it can be copied from there)
+  if (map.can_edit === false) { location.replace(NMM.shareUrl + '?map_id=' + MAP_ID); return; }
   nodes         = map.nodes    || [];
   settings      = map.settings || {};
   mapTitle      = map.title    || 'Untitled';

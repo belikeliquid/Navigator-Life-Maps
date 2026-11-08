@@ -40,7 +40,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button type="button" role="menuitem" onclick="nmmOpenOutlineImport()">📋 Import an outline</button>
     <button type="button" role="menuitem" onclick="nmmOpenGCalModal()">→ Google Calendar</button>
     <button type="button" role="menuitem" onclick="nmmExportPNG()">Export PNG</button>
-    <button type="button" role="menuitem" onclick="nmmOpenPromptExport()">Export AI <small>Text outline for Basecamp or AI</small></button>
+    <button type="button" role="menuitem" onclick="nmmOpenPromptExport()"><span>Export Prompt<small>Text outline for Basecamp or AI</small></span></button>
   </div>
 
   <!-- Layout style menu (opened from the ▾ next to Harmony; outside the toolbar so it isn't clipped) -->
@@ -70,7 +70,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button onclick="nmmOpenOutlineImport();nmmToggleMobileMenu()">📋 Import</button>
     <button onclick="nmmOpenGCalModal();nmmToggleMobileMenu()">→ GCal</button>
     <button onclick="nmmExportPNG();nmmToggleMobileMenu()">Export PNG</button>
-    <button onclick="nmmOpenPromptExport();nmmToggleMobileMenu()">Export AI</button>
+    <button onclick="nmmOpenPromptExport();nmmToggleMobileMenu()">Export Prompt</button>
     <button onclick="nmmSave();nmmToggleMobileMenu()">Save</button>
   </div>
 
@@ -192,10 +192,10 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     </div>
   </div>
 
-  <!-- Export AI: the map as a text outline with a description, for Basecamp or AI -->
+  <!-- Export Prompt: the map as a text outline with a description, for Basecamp or AI -->
   <div class="nmm-modal-overlay" id="nmm-prompt-modal">
     <div class="nmm-modal nmm-prompt-modal">
-      <h3>Export AI</h3>
+      <h3>Export Prompt</h3>
       <p class="nmm-prompt-intro">Your map as a text outline with a description of how to read it. Copy it into Basecamp, Claude or any AI.</p>
       <div class="nmm-field">
         <label for="nmm-prompt-purpose">Use it to</label>

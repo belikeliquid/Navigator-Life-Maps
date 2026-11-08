@@ -23,6 +23,11 @@ const outline = NMMOutline.create({
   onShowMap: function() { C.render(); C.autoCenter(); }
 });
 
+NMMCore.hoverCard({ root: root, selector: '.nmm-node', info: function(el) {
+  const n = C.find(el.dataset.id);
+  return n && { title: n.title, subs: n.subs, date: n.date, tag: n.tag, sefirot: n.sefirot };
+} });
+
 async function loadMap() {
   try {
     // The share endpoint is public; no nonce, since a cached page could carry a stale one.
@@ -30,6 +35,12 @@ async function loadMap() {
               : MAP_ID    ? await NMMCore.api('GET', 'maps/' + MAP_ID) : null;
     if (!map || map.code) { showError(); return; }
     nodes = map.nodes || [];
+    // Featured maps can be copied by any member
+    const copyBtn = document.getElementById('nmm-view-copy');
+    if (copyBtn && map.featured && NMM.isLoggedIn && !SHARE_KEY) {
+      copyBtn.style.display = '';
+      copyBtn.onclick = function() { NMMCore.copyMap(map.id, copyBtn); };
+    }
     C.setSettings(map.settings);
     document.getElementById('nmm-view-title').textContent = map.title || '';
     await C.loadLinkedIslands(map.islands, nodes);

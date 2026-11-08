@@ -123,6 +123,131 @@
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
   }
 
+  // ---- Dates as whole days, in the viewer's own time zone ----
+  function dayOf(str) {
+    const p = String(str || '').split('-');
+    return p.length === 3 ? Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000 : null;
+  }
+  function today() { const t = new Date(); return Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) / 86400000; }
+  function longDate(str) {
+    const d = dayOf(str);
+    return d === null ? str : new Date(d * 86400000).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  }
+  function whenText(days) {
+    if (days < -1) return 'Overdue by ' + -days + ' days';
+    if (days === -1) return 'Was due yesterday';
+    if (days === 0) return 'Due today';
+    if (days === 1) return 'Due tomorrow';
+    return 'Due in ' + days + ' days';
+  }
+
+  // Dated cards that aren't done, most pressing first: overdue (oldest first), then today, then soonest.
+  function attention(nodes) {
+    const t = today();
+    return nodes.filter(function(n) { return n.date && n.tag !== 'done' && !n._readonly && dayOf(n.date) !== null; })
+      .map(function(n) { const days = dayOf(n.date) - t; return { n: n, days: days, tag: n.tag || '', when: whenText(days) }; })
+      .sort(function(a, b) { return a.days - b.days; });
+  }
+
+  // ---- Hover card: the whole card in an easy-to-read window (mouse and trackpad only) ----
+  // opts: root (where it lives), selector (the cards), info(el) -> {title, subs, date, tag, sefirot, where} or null
+  const CAN_HOVER = window.matchMedia('(hover: hover) and (pointer: fine)');
+  function hoverCard(opts) {
+    if (!CAN_HOVER.matches) return;
+    const box = document.createElement('div');
+    box.className = 'nmm-hovercard'; box.setAttribute('role', 'tooltip');
+    opts.root.appendChild(box);
+    let timer = null, current = null;
+    function hide() { clearTimeout(timer); timer = null; current = null; box.classList.remove('open'); }
+    function show(el) {
+      const n = opts.info(el);
+      if (!n || !el.isConnected) return;
+      const tc = TAG_COLORS[n.tag], subs = (n.subs || []).filter(Boolean);
+      box.innerHTML =
+        '<div class="nmm-hc-title">' + esc(n.title || 'Untitled') + '</div>' +
+        ((n.date || tc) ? '<div class="nmm-hc-meta">' + (n.date ? '<span class="nmm-hc-date">📅 ' + esc(longDate(n.date)) + '</span>' : '') +
+          (tc ? '<span class="nmm-hc-tag" style="background:' + tc.bg + ';color:' + tc.text + '">' + tc.label + '</span>' : '') + '</div>' : '') +
+        (subs.length ? '<ul class="nmm-hc-notes">' + subs.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
+        (n.sefirot && SEFIROT_LABELS[n.sefirot] ? '<div class="nmm-hc-where">✦ ' + esc(SEFIROT_LABELS[n.sefirot]) + '</div>' : '') +
+        (n.where ? '<div class="nmm-hc-where">' + esc(n.where) + '</div>' : '');
+      box.classList.add('open');
+      const r = el.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
+      const left = r.right + 12 + w < innerWidth ? r.right + 12 : Math.max(8, r.left - 12 - w);
+      box.style.left = left + 'px';
+      box.style.top = Math.max(8, Math.min(r.top, innerHeight - h - 8)) + 'px';
+      current = el;
+    }
+    opts.root.addEventListener('mouseover', function(e) {
+      const el = e.target.closest(opts.selector);
+      if (!el || el === current || e.buttons) return;
+      hide();
+      timer = setTimeout(function() { show(el); }, opts.delay || 450);
+    });
+    opts.root.addEventListener('mouseout', function(e) {
+      const el = e.target.closest(opts.selector);
+      if (el && !el.contains(e.relatedTarget)) hide();
+    });
+    ['mousedown', 'wheel', 'keydown'].forEach(function(ev) { document.addEventListener(ev, hide, true); });
+    window.addEventListener('scroll', hide, true);
+  }
+
+  // ---- Notice: one card that needs a look, faded in at the bottom right (computer screens only) ----
+  // opts: root, key (remembers a dismissal for this visit), label(item), detail(item), onOpen(item)
+  const WIDE = window.matchMedia('(min-width: 900px) and (hover: hover)');
+  function notice(opts) {
+    const el = document.createElement('div');
+    el.className = 'nmm-notice'; el.setAttribute('role', 'status');
+    opts.root.appendChild(el);
+    let items = [], idx = 0, shownOnce = false;
+    function dismissed() { try { return sessionStorage.getItem('nmm_notice_' + opts.key) === '1'; } catch(e) { return false; } }
+    function render() {
+      const it = items[idx];
+      if (!it || dismissed() || !WIDE.matches) { el.classList.remove('open'); return; }
+      const tc = TAG_COLORS[it.n.tag];
+      el.innerHTML =
+        '<button type="button" class="nmm-notice-x" aria-label="Dismiss" data-act="close">×</button>' +
+        '<div class="nmm-notice-label' + (it.days < 0 ? ' nmm-notice-late' : '') + '">' + esc(opts.label(it)) +
+          (items.length > 1 ? ' <span>· ' + (idx + 1) + ' of ' + items.length + '</span>' : '') + '</div>' +
+        '<div class="nmm-notice-title">' + esc(it.n.title || 'Untitled') + '</div>' +
+        '<div class="nmm-notice-detail">' + (tc ? '<span class="nmm-hc-tag" style="background:' + tc.bg + ';color:' + tc.text + '">' + tc.label + '</span> ' : '') + esc(opts.detail(it)) + '</div>' +
+        '<div class="nmm-notice-actions"><button type="button" class="nmm-notice-btn nmm-notice-open" data-act="open">Open card</button>' +
+          (items.length > 1 ? '<button type="button" class="nmm-notice-btn" data-act="next">Next ›</button>' : '') + '</div>';
+      if (!shownOnce) { shownOnce = true; setTimeout(function() { el.classList.add('open'); }, 1200); }
+      else el.classList.add('open');
+    }
+    el.addEventListener('click', function(e) {
+      const b = e.target.closest('[data-act]'), act = b ? b.dataset.act : 'open';
+      if (act === 'close') { try { sessionStorage.setItem('nmm_notice_' + opts.key, '1'); } catch(err) {} el.classList.remove('open'); return; }
+      if (act === 'next') { idx = (idx + 1) % items.length; render(); return; }
+      if (items[idx]) opts.onOpen(items[idx]);
+    });
+    return {
+      // New list: stay on the same card while it is unchanged; once it has been dealt with
+      // (new date, done, gone) go back to the most pressing one
+      update: function(list) {
+        const cur = items[idx];
+        items = list || [];
+        const keep = cur ? items.findIndex(function(it) { return it.n.id === cur.n.id && it.days === cur.days && it.tag === cur.tag; }) : -1;
+        idx = keep >= 0 ? keep : 0;
+        render();
+      }
+    };
+  }
+
+  // Copy a map (a featured one, or your own) into a new map of yours, then open it
+  function copyMap(id, btn) {
+    const label = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Copying…'; }
+    return api('POST', 'maps/' + id + '/copy').then(function(map) {
+      if (map && map.id) { location.href = NMM.editorUrl + '?map_id=' + map.id; return; }
+      alert((map && map.message) || 'Could not copy this map.');
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+    }).catch(function() {
+      alert('Could not copy this map.');
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+    });
+  }
+
   function isTask(n) { return n.task === undefined ? !!n.tag : !!n.task; }
 
   const TAG_COLORS = {
@@ -196,6 +321,7 @@
     mapIdsFromUrl: mapIdsFromUrl, pageUrl: pageUrl, esc: esc,
     loadHtml2Canvas: loadHtml2Canvas, mapFilter: mapFilter,
     TAG_COLORS: TAG_COLORS, SEFIROT_LABELS: SEFIROT_LABELS, isTask: isTask,
-    setViewTabs: setViewTabs, dropdown: dropdown
+    setViewTabs: setViewTabs, dropdown: dropdown,
+    copyMap: copyMap, dayOf: dayOf, today: today, longDate: longDate, attention: attention, hoverCard: hoverCard, notice: notice
   };
 })();
