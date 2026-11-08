@@ -269,6 +269,14 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.8.0 — Share a map with other members <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Share on a map card now opens a Share dialog: enter another member's email and they can open and edit the map too, as many people as you like (up to 25). The reply is the same whether or not the email has an account, so it can't be used to find out who is a member. A matching member gets an email with a link.<br>
+                        Only the owner can delete a map or change who it is shared with; the others can leave it. Shared maps show who shared them and don't count toward anyone else's map limit. The view-only link moved into the same dialog.<br>
+                        When two people save at the same time, the editor now merges card by card instead of asking whose version to keep, and an open shared map picks up the other person's saves while you're not editing.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.7.5 — A Kanban board that stays focused <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         AI Organize now puts at most 3 cards in Sprint and at most 5 each in Start, Doing and Review. The soonest cards keep their stage and other tasks wait in Triage. Headings stay off the board.<br>

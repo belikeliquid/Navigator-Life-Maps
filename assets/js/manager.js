@@ -43,19 +43,24 @@ function renderMaps(maps) {
         window.location.href = openUrl;
       }
     });
+    var owner    = map.can_manage !== false;
+    var sharing  = map.shared_by ? '<p class="nmm-card-shared">Shared by ' + esc(map.shared_by) + '</p>'
+                 : map.people ? '<p class="nmm-card-shared">Shared with ' + map.people + (map.people === 1 ? ' person' : ' people') + '</p>' : '';
     card.innerHTML =
       '<div class="nmm-card-color-bar" style="background:' + (map.color||'#0BBFBF') + '"></div>' +
       '<div class="nmm-card-body">' +
         '<div class="nmm-card-header">' +
           '<h3 class="nmm-card-title">' + esc(map.title) + '</h3>' + cat +
         '</div>' +
-        '<p class="nmm-card-meta">Last edited ' + modified + '</p>' +
+        '<p class="nmm-card-meta">Last edited ' + modified + '</p>' + sharing +
       '</div>' +
       '<div class="nmm-card-actions">' +
         '<a href="' + openUrl + '" class="nmm-btn nmm-btn-primary nmm-btn-sm">Open</a>' +
         '<button class="nmm-btn nmm-btn-sm nmm-edit-btn" data-id="' + map.id + '" data-title="' + esc(map.title) + '" data-category="' + esc(map.category||'') + '">Edit</button>' +
-        '<button class="nmm-btn nmm-btn-sm nmm-share-btn" data-url="' + NMM.shareUrl + '?share=' + map.share_key + '">Share</button>' +
-        '<button class="nmm-btn nmm-btn-sm nmm-delete-btn" data-id="' + map.id + '">Delete</button>' +
+        (owner
+          ? '<button class="nmm-btn nmm-btn-sm nmm-share-btn">Share</button>' +
+            '<button class="nmm-btn nmm-btn-sm nmm-delete-btn" data-id="' + map.id + '">Delete</button>'
+          : '<button class="nmm-btn nmm-btn-sm nmm-leave-btn">Leave</button>') +
       '</div>';
 
     // Edit button
@@ -74,6 +79,18 @@ function renderMaps(maps) {
       document.getElementById('nmm-edit-modal').classList.add('open');
     });
 
+    // Leave a map someone shared with you
+    if (!owner) card.querySelector('.nmm-leave-btn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (!confirm('Leave "' + map.title + '"? It will no longer be in your maps. ' + map.shared_by + ' can share it with you again.')) return;
+      api('POST', 'maps/' + map.id + '/leave').then(function(res) {
+        if (!res || !res.left) { alert((res && res.message) || 'Could not leave this map.'); return; }
+        allMaps = allMaps.filter(function(m) { return m.id !== map.id; });
+        filterMaps();
+      });
+    });
+    if (!owner) { grid.appendChild(card); return; }
+
     // Delete button
     card.querySelector('.nmm-delete-btn').addEventListener('click', function(e) {
       e.stopPropagation();
@@ -89,9 +106,7 @@ function renderMaps(maps) {
     // Share button
     card.querySelector('.nmm-share-btn').addEventListener('click', function(e) {
       e.stopPropagation();
-      var url = this.dataset.url;
-      if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function(){ alert('Share link copied!'); }); }
-      else { prompt('Copy this link:', url); }
+      openShare(map);
     });
 
     grid.appendChild(card);
@@ -122,16 +137,18 @@ function filterMaps() {
 // Map limit: 0 means none (admins). The server enforces it; this explains it up front.
 var mapLimit = 0;
 api('GET', 'auth/me').then(function(me) { mapLimit = (me && me.limit) || 0; showMapCount(); }).catch(function() {});
+// Maps shared with you don't count toward your limit
+function ownCount() { return allMaps.filter(function(m) { return !m.shared_by; }).length; }
 function showMapCount() {
   var el = document.getElementById('nmm-map-count');
   var addCard = document.querySelector('.nmm-card-new');
-  if (addCard) addCard.style.display = mapLimit && allMaps.length >= mapLimit ? 'none' : '';
+  if (addCard) addCard.style.display = mapLimit && ownCount() >= mapLimit ? 'none' : '';
   if (!el || !mapLimit) return;
-  el.textContent = allMaps.length + ' of ' + mapLimit + ' maps';
+  el.textContent = ownCount() + ' of ' + mapLimit + ' maps';
   el.style.display = 'inline';
 }
 function openNewModal() {
-  if (mapLimit && allMaps.length >= mapLimit) {
+  if (mapLimit && ownCount() >= mapLimit) {
     alert('You have reached your limit of ' + mapLimit + ' maps. Delete a map to make room for a new one.');
     return;
   }
@@ -337,6 +354,69 @@ document.getElementById('nmm-edit-confirm').addEventListener('click', function()
 });
 
 document.getElementById('nmm-edit-cancel').addEventListener('click', function(){ document.getElementById('nmm-edit-modal').classList.remove('open'); });
+
+// ============================================================
+// SHARE — edit together with other members, or copy the view-only link
+// ============================================================
+var shareMap = null;
+function $share(id) { return document.getElementById(id); }
+function shareMsg(text, isError) {
+  var el = $share('nmm-share-msg');
+  el.textContent = text; el.classList.toggle('nmm-share-error', !!isError);
+}
+var SHARE_HINT = 'They can open and edit this map from their own maps list. Only you can delete it or choose who it is shared with.';
+function openShare(map) {
+  shareMap = map;
+  $share('nmm-share-title').textContent = map.title;
+  $share('nmm-share-email').value = '';
+  shareMsg(SHARE_HINT);
+  renderPeople(null);
+  $share('nmm-share-modal').classList.add('open');
+  api('GET', 'maps/' + map.id + '/people').then(function(res) {
+    if (res && res.people) renderPeople(res.people);
+    else shareMsg((res && res.message) || 'Could not load who this map is shared with.', true);
+  });
+}
+function renderPeople(people) {
+  var list = $share('nmm-share-people');
+  $share('nmm-share-people-wrap').style.display = people && people.length ? '' : 'none';
+  list.innerHTML = '';
+  (people || []).forEach(function(email) {
+    var li = document.createElement('li');
+    li.innerHTML = '<span>' + esc(email) + '</span><button type="button" class="nmm-btn nmm-btn-sm">Remove</button>';
+    li.querySelector('button').addEventListener('click', function() {
+      this.disabled = true;
+      api('POST', 'maps/' + shareMap.id + '/people/remove', { email: email }).then(function(res) {
+        if (res && res.people) { renderPeople(res.people); updatePeopleCount(res.people.length); shareMsg(email + ' no longer has access.'); }
+        else shareMsg((res && res.message) || 'Could not remove ' + email + '.', true);
+      });
+    });
+    list.appendChild(li);
+  });
+}
+function updatePeopleCount(n) {
+  shareMap.people = n;
+  filterMaps();
+}
+function addPerson() {
+  var input = $share('nmm-share-email'), email = input.value.trim(), btn = $share('nmm-share-add');
+  if (!email) { input.focus(); return; }
+  btn.disabled = true; btn.textContent = 'Sharing...';
+  api('POST', 'maps/' + shareMap.id + '/people', { email: email }).then(function(res) {
+    if (res && res.people) { input.value = ''; renderPeople(res.people); updatePeopleCount(res.people.length); shareMsg(res.message); }
+    else shareMsg((res && res.message) || 'Could not share the map. Please try again.', true);
+  }).catch(function() { shareMsg('Could not share the map. Please try again.', true); })
+    .then(function() { btn.disabled = false; btn.textContent = 'Share'; });
+}
+$share('nmm-share-add').addEventListener('click', addPerson);
+$share('nmm-share-email').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); addPerson(); } });
+$share('nmm-share-copy').addEventListener('click', function() {
+  var url = NMM.shareUrl + '?share=' + shareMap.share_key, btn = this;
+  var done = function() { btn.textContent = 'Link copied ✓'; setTimeout(function() { btn.textContent = 'Copy view link'; }, 2000); };
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, function() { prompt('Copy this link:', url); });
+  else prompt('Copy this link:', url);
+});
+$share('nmm-share-close').addEventListener('click', function() { $share('nmm-share-modal').classList.remove('open'); });
 
 // Close modals on overlay click
 document.querySelectorAll('.nmm-modal-overlay').forEach(function(o){

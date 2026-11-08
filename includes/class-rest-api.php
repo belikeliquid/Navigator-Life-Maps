@@ -5,6 +5,7 @@ class NMM_REST_API {
 
     public static function register_routes() {
         add_action( 'rest_api_init', [ __CLASS__, 'routes' ] );
+        add_action( 'nmm_share_email', [ __CLASS__, 'send_share_email' ], 10, 3 );
     }
 
     public static function routes() {
@@ -19,6 +20,19 @@ class NMM_REST_API {
             [ 'methods' => 'GET',    'callback' => [ __CLASS__, 'get_map' ],    'permission_callback' => '__return_true' ],
             [ 'methods' => 'PUT',    'callback' => [ __CLASS__, 'update_map' ], 'permission_callback' => [ __CLASS__, 'auth' ] ],
             [ 'methods' => 'DELETE', 'callback' => [ __CLASS__, 'delete_map' ], 'permission_callback' => [ __CLASS__, 'auth' ] ],
+        ]);
+
+        // Sharing with other members. Only the owner (or an admin) manages the list;
+        // anyone it is shared with can leave.
+        register_rest_route( $namespace, '/maps/(?P<id>\d+)/people', [
+            [ 'methods' => 'GET',  'callback' => [ __CLASS__, 'get_people' ], 'permission_callback' => [ __CLASS__, 'auth' ] ],
+            [ 'methods' => 'POST', 'callback' => [ __CLASS__, 'add_person' ], 'permission_callback' => [ __CLASS__, 'auth' ] ],
+        ]);
+        register_rest_route( $namespace, '/maps/(?P<id>\d+)/people/remove', [
+            'methods' => 'POST', 'callback' => [ __CLASS__, 'remove_person' ], 'permission_callback' => [ __CLASS__, 'auth' ],
+        ]);
+        register_rest_route( $namespace, '/maps/(?P<id>\d+)/leave', [
+            'methods' => 'POST', 'callback' => [ __CLASS__, 'leave_map' ], 'permission_callback' => [ __CLASS__, 'auth' ],
         ]);
 
         // Islands — same rule; creating one is admin only (no app screen makes them)
@@ -67,9 +81,22 @@ class NMM_REST_API {
         return current_user_can( 'nmm_edit_maps' ) || current_user_can( 'edit_posts' ) || current_user_can( 'manage_options' );
     }
 
-    // The person who made it, or an admin. Others get the same "not found" as a missing map.
-    private static function can_access( $post ) {
+    // The person who made it, or an admin: they can delete it and choose who it is shared with.
+    private static function can_manage( $post ) {
         return current_user_can( 'manage_options' ) || ( is_user_logged_in() && (int) $post->post_author === get_current_user_id() );
+    }
+
+    // Owner, admin, or a member the map is shared with. Others get the same "not found" as a missing map.
+    private static function can_access( $post ) {
+        return self::can_manage( $post ) || ( $post->post_type === 'nmm_mindmap' && self::is_editor( $post ) );
+    }
+
+    // Members a map is shared with: one nmm_editor meta row per user id, so maps can be looked up by it.
+    private static function editors( $post_id ) {
+        return array_map( 'intval', get_post_meta( $post_id, 'nmm_editor', false ) );
+    }
+    private static function is_editor( $post ) {
+        return is_user_logged_in() && in_array( get_current_user_id(), self::editors( $post->ID ), true );
     }
 
     public static function get_maps( $request ) {
@@ -81,11 +108,18 @@ class NMM_REST_API {
             'orderby'     => 'modified',
             'order'       => 'DESC',
         ];
-        // Admins see all
-        if ( ! current_user_can( 'manage_options' ) ) {
-            $args['author'] = get_current_user_id();
+        // Admins see all; everyone else sees their own maps and the ones shared with them
+        if ( current_user_can( 'manage_options' ) ) {
+            $posts = get_posts( $args );
+        } else {
+            $uid   = get_current_user_id();
+            $posts = get_posts( $args + [ 'author' => $uid ] );
+            $own   = wp_list_pluck( $posts, 'ID' );
+            foreach ( get_posts( $args + [ 'meta_key' => 'nmm_editor', 'meta_value' => (string) $uid ] ) as $p ) {
+                if ( ! in_array( $p->ID, $own, true ) ) $posts[] = $p;
+            }
+            usort( $posts, function ( $a, $b ) { return strcmp( $b->post_modified, $a->post_modified ); } );
         }
-        $posts = get_posts( $args );
         return rest_ensure_response( array_map( [ __CLASS__, 'format_map' ], $posts ) );
     }
 
@@ -130,12 +164,14 @@ class NMM_REST_API {
         if ( isset( $params['base_rev'] ) && (int) $params['base_rev'] !== $rev )
             return new WP_Error( 'conflict', 'This map was changed somewhere else since it was opened.', [ 'status' => 409, 'rev' => $rev ] );
         update_post_meta( $post->ID, 'nmm_rev', $rev + 1 );
+        update_post_meta( $post->ID, 'nmm_last_editor', get_current_user_id() );
         if ( isset( $params['title'] ) )    wp_update_post([ 'ID' => $post->ID, 'post_title' => sanitize_text_field( $params['title'] ) ]);
         if ( isset( $params['nodes'] ) )    update_post_meta( $post->ID, 'nmm_nodes',    wp_slash( json_encode( $params['nodes'] ) ) );
         if ( isset( $params['settings'] ) ) update_post_meta( $post->ID, 'nmm_settings', wp_slash( json_encode( $params['settings'] ) ) );
         if ( isset( $params['category'] ) ) update_post_meta( $post->ID, 'nmm_category', sanitize_text_field( $params['category'] ) );
         if ( isset( $params['color'] ) )    update_post_meta( $post->ID, 'nmm_color',    sanitize_hex_color( $params['color'] ) );
-        if ( isset( $params['islands'] ) )  update_post_meta( $post->ID, 'nmm_islands',  wp_slash( json_encode( $params['islands'] ) ) );
+        // Linked islands belong to the owner, so only they can change which are linked
+        if ( isset( $params['islands'] ) && self::can_manage( $post ) ) update_post_meta( $post->ID, 'nmm_islands', wp_slash( json_encode( $params['islands'] ) ) );
         return rest_ensure_response( self::format_map( get_post( $post->ID ), true ) );
     }
 
@@ -143,6 +179,8 @@ class NMM_REST_API {
         $post = get_post( $request['id'] );
         if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::can_access( $post ) )
             return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
+        if ( ! self::can_manage( $post ) )
+            return new WP_Error( 'not_owner', 'Only the owner can delete this map. You can leave it instead.', [ 'status' => 403 ] );
         wp_delete_post( $post->ID, true );
         return rest_ensure_response([ 'deleted' => true ]);
     }
@@ -188,6 +226,116 @@ class NMM_REST_API {
             return new WP_Error( 'not_found', 'Island not found', [ 'status' => 404 ] );
         wp_delete_post( $post->ID, true );
         return rest_ensure_response([ 'deleted' => true ]);
+    }
+
+    // ---------------------------------------------------------------
+    // SHARING WITH MEMBERS
+    // The reply never says whether an account has the email, so the form can't be used
+    // to find out who is on the site. nmm_people keeps every address the owner entered
+    // (with the user it matched, or 0); only the owner sees the addresses.
+    // An address that matches nobody grants nothing, even if someone signs up with it
+    // later: signup doesn't confirm that the email belongs to the person.
+    // ---------------------------------------------------------------
+    const SHARE_MAX = 25;
+
+    private static function people( $post_id ) {
+        $p = json_decode( get_post_meta( $post_id, 'nmm_people', true ) ?: '[]', true );
+        return is_array( $p ) ? array_values( $p ) : [];
+    }
+    private static function save_people( $post_id, $people ) {
+        update_post_meta( $post_id, 'nmm_people', wp_slash( json_encode( array_values( $people ) ) ) );
+    }
+    private static function people_response( $post_id, $message = '' ) {
+        return rest_ensure_response( [ 'people' => array_column( self::people( $post_id ), 'email' ), 'message' => $message ] );
+    }
+
+    // The map, if the current user may manage who it is shared with
+    private static function managed_map( $request ) {
+        $post = get_post( $request['id'] );
+        if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::can_access( $post ) )
+            return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
+        if ( ! self::can_manage( $post ) )
+            return new WP_Error( 'not_owner', 'Only the owner can choose who this map is shared with.', [ 'status' => 403 ] );
+        return $post;
+    }
+
+    public static function get_people( $request ) {
+        $post = self::managed_map( $request );
+        if ( is_wp_error( $post ) ) return $post;
+        return self::people_response( $post->ID );
+    }
+
+    public static function add_person( $request ) {
+        $post = self::managed_map( $request );
+        if ( is_wp_error( $post ) ) return $post;
+        $params = $request->get_json_params();
+        $email  = strtolower( sanitize_email( $params['email'] ?? '' ) );
+        if ( ! is_email( $email ) )
+            return new WP_Error( 'bad_email', 'Please enter a valid email address.', [ 'status' => 400 ] );
+
+        $done   = 'If someone has an account with that email, they can now open and edit this map.';
+        $people = self::people( $post->ID );
+        if ( in_array( $email, array_column( $people, 'email' ), true ) ) return self::people_response( $post->ID, $done );
+        if ( count( $people ) >= self::SHARE_MAX )
+            return new WP_Error( 'too_many', 'A map can be shared with up to ' . self::SHARE_MAX . ' people.', [ 'status' => 400 ] );
+
+        $user = get_user_by( 'email', $email );
+        $uid  = $user ? (int) $user->ID : 0;
+        if ( $uid === (int) $post->post_author ) $uid = 0;
+        $people[] = [ 'email' => $email, 'user' => $uid ];
+        self::save_people( $post->ID, $people );
+        if ( $uid && ! in_array( $uid, self::editors( $post->ID ), true ) ) {
+            add_post_meta( $post->ID, 'nmm_editor', $uid );
+            // Sent by WP cron, so the reply takes the same time whether or not the email matched
+            wp_schedule_single_event( time(), 'nmm_share_email', [ $post->ID, $uid, get_current_user_id() ] );
+        }
+        return self::people_response( $post->ID, $done );
+    }
+
+    public static function remove_person( $request ) {
+        $post = self::managed_map( $request );
+        if ( is_wp_error( $post ) ) return $post;
+        $params = $request->get_json_params();
+        $email  = strtolower( sanitize_email( $params['email'] ?? '' ) );
+        $keep   = [];
+        $gone   = [];
+        foreach ( self::people( $post->ID ) as $p ) {
+            if ( $p['email'] === $email ) $gone[] = (int) $p['user'];
+            else $keep[] = $p;
+        }
+        self::save_people( $post->ID, $keep );
+        $still = array_map( 'intval', array_column( $keep, 'user' ) );
+        foreach ( array_filter( $gone ) as $uid ) {
+            if ( ! in_array( $uid, $still, true ) ) delete_post_meta( $post->ID, 'nmm_editor', $uid );
+        }
+        return self::people_response( $post->ID, '' );
+    }
+
+    public static function leave_map( $request ) {
+        $post = get_post( $request['id'] );
+        if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::is_editor( $post ) )
+            return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
+        $uid = get_current_user_id();
+        delete_post_meta( $post->ID, 'nmm_editor', $uid );
+        self::save_people( $post->ID, array_filter( self::people( $post->ID ), function ( $p ) use ( $uid ) { return (int) $p['user'] !== $uid; } ) );
+        return rest_ensure_response( [ 'left' => true ] );
+    }
+
+    public static function send_share_email( $map_id, $user_id, $sharer_id ) {
+        $post = get_post( $map_id );
+        $user = get_userdata( $user_id );
+        // Removed again before the email went out: send nothing
+        if ( ! $post || ! $user || ! in_array( (int) $user_id, self::editors( $map_id ), true ) ) return;
+        $sharer = get_userdata( $sharer_id );
+        $name   = $sharer ? $sharer->display_name : 'Someone';
+        $title  = wp_strip_all_tags( $post->post_title );
+        $body   = 'Hi ' . $user->display_name . ",\n\n" .
+                  $name . ' shared the map "' . $title . '" with you on Navigator Life Maps, so you can work on it together. ' .
+                  "Changes either of you make are saved for both.\n\n" .
+                  'Open the map: ' . home_url( '/map-editor/?map_id=' . $map_id ) . "\n" .
+                  'Your maps: ' . home_url( '/maps/' ) . "\n\n" .
+                  "Navigator Project\n";
+        wp_mail( $user->user_email, $name . ' shared a map with you: ' . $title, $body );
     }
 
     public static function get_shared_map( $request ) {
@@ -510,13 +658,24 @@ Return JSON array only. Start with [ end with ].';
             'rev'       => (int) get_post_meta( $post->ID, 'nmm_rev', true ),
             'category'  => get_post_meta( $post->ID, 'nmm_category', true ),
             'color'     => get_post_meta( $post->ID, 'nmm_color', true ) ?: '#0BBFBF',
-            'share_key' => get_post_meta( $post->ID, 'nmm_share_key', true ),
         ];
+        // What the current user can do, and who else is on the map
+        $manage = self::can_manage( $post );
+        $map['can_manage'] = $manage;
+        if ( $manage ) {
+            $map['share_key'] = get_post_meta( $post->ID, 'nmm_share_key', true );
+            $map['people']    = count( self::people( $post->ID ) );
+        } elseif ( self::is_editor( $post ) ) {
+            $owner = get_userdata( (int) $post->post_author );
+            $map['shared_by'] = $owner ? $owner->display_name : 'Another member';
+        }
         if ( $include_data ) {
             $map['nodes']    = json_decode( get_post_meta( $post->ID, 'nmm_nodes',    true ) ?: '[]', true );
             // Cast so empty settings go out as {} rather than [], which the editor can't add keys to
             $map['settings'] = (object) json_decode( get_post_meta( $post->ID, 'nmm_settings', true ) ?: '{}', true );
             $map['islands']  = json_decode( get_post_meta( $post->ID, 'nmm_islands',  true ) ?: '[]', true );
+            $last = get_userdata( (int) get_post_meta( $post->ID, 'nmm_last_editor', true ) );
+            $map['edited_by'] = $last ? $last->display_name : '';
         }
         return $map;
     }

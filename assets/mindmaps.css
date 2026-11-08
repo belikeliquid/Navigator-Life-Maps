@@ -343,6 +343,18 @@ body:has(.nmm-app) .entry-content > *:first-child {
   flex-shrink: 0;
 }
 .nmm-card-meta { font-size: 14px; color: var(--nmm-light); }
+.nmm-card-shared { margin: 4px 0 0; font-size: 13px; font-weight: 600; color: #078f8f; }
+.nmm-share-map-title { margin: -4px 0 16px; font-family: var(--nmm-font); font-size: 15px; font-weight: 600; color: var(--nmm-navy); }
+.nmm-share-row { display: flex; gap: 8px; }
+.nmm-share-row .nmm-input { flex: 1; min-width: 0; }
+.nmm-share-error { color: #b42318; }
+.nmm-share-people { list-style: none; margin: 0; padding: 0; border: 1px solid var(--nmm-border); border-radius: 8px; }
+.nmm-share-people li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; font-family: var(--nmm-font); font-size: 14px; color: var(--nmm-navy); }
+.nmm-share-people li + li { border-top: 1px solid var(--nmm-border); }
+#nmm-share-modal .nmm-share-people .nmm-btn, #nmm-share-copy { color: var(--nmm-mid); border-color: var(--nmm-border); background: var(--nmm-white); }
+#nmm-share-modal .nmm-share-people .nmm-btn:hover, #nmm-share-copy:hover { border-color: var(--nmm-teal); color: var(--nmm-teal); }
+#nmm-share-modal .nmm-share-people .nmm-btn { padding: 4px 10px; font-size: 12px; flex-shrink: 0; }
+.nmm-share-people li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nmm-card-actions {
   display: flex;
   gap: 8px;

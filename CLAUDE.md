@@ -29,15 +29,17 @@ Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. 
 
 **Zoom.** `canvas.js` scales `#nmm-canvas` with a CSS transform inside a JS-created `.nmm-canvas-sizer` (and moves `#nmm-motif` out of it, pinned to the top of the map area behind the cards). Dragging empty space and the arrow keys pan the map. Node x, y stay unzoomed: convert pointer positions with `C.toCanvas(clientX, clientY)`, never `clientX + scrollLeft`.
 
-**Access.** Maps and islands are readable and writable only by their author or an admin (`can_access()`, a 404 otherwise); the public route is `/share/<key>`, which doesn't include linked-island cards for logged-out viewers. Post types have `show_in_rest` off. Signup needs `nmm_invite_code` (option on the site only; the repo is public, so never commit the code). Limits live in `NMM_Auth`: standard 3, host 5 (role `nmm_host` or WP Author), admin/editor none; enforced in `create_map` and the AI routes.
+**Access.** Maps and islands are readable and writable only by their author, an admin, or (maps only) a member the map is shared with (`can_access()`, a 404 otherwise). Deleting and managing sharing need `can_manage()` (author or admin). the public route is `/share/<key>`, which doesn't include linked-island cards for logged-out viewers. Post types have `show_in_rest` off. Signup needs `nmm_invite_code` (option on the site only; the repo is public, so never commit the code). Limits live in `NMM_Auth`: standard 3, host 5 (role `nmm_host` or WP Author), admin/editor none; enforced in `create_map` and the AI routes.
 
 **Creating.** The new-map dialog (`manager.js`) saves `settings.layout` and sends `layout` to `/ai/organize`: `tol` gets the sefirot prompt, anything else a plain hierarchy with x, y of 0. It opens the editor with `&arrange=1`, which lays the map out once.
 
 **Timeline.** `timeline.js` measures each card, then `fitDistance()` puts it in the nearest free spot above or below the line. Width follows the busiest stretch of dates (capped). Dates are whole-day numbers (`dayNum`). Cards outside the range are hidden and counted in the range note.
 
+**Sharing.** `nmm_editor` post meta, one row per user id, grants editing (and lets `get_maps` find shared maps). `nmm_people` (JSON `[{email, user}]`) keeps every address the owner typed, matched or not, so replies never reveal whether an account exists; only the owner sees it (`/maps/<id>/people`). Unmatched addresses never grant access later, because signup doesn't verify email. The share email goes out through WP cron (`nmm_share_email`). `format_map` adds `can_manage`, `people` (count, owner only), `shared_by` (for members) and `edited_by`; `share_key` is owner only.
+
 **Kanban limits.** Sprint 3; Start, Doing and Review 5 each. `limit_stages()` in `class-rest-api.php` enforces them on AI maps (overflow goes to Triage with `task: true`, soonest date stays). `LIMITS` in `kanban.js` only warns, counting the cards on the board across the selected maps. Keep the two in step.
 
-**Saving.** Every write sends the whole node array. `nmm_rev` increments on each save. The editor sends `base_rev` and gets a 409 if the map changed since it loaded; Kanban/timeline/maps list use `NMMCore.patchNode()` (fresh GET, then PUT, no `base_rev`). The editor autosaves 2 s after a change and keeps a localStorage draft (`nmm_draft_<id>`) until the save is confirmed.
+**Saving.** Every write sends the whole node array. `nmm_rev` increments on each save. The editor sends `base_rev` and gets a 409 if the map changed since it loaded; it then merges card by card against `baseBody` (`mergeBodies()`) and saves again. On shared maps it polls every 15 s while idle and shows other people's saves; Kanban/timeline/maps list use `NMMCore.patchNode()` (fresh GET, then PUT, no `base_rev`). The editor autosaves 2 s after a change and keeps a localStorage draft (`nmm_draft_<id>`) until the save is confirmed.
 
 ## Gotchas
 

@@ -15,6 +15,14 @@ let saveTimer = null, isDirty = false;
 // save only clears isDirty if nothing changed while it was in flight.
 let mapRev = 0, changeSeq = 0, saving = false, saveQueued = false;
 let undoStack = []; // max 10 steps
+// baseBody: the map as the server last had it, so a save that crosses someone else's can be merged.
+// shared: other people can edit this map, so check for their saves while idle.
+let baseBody = null, shared = false;
+const clone = function(o) { return JSON.parse(JSON.stringify(o)); };
+const same  = function(a, b) { return JSON.stringify(a) === JSON.stringify(b); };
+function bodyOf(map) {
+  return { title: map.title || '', category: map.category || '', nodes: map.nodes || [], settings: map.settings || {}, islands: map.islands || [] };
+}
 
 const C = NMMCanvas.create({
   getNodes: function() { return nodes; },
@@ -55,6 +63,8 @@ async function loadMap() {
   mapCategory   = map.category || '';
   linkedIslands = map.islands  || [];
   mapRev        = map.rev      || 0;
+  baseBody      = clone(bodyOf(map));
+  shared        = !!(map.shared_by || map.people);
   let changed   = restoreDraft(map);
 
   // New maps arrive empty. Outline mode passes its text in the URL.
@@ -147,16 +157,18 @@ window.nmmSave = async function(isRetry) {
   try {
     // On retry, always fetch a fresh nonce first — stale nonce is the most common save failure
     if (isRetry === true) await NMMCore.refreshNonce();
+    const sent = saveBody();
     const r = await fetch(NMM.restUrl + 'maps/' + MAP_ID, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': NMM.nonce },
-      body: JSON.stringify(Object.assign(saveBody(), { base_rev: mapRev }))
+      body: JSON.stringify(Object.assign({}, sent, { base_rev: mapRev }))
     });
     const data = await r.json();
     saving = false;
-    if (r.status === 409) { resolveConflict(data); return; }
+    if (r.status === 409) { resolveConflict(); return; }
     if (!data.id) throw new Error('bad response');
     mapRev = data.rev;
+    baseBody = clone(sent);
     if (seq === changeSeq) { isDirty = false; clearDraft(); setStatus('Saved ✓', true); setTimeout(function() { if (!isDirty) setStatus(''); }, 3000); }
     else saveDraft(saveBody()); // edits made during the save: keep the draft current for the next save
     if (saveQueued || seq !== changeSeq) { saveQueued = false; nmmSave(); }
@@ -167,15 +179,73 @@ window.nmmSave = async function(isRetry) {
   }
 };
 
-function resolveConflict(data) {
-  const keepMine = confirm('This map was changed somewhere else (another tab, the Kanban board or the maps list) since you opened it.\n\nOK = save your version over it\nCancel = discard your unsaved changes and load the newer version');
-  if (keepMine) {
-    mapRev = (data.data && data.data.rev) || 0;
-    nmmSave();
-  } else {
-    isDirty = false; clearDraft(); location.reload();
+// Someone else (another person, tab, the Kanban board) saved since this editor loaded.
+// Merge card by card: your changes go on top of theirs, and cards nobody here touched keep their version.
+async function resolveConflict() {
+  if (dragState) { setTimeout(resolveConflict, 500); return; } // never swap the cards under a drag
+  setStatus('Merging with other changes...');
+  let latest;
+  try { latest = await api('GET', 'maps/' + MAP_ID); } catch(e) {}
+  if (!latest || !latest.id) {
+    setStatus('Save failed — retrying...');
+    saveTimer = setTimeout(function() { nmmSave(true); }, 5000);
+    return;
   }
+  showBody(mergeBodies(baseBody, saveBody(), bodyOf(latest)), latest);
+  nmmSave();
 }
+
+function mergeBodies(base, mine, theirs) {
+  base = base || { nodes: [], settings: {} };
+  const pick = function(k) { return same(mine[k], base[k]) ? theirs[k] : mine[k]; };
+  const settings = Object.assign({}, theirs.settings), bs = base.settings || {}, ms = mine.settings || {};
+  Object.keys(Object.assign({}, bs, ms)).forEach(function(k) {
+    if (same(ms[k], bs[k])) return;
+    if (ms[k] === undefined) delete settings[k]; else settings[k] = ms[k];
+  });
+  const byId = function(list) { const m = {}; (list || []).forEach(function(n) { m[n.id] = n; }); return m; };
+  const b = byId(base.nodes), m = byId(mine.nodes);
+  let out = (theirs.nodes || []).slice();
+  (mine.nodes || []).forEach(function(n) {   // cards you added or changed
+    if (b[n.id] && same(n, b[n.id])) return;
+    const i = out.findIndex(function(x) { return x.id === n.id; });
+    if (i >= 0) out[i] = n; else out.push(n);
+  });
+  const deleted = Object.keys(b).filter(function(id) { return !m[id]; });   // cards you deleted
+  out = out.filter(function(n) { return deleted.indexOf(n.id) < 0; });
+  const ids = byId(out);   // cards someone added under one you deleted move up to its parent
+  out.forEach(function(n) {
+    if (!n.parent || ids[n.parent]) return;
+    let p = n.parent;
+    while (p && !ids[p] && b[p]) p = b[p].parent;
+    n.parent = p && ids[p] ? p : null;
+  });
+  return { title: pick('title'), category: pick('category'), islands: pick('islands'), settings: settings, nodes: out };
+}
+
+// Put a body from the server (or a merge) on screen. latest = the map as the server has it now.
+function showBody(body, latest) {
+  nodes = clone(body.nodes).concat(nodes.filter(function(n) { return n._readonly; }));
+  settings = body.settings; mapTitle = body.title || mapTitle; mapCategory = body.category; linkedIslands = body.islands;
+  mapRev = latest.rev; baseBody = clone(bodyOf(latest));
+  undoStack = []; $('nmm-undo-btn').disabled = true;   // undo would bring back the other version
+  $('nmm-map-title-display').textContent = mapTitle;
+  C.setSettings(settings); showLayoutStyle(); C.render();
+}
+
+// On a shared map, pick up other people's saves while you are not in the middle of something.
+async function checkForChanges() {
+  const busy = function() { return isDirty || saving || dragState || document.hidden || document.querySelector('.nmm-modal-overlay.open'); };
+  if (!shared || busy()) return;
+  let latest;
+  try { latest = await api('GET', 'maps/' + MAP_ID); } catch(e) { return; }
+  if (!latest || !latest.id || latest.rev <= mapRev || busy()) return;
+  showBody(bodyOf(latest), latest);
+  clearDraft();
+  setStatus('Updated with ' + (latest.edited_by ? latest.edited_by + '’s' : 'new') + ' changes', true);
+  setTimeout(function() { if (!isDirty) setStatus(''); }, 4000);
+}
+setInterval(checkForChanges, 15000);
 
 // Leaving the page: send any unsaved changes with keepalive so the request
 // survives the unload. The local draft covers the case where it doesn't arrive.

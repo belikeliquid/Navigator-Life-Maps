@@ -159,6 +159,35 @@
     </div>
   </div>
 
+  <!-- Share Map Modal -->
+  <div class="nmm-modal-overlay" id="nmm-share-modal">
+    <div class="nmm-modal" style="width:480px;max-width:96vw">
+      <h3>Share map</h3>
+      <p class="nmm-share-map-title" id="nmm-share-title"></p>
+      <div class="nmm-field">
+        <label for="nmm-share-email">Edit together with another member</label>
+        <div class="nmm-share-row">
+          <input type="email" id="nmm-share-email" class="nmm-input" placeholder="Their email address" autocomplete="off" />
+          <button type="button" class="nmm-btn nmm-btn-primary" id="nmm-share-add">Share</button>
+        </div>
+        <p class="nmm-new-hint" id="nmm-share-msg" role="status"></p>
+      </div>
+      <div class="nmm-field" id="nmm-share-people-wrap" style="display:none">
+        <label>Shared with</label>
+        <ul class="nmm-share-people" id="nmm-share-people"></ul>
+        <p class="nmm-new-hint">An address with no account stays on this list but gives no access.</p>
+      </div>
+      <div class="nmm-field">
+        <label>View-only link</label>
+        <p class="nmm-new-hint" style="margin:0 0 8px">Anyone with this link can view the map without signing in.</p>
+        <button type="button" class="nmm-btn" id="nmm-share-copy">Copy view link</button>
+      </div>
+      <div class="nmm-modal-actions">
+        <button type="button" class="nmm-btn" id="nmm-share-close">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Edit Map Modal -->
   <div class="nmm-modal-overlay" id="nmm-edit-modal">
     <div class="nmm-modal">
