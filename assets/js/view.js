@@ -25,7 +25,7 @@ const outline = NMMOutline.create({
 
 NMMCore.hoverCard({ root: root, selector: '.nmm-node', info: function(el) {
   const n = C.find(el.dataset.id);
-  return n && { title: n.title, subs: n.subs, date: n.date, tag: n.tag, sefirot: n.sefirot };
+  return n && { title: n.title, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot };
 } });
 
 async function loadMap() {

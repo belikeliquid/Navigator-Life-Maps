@@ -102,7 +102,7 @@ const attentionNotice = NMMCore.notice({
 });
 NMMCore.hoverCard({ root: root, selector: '.nmm-kb-card', info: function(el) {
   const n = findNode(+el.dataset.mapId, el.dataset.nodeId);
-  return n && { title: n.title, subs: n.subs, date: n.date, tag: n.tag, sefirot: n.sefirot,
+  return n && { title: n.title, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot,
     where: [selectedMapIds.length > 1 ? n._map_title : '', pathOf(n)].filter(Boolean).join(' · ') };
 } });
 

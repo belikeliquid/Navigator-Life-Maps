@@ -98,7 +98,10 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
       <h3>Edit Node</h3>
       <div class="nmm-field"><label>Title</label><input type="text" id="nme-title" class="nmm-input" /></div>
       <div class="nmm-field"><label>Subtitle lines (one per line)</label><textarea id="nme-sub" rows="3" class="nmm-input"></textarea></div>
-      <div class="nmm-field"><label>Date (Google Calendar compatible)</label><input type="date" id="nme-date" class="nmm-input" /></div>
+      <div class="nmm-field-row">
+        <div class="nmm-field"><label for="nme-date">Start date</label><input type="date" id="nme-date" class="nmm-input" /></div>
+        <div class="nmm-field"><label for="nme-end">End date <small>(optional)</small></label><input type="date" id="nme-end" class="nmm-input" /></div>
+      </div>
       <div class="nmm-field">
         <label>Parent node</label>
         <select id="nme-parent" class="nmm-input"></select>

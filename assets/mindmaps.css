@@ -830,6 +830,114 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-mobile-menu-btn { display: none; }
 
 /* ============================================================
+   ROADMAP (roadmap.js)
+   ============================================================ */
+.nmm-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.nmm-field small { font-weight: 400; text-transform: none; letter-spacing: 0; }
+@media (max-width: 480px) { .nmm-field-row { grid-template-columns: 1fr; gap: 0; } }
+.nmm-seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; flex-shrink: 0; }
+.nmm-app .nmm-seg button {
+  padding: 5px 10px; border: 0; border-radius: 999px; background: transparent; cursor: pointer;
+  font-family: var(--nmm-font); font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,0.8); white-space: nowrap;
+}
+.nmm-app .nmm-seg button:hover { background: rgba(255,255,255,0.1); color: white; }
+.nmm-app .nmm-seg button.active { background: rgba(255,255,255,0.92); color: var(--nmm-navy); font-weight: 600; }
+.nmm-menu-current { background: var(--nmm-sand2) !important; font-weight: 600 !important; }
+
+.nmm-rm-body {
+  background: var(--nmm-sand);
+  background-image: linear-gradient(rgba(232,228,219,0.8), rgba(232,228,219,0.8)), url('/wp-content/uploads/2021/06/watermap-1.png');
+  background-size: cover; background-attachment: fixed; background-position: center;
+  min-height: calc(100vh - 60px); padding: 16px 20px 32px; font-family: var(--nmm-font);
+}
+.nmm-rm-setup { max-width: 920px; margin: 24px auto; padding: 24px; background: rgba(255,255,255,0.85); border-radius: 16px; box-shadow: 0 2px 10px rgba(1,28,47,0.06); }
+.nmm-rm-setup h2 { margin: 0 0 6px; font-size: 20px; font-weight: 700; color: var(--nmm-navy); letter-spacing: 0; text-transform: none; }
+.nmm-rm-setup p { margin: 0 0 16px; font-size: 14.5px; line-height: 1.5; color: var(--nmm-mid); }
+.nmm-rm-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.nmm-app .nmm-rm-preset {
+  display: block; padding: 14px 16px; border: 1.5px solid var(--nmm-border); border-radius: 12px; background: white; text-align: left; cursor: pointer;
+  font-family: var(--nmm-font); color: var(--nmm-navy);
+}
+.nmm-app .nmm-rm-preset:hover { border-color: var(--nmm-teal); box-shadow: 0 4px 12px rgba(11,191,191,0.15); }
+.nmm-rm-preset strong { display: block; font-size: 15px; font-weight: 600; }
+.nmm-rm-preset span { display: block; margin-top: 4px; font-size: 13px; line-height: 1.4; color: var(--nmm-light); }
+.nmm-app .nmm-rm-preset-branch { border-style: dashed; }
+
+.nmm-rm-tray { margin-bottom: 14px; padding: 10px 12px; background: rgba(255,255,255,0.45); border: 1.5px dashed var(--nmm-border); border-radius: 12px; }
+.nmm-rm-tray-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 8px; font-size: 14px; color: var(--nmm-navy); }
+.nmm-rm-tray-head span { font-size: 13px; color: var(--nmm-light); }
+.nmm-rm-tray-cards { display: flex; flex-wrap: wrap; gap: 8px; max-height: 128px; overflow-y: auto; }
+.nmm-rm-tcard {
+  display: inline-flex; align-items: center; gap: 8px; max-width: 280px; padding: 7px 12px; background: white; border-radius: 8px;
+  border-left: 4px solid var(--nmm-border); box-shadow: 0 1px 3px rgba(1,28,47,0.08); cursor: grab; touch-action: none; user-select: none;
+  font-size: 13.5px; font-weight: 500; color: var(--nmm-navy);
+}
+.nmm-rm-tcard-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nmm-rm-ghost { position: fixed; z-index: 2000; pointer-events: none; opacity: 0.9; box-shadow: 0 10px 24px rgba(1,28,47,0.25); transform: rotate(-2deg); }
+
+.nmm-rm-scroll { overflow: auto; max-height: calc(100vh - 150px); background: rgba(255,255,255,0.55); border-radius: 12px; box-shadow: 0 1px 4px rgba(1,28,47,0.06); }
+.nmm-rm-grid { position: relative; min-width: 100%; }
+.nmm-rm-head { position: sticky; top: 0; z-index: 4; display: flex; background: var(--nmm-navy); }
+.nmm-rm-corner { position: sticky; left: 0; z-index: 5; flex-shrink: 0; display: flex; align-items: center; padding: 0 14px; background: var(--nmm-navy); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+.nmm-rm-axis { position: relative; flex-shrink: 0; height: 50px; }
+.nmm-rm-months, .nmm-rm-weeks { position: relative; height: 25px; }
+.nmm-rm-month { position: absolute; top: 6px; padding-left: 6px; font-size: 12.5px; font-weight: 600; color: white; white-space: nowrap; border-left: 1px solid rgba(255,255,255,0.3); }
+.nmm-rm-week { position: absolute; top: 4px; padding-left: 4px; font-size: 11px; color: rgba(255,255,255,0.55); }
+.nmm-rm-lanes { position: relative; }
+.nmm-rm-lines { position: absolute; top: 0; bottom: 0; pointer-events: none; z-index: 0; }
+.nmm-rm-lines i { position: absolute; top: 0; bottom: 0; width: 1px; }
+.nmm-rm-wline { background: rgba(1,28,47,0.05); }
+.nmm-rm-mline { background: rgba(1,28,47,0.14); }
+.nmm-rm-lines .nmm-rm-today { width: 2px; background: #C9A45C; z-index: 3; }
+.nmm-rm-today b { position: absolute; top: 4px; left: 4px; padding: 1px 6px; border-radius: 999px; background: #C9A45C; color: var(--nmm-navy); font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+.nmm-rm-lane { position: relative; display: flex; border-bottom: 1px solid rgba(1,28,47,0.08); }
+.nmm-rm-label {
+  position: sticky; left: 0; z-index: 3; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  padding: 10px 14px; background: rgba(244,241,234,0.97); border-right: 1px solid rgba(1,28,47,0.08);
+}
+.nmm-rm-lane-extra .nmm-rm-label { background: rgba(231,228,219,0.97); }
+.nmm-app .nmm-rm-lane-btn, .nmm-rm-lane-name {
+  padding: 0; border: 0; background: none; text-align: left; cursor: pointer;
+  font-family: var(--nmm-font); font-size: 14.5px; font-weight: 600; color: var(--nmm-navy); line-height: 1.3;
+}
+.nmm-rm-lane-name { cursor: default; }
+.nmm-app .nmm-rm-lane-btn span { font-size: 11px; color: var(--nmm-light); }
+.nmm-app .nmm-rm-lane-btn:hover { color: #078f8f; }
+.nmm-rm-count { font-size: 12px; color: var(--nmm-light); }
+.nmm-rm-track { position: relative; z-index: 1; flex-shrink: 0; transition: background 0.15s; }
+.nmm-rm-track.nmm-rm-over { background: rgba(11,191,191,0.1); }
+.nmm-rm-bar {
+  --rm-bg: #E7E4DB; --rm-fg: #011C2F;
+  position: absolute; height: 34px; display: flex; align-items: center; padding: 0 14px 0 12px; border-radius: 8px;
+  background: var(--rm-bg); color: var(--rm-fg); box-shadow: 0 1px 3px rgba(1,28,47,0.12); cursor: grab; user-select: none;
+  font-size: 13px; font-weight: 600; line-height: 1.2; overflow: hidden;
+}
+.nmm-rm-bar:hover { box-shadow: 0 4px 12px rgba(1,28,47,0.18); z-index: 2; }
+.nmm-rm-bar:focus-visible { outline: 2px solid var(--nmm-navy); outline-offset: 2px; }
+.nmm-rm-locked { cursor: pointer; }
+.nmm-rm-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* No end date: the bar fades out over its last third, and its end is dashed */
+.nmm-rm-assumed {
+  background: linear-gradient(90deg, var(--rm-bg) 0%, var(--rm-bg) 60%, rgba(255,255,255,0.35) 100%);
+  border-right: 2px dashed rgba(1,28,47,0.25);
+}
+.nmm-rm-done { opacity: 0.6; }
+.nmm-rm-done .nmm-rm-title { text-decoration: line-through; text-decoration-thickness: 1px; }
+.nmm-rm-dragging { z-index: 6; cursor: grabbing; box-shadow: 0 10px 24px rgba(1,28,47,0.25); opacity: 0.92; }
+.nmm-rm-handle { position: absolute; top: 0; right: 0; bottom: 0; width: 10px; cursor: ew-resize; touch-action: none; }
+.nmm-rm-handle::after { content: ''; position: absolute; top: 9px; bottom: 9px; right: 3px; width: 3px; border-radius: 2px; background: rgba(1,28,47,0.25); opacity: 0; transition: opacity 0.15s; }
+.nmm-rm-bar:hover .nmm-rm-handle::after { opacity: 1; }
+.nmm-rm-addrow { border-bottom: 0; }
+.nmm-app .nmm-rm-add { padding: 6px 12px; border: 1.5px dashed var(--nmm-border); border-radius: 999px; background: white; cursor: pointer; font-family: var(--nmm-font); font-size: 13px; font-weight: 600; color: #078f8f; }
+.nmm-rm-nolanes { padding: 40px 20px; text-align: center; font-size: 14.5px; color: var(--nmm-mid); position: relative; z-index: 1; }
+.nmm-rm-empty { text-align: center; padding: 80px 20px; color: var(--nmm-mid); font-size: 16px; }
+@media (max-width: 768px) {
+  .nmm-rm-body { padding: 12px 10px 24px; }
+  .nmm-rm-scroll { max-height: none; }
+  .nmm-rm-label { width: 130px !important; padding: 8px 10px; }
+}
+
+/* ============================================================
    ANIMATE — cards appear one at a time (canvas.js animate())
    ============================================================ */
 @keyframes nmm-reveal { from { opacity: 0; transform: translateY(12px) scale(0.94); } to { opacity: 1; transform: none; } }
@@ -963,7 +1071,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   .nmm-editor-toolbar { flex-wrap: wrap; height: auto; min-height: 60px; padding: 8px 10px; row-gap: 8px; overflow: visible; }
   .nmm-editor-toolbar .nmm-btn-keep { display: inline-flex; }
   .nmm-editor-toolbar .nmm-view-tabs { order: 10; flex: 1 0 100%; }
-  .nmm-editor-toolbar .nmm-vtab { flex: 1; justify-content: center; }
+  .nmm-editor-toolbar .nmm-vtab { flex: 1 1 0; min-width: 0; justify-content: center; padding: 6px 4px; gap: 3px; font-size: 12.5px; }
   .nmm-editor-toolbar .nmm-tl-tools { order: 11; flex: 1 0 100%; flex-wrap: wrap; }
   .nmm-editor-toolbar .nmm-toolbar-gap { display: none; }
   .nmm-editor-toolbar .nmm-btn-save { margin-left: auto; }
@@ -976,6 +1084,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   .admin-bar .nmm-canvas-wrap { height: calc(100vh - 158px); }
 }
 @media (max-width: 480px) {
+  .nmm-editor-toolbar .nmm-vtab span[aria-hidden] { display: none; } /* four tabs fit on a phone */
   .nmm-manager .nmm-logo-text { display: none; }
   .nmm-map-picker .nmm-map-title-display { max-width: 130px; }
 }

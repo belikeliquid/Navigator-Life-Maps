@@ -37,7 +37,7 @@
       const canEdit = opts.editable && !n._readonly;
       const tag = TAG_COLORS[n.tag];
       const meta = [
-        n.date ? '<span class="nmm-ol-date">📅 ' + esc(shortDate(n.date)) + '</span>' : '',
+        n.date ? '<span class="nmm-ol-date">📅 ' + esc(shortDate(n.date)) + (n.end ? ' → ' + esc(shortDate(n.end)) : '') + '</span>' : '',
         tag ? '<span class="nmm-ol-tag" style="background:' + tag.bg + ';color:' + tag.text + '">' + tag.label + '</span>' : '',
         n._readonly ? '<span class="nmm-ol-linked">Linked: ' + esc(n._island_title || '') + '</span>' : ''
       ].join('');

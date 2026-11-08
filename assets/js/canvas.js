@@ -55,7 +55,7 @@
       const ro       = !!n._readonly;
       const expander = hasChildren(n.id) ? '<span class="nmm-expander" data-eid="' + esc(n.id) + '">' + (n.collapsed ? '+' : '−') + '</span>' : '';
       const subs     = (n.subs && n.subs.length) ? '<div class="nmm-node-sub">' + n.subs.map(function(s) { return '<span>' + esc(s) + '</span>'; }).join('') + '</div>' : '';
-      const date     = n.date ? '<div class="nmm-node-date">📅 ' + esc(n.date) + '</div>' : '';
+      const date     = n.date ? '<div class="nmm-node-date">📅 ' + esc(n.date) + (n.end ? ' → ' + esc(n.end) : '') + '</div>' : '';
       const linked   = ro ? '<div class="nmm-linked-badge">⛓ ' + (opts.editable
         ? '<a href="' + NMM.editorUrl + '?map_id=' + n._island_id + '" target="_blank" style="color:inherit">Edit source: ' + esc(n._island_title) + '</a>'
         : esc(n._island_title)) + '</div>' : '';

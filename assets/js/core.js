@@ -41,12 +41,19 @@
   // Change fields on one node from a page other than the editor (Kanban, timeline).
   // Loads the latest map first so it never writes back stale nodes.
   async function patchNode(mapId, nodeId, fields) {
+    return patchMap(mapId, function(map) {
+      const node = map.nodes.find(function(n) { return n.id === nodeId; });
+      if (!node) throw new Error('Card not found in map');
+      Object.assign(node, fields);
+    });
+  }
+  // Change anything in a map (mutate(map) edits it in place) on top of the latest saved version
+  async function patchMap(mapId, mutate) {
     const map = await api('GET', 'maps/' + mapId);
     if (!map || !map.nodes) throw new Error((map && map.message) || 'Map not found');
-    const node = map.nodes.find(function(n) { return n.id === nodeId; });
-    if (!node) throw new Error('Card not found in map');
-    Object.assign(node, fields);
-    const saved = await api('PUT', 'maps/' + mapId, { nodes: map.nodes, title: map.title, settings: map.settings || {}, islands: map.islands || [] });
+    map.settings = map.settings || {};
+    mutate(map);
+    const saved = await api('PUT', 'maps/' + mapId, { nodes: map.nodes, title: map.title, settings: map.settings, islands: map.islands || [] });
     if (!saved || !saved.id) throw new Error((saved && saved.message) || 'Save failed');
     return saved;
   }
@@ -97,6 +104,8 @@
           a.removeAttribute('href'); a.setAttribute('aria-disabled', 'true');
           a.title = shownIds.length ? 'Pick one map to open its mind map' : 'Open one map to see its mind map';
         }
+      } else if (v === 'roadmap') {
+        a.href = NMM.roadmapUrl + (shownIds.length === 1 ? '?map_id=' + shownIds[0] : '');
       } else {
         a.href = pageUrl(v === 'kanban' ? NMM.kanbanUrl : NMM.timelineUrl, linkIds);
       }
@@ -128,6 +137,8 @@
     const p = String(str || '').split('-');
     return p.length === 3 ? Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000 : null;
   }
+  // All-day calendar events end on the following day: '2026-11-30' -> '20261201'
+  function dayAfter(str) { const d = dayOf(str); return d === null ? '' : new Date((d + 1) * 86400000).toISOString().slice(0, 10).replace(/-/g, ''); }
   function today() { const t = new Date(); return Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) / 86400000; }
   function longDate(str) {
     const d = dayOf(str);
@@ -165,7 +176,7 @@
       const tc = TAG_COLORS[n.tag], subs = (n.subs || []).filter(Boolean);
       box.innerHTML =
         '<div class="nmm-hc-title">' + esc(n.title || 'Untitled') + '</div>' +
-        ((n.date || tc) ? '<div class="nmm-hc-meta">' + (n.date ? '<span class="nmm-hc-date">📅 ' + esc(longDate(n.date)) + '</span>' : '') +
+        ((n.date || tc) ? '<div class="nmm-hc-meta">' + (n.date ? '<span class="nmm-hc-date">📅 ' + esc(longDate(n.date)) + (n.end ? ' → ' + esc(longDate(n.end)) : '') + '</span>' : '') +
           (tc ? '<span class="nmm-hc-tag" style="background:' + tc.bg + ';color:' + tc.text + '">' + tc.label + '</span>' : '') + '</div>' : '') +
         (subs.length ? '<ul class="nmm-hc-notes">' + subs.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
         (n.sefirot && SEFIROT_LABELS[n.sefirot] ? '<div class="nmm-hc-where">✦ ' + esc(SEFIROT_LABELS[n.sefirot]) + '</div>' : '') +
@@ -317,11 +328,11 @@
   }
 
   window.NMMCore = {
-    api: api, refreshNonce: refreshNonce, patchNode: patchNode,
+    api: api, refreshNonce: refreshNonce, patchNode: patchNode, patchMap: patchMap,
     mapIdsFromUrl: mapIdsFromUrl, pageUrl: pageUrl, esc: esc,
     loadHtml2Canvas: loadHtml2Canvas, mapFilter: mapFilter,
     TAG_COLORS: TAG_COLORS, SEFIROT_LABELS: SEFIROT_LABELS, isTask: isTask,
     setViewTabs: setViewTabs, dropdown: dropdown,
-    copyMap: copyMap, dayOf: dayOf, today: today, longDate: longDate, attention: attention, hoverCard: hoverCard, notice: notice
+    copyMap: copyMap, dayOf: dayOf, dayAfter: dayAfter, today: today, longDate: longDate, attention: attention, hoverCard: hoverCard, notice: notice
   };
 })();

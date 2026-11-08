@@ -67,6 +67,7 @@ class NMM_Settings {
             'share'   => [ 'title' => 'Map View',    'slug' => 'map-share',  'content' => '[navigator_mindmap id="0" readonly="true"]' ],
             'kanban'   => [ 'title' => 'Kanban',     'slug' => 'kanban',     'content' => '[navigator_kanban]' ],
             'timeline' => [ 'title' => 'Timeline',  'slug' => 'timeline',   'content' => '[navigator_timeline]' ],
+            'roadmap'  => [ 'title' => 'Roadmap',   'slug' => 'roadmap',    'content' => '[navigator_roadmap]' ],
         ];
         if ( isset( $pages[ $type ] ) ) {
             $p = $pages[ $type ];
@@ -117,6 +118,7 @@ class NMM_Settings {
             'share'   => [ 'label' => 'Public share',  'slug' => 'map-share',  'shortcode' => '[navigator_mindmap id="0" readonly="true"]', 'type' => 'share' ],
             'kanban'   => [ 'label' => 'Kanban board',  'slug' => 'kanban',     'shortcode' => '[navigator_kanban]',       'type' => 'kanban' ],
             'timeline' => [ 'label' => 'Timeline',      'slug' => 'timeline',   'shortcode' => '[navigator_timeline]',     'type' => 'timeline' ],
+            'roadmap'  => [ 'label' => 'Roadmap',       'slug' => 'roadmap',    'shortcode' => '[navigator_roadmap]',      'type' => 'roadmap' ],
         ];
 
         // REST checks
@@ -268,6 +270,14 @@ class NMM_Settings {
           <div class="nmm-settings-card">
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
+                <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.10.0 — Roadmap <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        A fourth view, ▤ Roadmap, next to Mind Map, Kanban and Timeline (page /roadmap/). Each dated card is a bar from its start to its end date, coloured by Kanban stage; a card with no end date gets a 3-week bar that fades out. Weeks, Months and Quarters scales, a Today line and button.<br>
+                        Lanes are phases you name, starting from a preset (Project, Launch, Healing, Self-growth, Career path or Blank) and renamed, added, moved or removed from each lane's menu; or the map's own main branches. Drag a bar to move it (up or down to change its lane), drag its right edge to change the end, click it to edit. Cards without dates wait above the roadmap; drag one onto a lane to give it dates.<br>
+                        Cards now have an End date in the mind map's edit window, shown on the card and in the hover card, the Export Prompt outline and the Google Calendar file.
+                    </div>
+                </div>
                 <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.9.1 — Animate <span>▾</span></div>
                     <div class="nmm-accordion-body">

@@ -52,7 +52,7 @@ function pathTo(n) {
 }
 NMMCore.hoverCard({ root: root, selector: '.nmm-node', delay: 600, info: function(el) {
   const n = find(el.dataset.id);
-  return n && { title: n.title, subs: n.subs, date: n.date, tag: n.tag, sefirot: n.sefirot, where: pathTo(n) };
+  return n && { title: n.title, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot, where: pathTo(n) };
 } });
 
 // Next up: the dated card most in need of a look, bottom right. Opening it shows the card on the map.
@@ -737,6 +737,7 @@ window.nmmOpenNodeModal = function(id) {
   $('nme-title').value   = n.title;
   $('nme-sub').value     = (n.subs || []).join('\n');
   $('nme-date').value    = n.date || '';
+  $('nme-end').value     = n.end || '';
   $('nme-tag').value     = n.tag || '';
   $('nme-task').checked  = NMMCore.isTask(n);
   showTagField();
@@ -757,6 +758,7 @@ window.nmmSaveNode = function() {
   const sub = $('nme-sub').value.trim();
   n.subs    = sub ? sub.split('\n').filter(function(s) { return s.trim(); }) : [];
   n.date    = $('nme-date').value || '';
+  n.end     = n.date && $('nme-end').value >= n.date ? $('nme-end').value : ''; // an end needs a start, and can't come before it
   n.task    = $('nme-task').checked;
   n.tag     = n.task ? $('nme-tag').value || '' : '';
   n.sefirot = $('nme-sefirot').value || '';
@@ -899,7 +901,7 @@ window.nmmDoGCalExport = function() {
   checked.forEach(function(cb) {
     const n = find(cb.dataset.nid); if (!n) return;
     const d = n.date.replace(/-/g, '');
-    lines.push('BEGIN:VEVENT', 'DTSTART;VALUE=DATE:' + d, 'DTEND;VALUE=DATE:' + d, 'SUMMARY:' + n.title, 'DESCRIPTION:' + (n.subs || []).join('\\n'), 'END:VEVENT');
+    lines.push('BEGIN:VEVENT', 'DTSTART;VALUE=DATE:' + d, 'DTEND;VALUE=DATE:' + (n.end ? NMMCore.dayAfter(n.end) : d), 'SUMMARY:' + n.title, 'DESCRIPTION:' + (n.subs || []).join('\\n'), 'END:VEVENT');
   });
   lines.push('END:VCALENDAR');
   const a = document.createElement('a');
@@ -927,7 +929,7 @@ function promptText(purpose) {
   }
   function tags(n) {
     const t = [];
-    if (n.date) t.push('[date: ' + n.date + ']');
+    if (n.date) t.push(n.end ? '[dates: ' + n.date + ' to ' + n.end + ']' : '[date: ' + n.date + ']');
     if (NMMCore.isTask(n)) t.push('[task' + (n.tag && NMMCore.TAG_COLORS[n.tag] ? ', stage: ' + NMMCore.TAG_COLORS[n.tag].label : ', stage: Triage') + ']');
     if (n.sefirot && NMMCore.SEFIROT_LABELS[n.sefirot]) t.push('[Tree of Life: ' + NMMCore.SEFIROT_LABELS[n.sefirot] + ']');
     if (n._readonly) t.push('[linked from: ' + n._island_title + ']');

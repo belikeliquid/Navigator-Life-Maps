@@ -20,13 +20,13 @@ WordPress plugin `navigator-mindmaps`, live on navigatorproject.org. Mind maps, 
 | `assets/js/{view,kanban,timeline,manager,landing}.js` | One script per page |
 | `assets/mindmaps.css` | All styles. App UI uses `--nmm-font` (Fira Sans); map cards stay Barlow Condensed because their size drives saved layouts |
 
-Pages (Enfold "Blank" template): `/maps` (manager or landing), `/map-editor/?map_id=N`, `/map-share/?share=KEY`, `/kanban/?map_id=N`, `/timeline/?map_id=N`. Kanban and timeline take one or more ids (`?map_id=1,2`); no id means all maps.
+Pages (Enfold "Blank" template): `/maps` (manager or landing), `/map-editor/?map_id=N`, `/map-share/?share=KEY`, `/kanban/?map_id=N`, `/timeline/?map_id=N`, `/roadmap/?map_id=N` (one map; no id = most recently edited). Kanban and timeline take one or more ids (`?map_id=1,2`); no id means all maps.
 
 ## Data
 
 A map is an `nmm_mindmap` post. Its whole content is JSON in post meta: `nmm_nodes` (array), `nmm_settings` (motif, quotes, template), `nmm_islands` (linked island ids), plus `nmm_category`, `nmm_color`, `nmm_share_key`, `nmm_rev`.
 
-Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. `parent: null` = island (root card). `x, y` = top-left on the canvas. `tag` ∈ start/doing/sprint/review/done or "" (Triage). Only Kanban tasks show on the board: `NMMCore.isTask(n)` (a node without `task` counts as one if it has a tag). `nmm_settings.layout` ∈ flow/mind/tol picks the Harmony style; `mind` also switches the canvas to sideways connectors.
+Node: `{id, x, y, title, subs[], parent, collapsed, date, end, task, tag, sefirot, lane}`. `date` is the start; `end` is optional. `parent: null` = island (root card). `x, y` = top-left on the canvas. `tag` ∈ start/doing/sprint/review/done or "" (Triage). Only Kanban tasks show on the board: `NMMCore.isTask(n)` (a node without `task` counts as one if it has a tag). `nmm_settings.layout` ∈ flow/mind/tol picks the Harmony style; `mind` also switches the canvas to sideways connectors.
 
 **Zoom.** `canvas.js` scales `#nmm-canvas` with a CSS transform inside a JS-created `.nmm-canvas-sizer` (and moves `#nmm-motif` out of it, pinned to the top of the map area behind the cards). Dragging empty space and the arrow keys pan the map. Node x, y stay unzoomed: convert pointer positions with `C.toCanvas(clientX, clientY)`, never `clientX + scrollLeft`.
 
@@ -41,6 +41,8 @@ Node: `{id, x, y, title, subs[], parent, collapsed, date, task, tag, sefirot}`. 
 **Featured.** `nmm_featured` meta (admins set it through `featured` on PUT). `can_read()` lets any signed-in member GET a featured map; writing still needs `can_access()`. `/featured` lists them, `/maps/<id>/copy` makes a copy for the current user (limit applies, islands not copied). `format_map` adds `created`, `featured`, `can_edit`; the editor sends `can_edit: false` maps to the read-only view, which shows "Use this map".
 
 **Hover cards and notices.** `NMMCore.hoverCard()` (mouse only) and `NMMCore.notice()` (screens 900px+) are shared by the editor, view, Kanban and timeline. `NMMCore.attention()` sorts dated, not-done cards by days from today; Kanban keeps only overdue ones and those due within 2 days still in Triage or Start.
+
+**Roadmap.** `roadmap.js`: bars from `date` to `end` (no end = 21 days, drawn fading). `settings.roadmap = {group: 'phase'|'branch', preset, lanes: [{id, label}]}`; in phase mode a card's `lane` is a lane id (unknown = Unsorted), in branch mode its lane is its top-level branch. Saves through `NMMCore.patchNode` / `patchMap`. Tray = undated tasks and leaf cards.
 
 **Kanban limits.** Sprint 3; Start, Doing and Review 5 each. `limit_stages()` in `class-rest-api.php` enforces them on AI maps (overflow goes to Triage with `task: true`, soonest date stays). `LIMITS` in `kanban.js` only warns, counting the cards on the board across the selected maps. Keep the two in step.
 

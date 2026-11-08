@@ -8,6 +8,7 @@ class NMM_Shortcodes {
         add_shortcode( 'navigator_mindmap',  [ __CLASS__, 'single_map' ] );
         add_shortcode( 'navigator_kanban',   [ __CLASS__, 'kanban' ] );
         add_shortcode( 'navigator_timeline', [ __CLASS__, 'timeline' ] );
+        add_shortcode( 'navigator_roadmap',  [ __CLASS__, 'roadmap' ] );
     }
 
     // Renders templates/<name>.php with $vars in scope and enqueues its script (assets/js/<name>.js).
@@ -27,7 +28,7 @@ class NMM_Shortcodes {
 
     // The view tabs every app page shares, always in this order and place, so they can be found
     // without looking. $current: map / kanban / timeline, or '' on the maps list. $ids: the maps shown.
-    // NMMCore.setViewTabs() keeps the links in step when the map filter changes.
+    // NMMCore.setViewTabs() keeps the links in step when the map filter changes. Roadmap shows one map.
     public static function view_tabs( $current, $ids = [] ) {
         $ids = array_values( array_filter( array_map( 'intval', (array) $ids ) ) );
         $q   = $ids ? '?map_id=' . implode( ',', $ids ) : '';
@@ -35,6 +36,7 @@ class NMM_Shortcodes {
             'map'      => [ '◈', 'Mind Map', count( $ids ) === 1 ? home_url( '/map-editor/?map_id=' . $ids[0] ) : '' ],
             'kanban'   => [ '⬡', 'Kanban',   home_url( '/kanban/' . $q ) ],
             'timeline' => [ '◷', 'Timeline', home_url( '/timeline/' . $q ) ],
+            'roadmap'  => [ '▤', 'Roadmap',  home_url( '/roadmap/' . ( count( $ids ) === 1 ? '?map_id=' . $ids[0] : '' ) ) ],
         ];
         echo '<nav class="nmm-view-tabs" aria-label="Views">';
         foreach ( $tabs as $key => $t ) {
@@ -86,6 +88,15 @@ class NMM_Shortcodes {
             exit;
         }
         return self::render( 'timeline' );
+    }
+
+    // [navigator_roadmap] — one map at a time (?map_id=N, else the most recently edited)
+    public static function roadmap( $atts ) {
+        if ( ! is_user_logged_in() ) {
+            wp_redirect( home_url( '/maps/?from=roadmap' ) );
+            exit;
+        }
+        return self::render( 'roadmap' );
     }
 
     // [navigator_kanban]

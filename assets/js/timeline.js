@@ -66,7 +66,7 @@ function updateLinks() {
 
 NMMCore.hoverCard({ root: root, selector: '.nmm-tl-node', info: function(el) {
   const n = el._node;
-  return n && { title: n.title, subs: n.subs, date: n.date, tag: n.tag, sefirot: n.sefirot, where: n._map_title };
+  return n && { title: n.title, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot, where: n._map_title };
 } });
 
 $('nmm-tl-apply-btn').addEventListener('click', function() {
