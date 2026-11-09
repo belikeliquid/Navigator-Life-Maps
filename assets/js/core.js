@@ -152,10 +152,11 @@
     return 'Due in ' + days + ' days';
   }
 
-  // Dated cards that aren't done, most pressing first: overdue (oldest first), then today, then soonest.
+  // Dated cards still being worked on, most pressing first: overdue (oldest first), then today, then soonest.
+  // Review and Done are left out: the work there is finished or waiting on someone else.
   function attention(nodes) {
     const t = today();
-    return nodes.filter(function(n) { return n.date && n.tag !== 'done' && !n._readonly && dayOf(n.date) !== null; })
+    return nodes.filter(function(n) { return n.date && n.tag !== 'done' && n.tag !== 'review' && !n._readonly && dayOf(n.date) !== null; })
       .map(function(n) { const days = dayOf(n.date) - t; return { n: n, days: days, tag: n.tag || '', when: whenText(days) }; })
       .sort(function(a, b) { return a.days - b.days; });
   }

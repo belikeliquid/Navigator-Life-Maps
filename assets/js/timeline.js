@@ -28,9 +28,18 @@ function dayLabel(n, withYear) {
 let allMaps = [], selectedMapIds = [], editNode = null;
 const mapNodes = {}; // map id -> node array, loaded on demand
 
-// Default range: today to 30 days out
+// Default range: today to 30 days out. If none of the selected cards fall in it (an older map),
+// the range fits the cards' own dates instead, until the member picks dates themselves.
 const now = new Date();
-let tlStart = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / DAY_MS, tlEnd = tlStart + 30;
+const TODAY = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / DAY_MS;
+let tlStart = TODAY, tlEnd = TODAY + 30, rangeChosen = false;
+function fitRange(dated) {
+  const days = dated.map(function(n) { return dayNum(n.date); });
+  const first = Math.min.apply(null, days), last = Math.max.apply(null, days);
+  const pad = Math.max(2, Math.ceil((14 - (last - first)) / 2)); // at least two weeks wide, cards centred
+  tlStart = first - pad; tlEnd = last + pad;
+  showRange();
+}
 function showRange() { $('nmm-tl-start').value = dayStr(tlStart); $('nmm-tl-end').value = dayStr(tlEnd); }
 showRange();
 
@@ -41,7 +50,11 @@ async function loadAll() {
     button: $('nmm-tl-filter-btn'), panel: $('nmm-tl-filter-panel'), list: $('nmm-tl-filter-list'),
     maps: allMaps,
     selected: fromUrl.length ? fromUrl : allMaps.map(function(m) { return m.id; }),
-    onChange: function(ids) { selectedMapIds = ids; updateLinks(); loadSelected().then(renderTimeline); }
+    onChange: function(ids) {
+      selectedMapIds = ids; updateLinks();
+      if (!rangeChosen) { tlStart = TODAY; tlEnd = TODAY + 30; showRange(); }
+      loadSelected().then(renderTimeline);
+    }
   });
 }
 
@@ -73,7 +86,7 @@ $('nmm-tl-apply-btn').addEventListener('click', function() {
   const s = $('nmm-tl-start').value, e = $('nmm-tl-end').value;
   if (!s || !e) { alert('Please set both a start and end date.'); return; }
   if (dayNum(s) >= dayNum(e)) { alert('End date must be after start date.'); return; }
-  tlStart = dayNum(s); tlEnd = dayNum(e);
+  tlStart = dayNum(s); tlEnd = dayNum(e); rangeChosen = true;
   renderTimeline();
 });
 
@@ -90,10 +103,7 @@ function showRangeNote(dated, before, after) {
   const btn = document.createElement('button');
   btn.type = 'button'; btn.textContent = 'Show all dates';
   btn.addEventListener('click', function() {
-    const days = dated.map(function(n) { return dayNum(n.date); });
-    tlStart = Math.min(tlStart, Math.min.apply(null, days));
-    tlEnd   = Math.max(tlEnd, Math.max.apply(null, days));
-    showRange(); renderTimeline();
+    fitRange(dated); rangeChosen = true; renderTimeline();
   });
   note.appendChild(span); note.appendChild(btn);
   note.style.display = 'flex';
@@ -121,6 +131,7 @@ function renderTimeline() {
   $('nmm-tl-canvas-wrap').style.display = dated.length ? 'block' : 'none';
   $('nmm-tl-empty').style.display       = dated.length ? 'none' : 'block';
   if (!dated.length) { showRangeNote([], 0, 0); return; }
+  if (!rangeChosen && !dated.some(function(n) { const d = dayNum(n.date); return d >= tlStart && d <= tlEnd; })) fitRange(dated);
 
   const nodes = dated.filter(function(n) { const d = dayNum(n.date); return d >= tlStart && d <= tlEnd; });
   showRangeNote(dated,

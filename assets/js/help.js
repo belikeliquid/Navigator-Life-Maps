@@ -78,7 +78,7 @@ const TOPICS = [
          '<p>Dated cards appear on the Timeline and Roadmap. Tasks appear on the Kanban board. You can also change both straight from those views.</p>',
       rel: ['kanban', 'timeline', 'nextup'] },
     { id: 'nextup', q: 'What is the Next up notice?', k: 'next up notice attention overdue reminder bottom right priority',
-      a: '<p>On a computer, the mind map and roadmap show one card at the bottom right: the dated card most in need of a look. Overdue cards come first, then the soonest.</p>' +
+      a: '<p>On a computer, the mind map and roadmap show one card at the bottom right: the dated card most in need of a look. Overdue cards come first, then the soonest. Cards in Review or Done are left out.</p>' +
          '<p><b>Open card</b> takes you to it. Change its date or stage and the notice moves on to the next one. Dismiss it with × for the rest of your visit.</p>',
       rel: ['dates', 'kanban'] },
     { id: 'tools', q: 'What do Export Prompt, Export PNG and Google Calendar do?', k: 'export prompt png image google calendar gcal ics download tools more menu',

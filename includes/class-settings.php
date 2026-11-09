@@ -271,6 +271,11 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.11.1 — Reminders and older timelines <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Next up and Needs attention no longer point to cards in Review or Done.<br>
+                        The timeline opens an older map on its own dates: when none of its cards fall between today and 30 days out, the range fits the cards instead (at least two weeks, cards centred). Show all dates now covers just the cards, and dates you choose with Apply stay while you switch maps.
+                    </div>
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.11.0 — Invitations and branded emails <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         Sharing a map with someone who has no account now sends them an invitation to join, with a private link that works for 14 days. The link opens the signup page with a note about who invited them to which map, their email filled in and no invitation code needed; after signing up (or logging in, if they already had an account) they land in the map. Only the link grants access, so signing up with someone else's address gets nothing. The person sharing still sees the same reply either way, so the form never reveals who is a member.<br>
