@@ -3,13 +3,13 @@
  * Plugin Name: Navigator Mind Maps
  * Plugin URI: https://navigatorproject.org
  * Description: Visual mind mapping tool for Navigator Leadership Group. Multi-map manager, Kanban view, Tree of Life template, outline import, and WordPress user auth.
- * Version: 1.11.1
+ * Version: 1.12.0
  * Author: Liquid Media / Navigator Leadership Group
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'NMM_VERSION', '1.11.1' );
+define( 'NMM_VERSION', '1.12.0' );
 define( 'NMM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NMM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -120,11 +120,12 @@ class Navigator_MindMaps {
     const PAGE_SCRIPTS = [
         'nmm-canvas'   => [ 'canvas.js',   [ 'nmm-core' ] ],
         'nmm-outline'  => [ 'outline.js',  [ 'nmm-core' ] ],
-        'nmm-editor'   => [ 'editor.js',   [ 'nmm-canvas', 'nmm-outline' ] ],
+        'nmm-more'     => [ 'more.js',     [ 'nmm-core' ] ],
+        'nmm-editor'   => [ 'editor.js',   [ 'nmm-canvas', 'nmm-outline', 'nmm-more' ] ],
         'nmm-view'     => [ 'view.js',     [ 'nmm-canvas', 'nmm-outline' ] ],
-        'nmm-kanban'   => [ 'kanban.js',   [ 'nmm-core' ] ],
-        'nmm-timeline' => [ 'timeline.js', [ 'nmm-core' ] ],
-        'nmm-roadmap'  => [ 'roadmap.js',  [ 'nmm-core' ] ],
+        'nmm-kanban'   => [ 'kanban.js',   [ 'nmm-more' ] ],
+        'nmm-timeline' => [ 'timeline.js', [ 'nmm-more' ] ],
+        'nmm-roadmap'  => [ 'roadmap.js',  [ 'nmm-more' ] ],
         'nmm-help'     => [ 'help.js',     [ 'nmm-core' ] ],
         'nmm-manager'  => [ 'manager.js',  [ 'nmm-core' ] ],
         'nmm-landing'  => [ 'landing.js',  [ 'nmm-core' ] ],

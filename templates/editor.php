@@ -33,17 +33,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <div class="nmm-menu-label">Open another map</div>
     <div id="nmm-picker-list"><span class="nmm-menu-note">Loading…</span></div>
   </div>
-  <div id="nmm-more-menu" class="nmm-menu" role="menu">
-    <button type="button" role="menuitem" class="nmm-narrow-only" onclick="nmmCenter()">⊙ Center</button>
-    <button type="button" role="menuitem" class="nmm-narrow-only" onclick="nmmExpandAll()">Expand all</button>
-    <button type="button" role="menuitem" class="nmm-narrow-only" onclick="nmmCollapseAll()">Collapse</button>
-    <button type="button" role="menuitem" class="nmm-menu-split" onclick="nmmAnimate()"><span>▶ Animate<small>Reveal the map one card at a time</small></span></button>
-    <button type="button" role="menuitem" onclick="nmmOpenSettings()">Settings</button>
-    <button type="button" role="menuitem" onclick="nmmOpenOutlineImport()">📋 Import an outline</button>
-    <button type="button" role="menuitem" onclick="nmmOpenGCalModal()">→ Google Calendar</button>
-    <button type="button" role="menuitem" onclick="nmmExportPNG()">Export PNG</button>
-    <button type="button" role="menuitem" onclick="nmmOpenPromptExport()"><span>Export Prompt<small>Text outline for Basecamp or AI</small></span></button>
-  </div>
+  <?php NMM_Shortcodes::more_menu( 'map' ); ?>
 
   <!-- Layout style menu (opened from the ▾ next to Harmony; outside the toolbar so it isn't clipped) -->
   <div id="nmm-layout-menu" class="nmm-layout-menu" role="menu">
@@ -73,6 +63,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button onclick="nmmOpenOutlineImport();nmmToggleMobileMenu()">📋 Import</button>
     <button onclick="nmmOpenGCalModal();nmmToggleMobileMenu()">→ GCal</button>
     <button onclick="nmmExportPNG();nmmToggleMobileMenu()">Export PNG</button>
+    <button onclick="nmmExportPrint();nmmToggleMobileMenu()">Export for print</button>
     <button onclick="nmmOpenPromptExport();nmmToggleMobileMenu()">Export Prompt</button>
     <button onclick="nmmSave();nmmToggleMobileMenu()">Save</button>
     <button onclick="nmmToggleMobileMenu();nmmOpenHelp()">? Help</button>
@@ -186,48 +177,4 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     </div>
   </div>
 
-  <!-- GCal Export Modal -->
-  <div class="nmm-modal-overlay" id="nmm-gcal-modal">
-    <div class="nmm-modal">
-      <h3>→ Export to Google Calendar</h3>
-      <p style="font-size:12px;color:#666;margin-bottom:12px">All dated nodes are selected. Uncheck any you don't want to export.</p>
-      <div id="nmm-gcal-list" class="nmm-gcal-list"></div>
-      <div class="nmm-modal-actions">
-        <button class="nmm-btn" onclick="nmmCloseGCalModal()">Cancel</button>
-        <button class="nmm-btn nmm-btn-primary" onclick="nmmDoGCalExport()">Export Selected →</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Export Prompt: the map as a text outline with a description, for Basecamp or AI -->
-  <div class="nmm-modal-overlay" id="nmm-prompt-modal">
-    <div class="nmm-modal nmm-prompt-modal">
-      <h3>Export Prompt</h3>
-      <p class="nmm-prompt-intro">Your map as a text outline with a description of how to read it. Copy it into Basecamp, Claude or any AI.</p>
-      <div class="nmm-field">
-        <label for="nmm-prompt-purpose">Use it to</label>
-        <select id="nmm-prompt-purpose" class="nmm-input" onchange="nmmUpdatePrompt()">
-          <option value="basecamp">Create a Basecamp project</option>
-          <option value="document">Write a document</option>
-          <option value="synthesis">Write a synthesis</option>
-          <option value="outline">Just the outline</option>
-        </select>
-      </div>
-      <div class="nmm-field">
-        <label for="nmm-prompt-text">Prompt</label>
-        <textarea id="nmm-prompt-text" class="nmm-input nmm-prompt-text" rows="16" spellcheck="false"></textarea>
-      </div>
-      <div class="nmm-prompt-send">
-        <button type="button" class="nmm-btn nmm-btn-basecamp" onclick="nmmSendToBasecamp()">Send to Basecamp as a new project</button>
-        <p id="nmm-prompt-soon" class="nmm-prompt-soon" role="status" hidden></p>
-      </div>
-      <div class="nmm-modal-actions">
-        <button class="nmm-btn" onclick="nmmClosePromptExport()">Close</button>
-        <button class="nmm-btn" onclick="nmmDownloadPrompt()">Download .md</button>
-        <button class="nmm-btn nmm-btn-primary" id="nmm-prompt-copy" onclick="nmmCopyPrompt()">Copy</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="nmm-export-overlay" class="nmm-export-overlay">Generating PNG...</div>
 </div>

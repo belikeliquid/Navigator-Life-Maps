@@ -527,5 +527,13 @@ root.addEventListener('keydown', function(e) {
 });
 
 window.addEventListener('resize', function() { if (map && rm) render(); });
+// The More menu (shared with the other views)
+NMMMore.init({
+  view: 'roadmap',
+  maps: function() { return map ? [{ id: map.id, title: map.title || 'Untitled', category: map.category || '', layout: (map.settings || {}).layout, nodes: nodes }] : []; },
+  imageEl: function() { return $('nmm-rm-grid'); },
+  cards: function() { return Array.prototype.slice.call(root.querySelectorAll('.nmm-rm-bar')); }
+});
+
 load();
 })();

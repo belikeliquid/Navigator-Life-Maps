@@ -840,8 +840,12 @@ body:has(.nmm-app) .entry-content > *:first-child {
   width: 34px; height: 34px; padding: 0; justify-content: center; flex-shrink: 0; border-radius: 50%;
   font-size: 16px; font-weight: 700; line-height: 1;
 }
+/* The panel's host sits on <body>: no size or background of its own */
+.nmm-app.nmm-help-host { position: static; width: 0 !important; height: 0; min-height: 0; background: none !important; }
+.nmm-help-backdrop { position: fixed; inset: 0; z-index: 100000; background: rgba(1,28,47,0.28); opacity: 0; visibility: hidden; transition: opacity 0.25s, visibility 0s 0.25s; }
+.nmm-help-host.open .nmm-help-backdrop { opacity: 1; visibility: visible; transition: opacity 0.25s; }
 .nmm-help {
-  position: fixed; top: 0; right: 0; bottom: 0; z-index: 1700; width: 420px; max-width: 100vw;
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 100001; width: 420px; max-width: 100vw;
   display: flex; flex-direction: column; background: var(--nmm-sand); box-shadow: -16px 0 40px rgba(1,28,47,0.22);
   font-family: var(--nmm-font); transform: translateX(105%); visibility: hidden;
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 0.3s;
@@ -851,7 +855,15 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-help-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; background: var(--nmm-navy); color: white; }
 .nmm-help-head strong { display: block; font-size: 16px; font-weight: 600; }
 .nmm-help-head span { display: block; margin-top: 2px; font-size: 12.5px; color: rgba(255,255,255,0.65); }
-.nmm-app .nmm-help-close { padding: 2px 8px; border: 0; background: none; cursor: pointer; font-size: 24px; line-height: 1; color: rgba(255,255,255,0.8); }
+.nmm-app .nmm-help-close { flex-shrink: 0; width: 36px; height: 36px; padding: 0; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; background: none; cursor: pointer; font-size: 22px; line-height: 1; color: white; }
+.nmm-app .nmm-help-close:hover, .nmm-app .nmm-help-close:focus-visible { background: rgba(255,255,255,0.12); border-color: var(--nmm-teal); }
+.nmm-help-topic { margin-top: 8px; border-top: 1px solid var(--nmm-border); }
+.nmm-help-topic summary { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px; cursor: pointer; list-style: none; font-weight: 600; font-size: 14px; color: var(--nmm-navy); }
+.nmm-help-topic summary::-webkit-details-marker { display: none; }
+.nmm-help-topic summary::after { content: '▾'; color: var(--nmm-light); transition: transform 0.2s; }
+.nmm-help-topic[open] summary::after { transform: rotate(180deg); }
+.nmm-help-topic summary span { margin-left: auto; margin-right: 10px; font-size: 12px; font-weight: 500; color: var(--nmm-light); }
+.nmm-help-topic .nmm-help-chips { padding-bottom: 10px; }
 .nmm-help-chat { flex: 1; overflow-y: auto; padding: 16px; overscroll-behavior: contain; }
 .nmm-help-msg { margin-bottom: 12px; font-size: 14.5px; line-height: 1.55; }
 .nmm-help-bot { padding: 14px 16px; background: white; border-radius: 4px 14px 14px 14px; color: #3d4a56; box-shadow: 0 1px 3px rgba(1,28,47,0.06); }
@@ -876,7 +888,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-app .nmm-help-ask input { flex: 1; min-width: 0; padding: 10px 14px; border: 1px solid var(--nmm-border); border-radius: 999px; font-family: var(--nmm-font); font-size: 16px; color: var(--nmm-navy); background: var(--nmm-sand); }
 .nmm-app .nmm-help-ask button { padding: 10px 18px; border: 0; border-radius: 999px; background: var(--nmm-teal); cursor: pointer; font-family: var(--nmm-font); font-size: 14px; font-weight: 600; color: var(--nmm-navy); }
 @media (prefers-reduced-motion: reduce) { .nmm-help { transition: none; } }
-@media (max-width: 480px) { .nmm-help { width: 100vw; } .admin-bar .nmm-help { top: 0; } }
+@media (max-width: 600px) { .nmm-help { width: 100vw; } .admin-bar .nmm-help { top: 0; } .nmm-help-head { padding-top: calc(14px + env(safe-area-inset-top)); } }
 
 /* Invitation banner on the signup / login page */
 .nmm-invite-banner {
@@ -1056,7 +1068,9 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-notice-late { color: #b42318; }
 .nmm-notice-title { margin-top: 4px; padding-right: 18px; font-size: 16px; font-weight: 600; line-height: 1.3; color: var(--nmm-navy); }
 .nmm-notice-detail { margin-top: 6px; font-size: 13.5px; line-height: 1.45; color: var(--nmm-mid); }
-.nmm-notice-actions { display: flex; gap: 6px; margin-top: 10px; }
+.nmm-notice-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.nmm-app .nmm-notice-mute { margin-left: auto; padding-left: 4px; padding-right: 4px; border-color: transparent; background: none; font-weight: 500; color: var(--nmm-light); }
+.nmm-app .nmm-notice-mute:hover { color: var(--nmm-navy); text-decoration: underline; }
 .nmm-app .nmm-notice-btn {
   padding: 6px 12px; border: 1px solid var(--nmm-border); border-radius: 999px; background: white; cursor: pointer;
   font-family: var(--nmm-font); font-size: 13px; font-weight: 500; color: var(--nmm-mid);
@@ -2175,3 +2189,18 @@ body:has(.nmm-app) .page-title {
 .nmm-layout-menu svg { flex-shrink: 0; width: 26px; height: 26px; }
 .nmm-layout-menu strong { display: block; font-size: 14px; font-weight: 600; }
 .nmm-layout-menu small { display: block; font-size: 12px; color: var(--nmm-light); margin-top: 1px; }
+
+/* === MORE MENU: Animate in Kanban, Timeline and Roadmap (assets/js/more.js) === */
+.nmm-reveal { transition: opacity 0.4s ease; }
+.nmm-reveal.nmm-reveal-hide { opacity: 0 !important; }
+@media (prefers-reduced-motion: reduce) { .nmm-reveal { transition: none; } }
+
+/* === EXPORT FOR PRINT: on while the image is made (.nmm-print on the app) ===
+   White page, no shadows or washes, cards outlined so they read on paper */
+.nmm-print *, .nmm-print *::before, .nmm-print *::after { box-shadow: none !important; text-shadow: none !important; }
+.nmm-print .nmm-node { background: #ffffff !important; border: 1.5px solid #c9c4b8; }
+.nmm-print .nmm-kb-body, .nmm-print .nmm-kb-triage-wrap, .nmm-print .nmm-kb-triage-cards { background: #ffffff !important; background-image: none !important; }
+.nmm-print .nmm-kb-col { background: #ffffff !important; border: 1px solid #d8d4cb; }
+.nmm-print .nmm-kb-card, .nmm-print .nmm-tl-node { background: #ffffff !important; border-top: 1px solid #d0cbbf; border-right: 1px solid #d0cbbf; border-bottom: 1px solid #d0cbbf; }
+.nmm-print .nmm-rm-grid { background: #ffffff !important; }
+.nmm-print .nmm-rm-bar { border: 1px solid rgba(1,28,47,0.25); }

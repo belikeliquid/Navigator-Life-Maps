@@ -300,5 +300,18 @@ window.nmmTlSaveEdit = async function() {
 $('nmm-tl-edit-modal').addEventListener('click', function(e) { if (e.target === this) nmmTlCloseEdit(); });
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') nmmTlCloseEdit(); });
 
+// The More menu (shared with the other views)
+NMMMore.init({
+  view: 'timeline',
+  maps: function() {
+    return selectedMapIds.map(function(id) {
+      const m = allMaps.find(function(x) { return x.id === id; }) || {};
+      return { id: id, title: m.title || 'Untitled', category: m.category || '', nodes: mapNodes[id] || [] };
+    });
+  },
+  imageEl: function() { return $('nmm-tl-canvas'); },
+  cards: function() { return Array.prototype.slice.call(root.querySelectorAll('.nmm-tl-node')); }
+});
+
 loadAll();
 })();

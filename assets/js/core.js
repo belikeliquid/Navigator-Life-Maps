@@ -210,7 +210,16 @@
     const el = document.createElement('div');
     el.className = 'nmm-notice'; el.setAttribute('role', 'status');
     opts.root.appendChild(el);
-    let items = [], idx = 0, shownOnce = false;
+    let all = [], items = [], idx = 0, shownOnce = false;
+    // "Don't remind me": muted cards are kept in this browser, by card and date,
+    // so a card that gets a new date reminds again
+    const MUTE_KEY = 'nmm_notice_muted';
+    function muteId(it) { return it.n.id + '|' + (it.n.date || ''); }
+    function muted() { try { return JSON.parse(localStorage.getItem(MUTE_KEY) || '[]'); } catch(e) { return []; } }
+    function mute(it) {
+      try { const m = muted().filter(function(x) { return x !== muteId(it); }); m.push(muteId(it)); localStorage.setItem(MUTE_KEY, JSON.stringify(m.slice(-500))); } catch(e) {}
+    }
+    function unmuted(list) { const m = muted(); return list.filter(function(it) { return m.indexOf(muteId(it)) < 0; }); }
     function dismissed() { try { return sessionStorage.getItem('nmm_notice_' + opts.key) === '1'; } catch(e) { return false; } }
     function render() {
       const it = items[idx];
@@ -223,7 +232,8 @@
         '<div class="nmm-notice-title">' + esc(it.n.title || 'Untitled') + '</div>' +
         '<div class="nmm-notice-detail">' + (tc ? '<span class="nmm-hc-tag" style="background:' + tc.bg + ';color:' + tc.text + '">' + tc.label + '</span> ' : '') + esc(opts.detail(it)) + '</div>' +
         '<div class="nmm-notice-actions"><button type="button" class="nmm-notice-btn nmm-notice-open" data-act="open">Open card</button>' +
-          (items.length > 1 ? '<button type="button" class="nmm-notice-btn" data-act="next">Next ›</button>' : '') + '</div>';
+          (items.length > 1 ? '<button type="button" class="nmm-notice-btn" data-act="next">Next ›</button>' : '') +
+          '<button type="button" class="nmm-notice-btn nmm-notice-mute" data-act="mute" title="Stop reminding me about this card (it comes back if its date changes)">Don&rsquo;t remind me</button></div>';
       if (!shownOnce) { shownOnce = true; setTimeout(function() { el.classList.add('open'); }, 1200); }
       else el.classList.add('open');
     }
@@ -231,6 +241,7 @@
       const b = e.target.closest('[data-act]'), act = b ? b.dataset.act : 'open';
       if (act === 'close') { try { sessionStorage.setItem('nmm_notice_' + opts.key, '1'); } catch(err) {} el.classList.remove('open'); return; }
       if (act === 'next') { idx = (idx + 1) % items.length; render(); return; }
+      if (act === 'mute') { if (items[idx]) mute(items[idx]); items = unmuted(all); if (idx >= items.length) idx = 0; render(); return; }
       if (items[idx]) opts.onOpen(items[idx]);
     });
     return {
@@ -238,7 +249,8 @@
       // (new date, done, gone) go back to the most pressing one
       update: function(list) {
         const cur = items[idx];
-        items = list || [];
+        all = list || [];
+        items = unmuted(all);
         const keep = cur ? items.findIndex(function(it) { return it.n.id === cur.n.id && it.days === cur.days && it.tag === cur.tag; }) : -1;
         idx = keep >= 0 ? keep : 0;
         render();

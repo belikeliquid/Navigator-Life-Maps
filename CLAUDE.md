@@ -18,7 +18,8 @@ WordPress plugin `navigator-mindmaps`, live on navigatorproject.org. Mind maps, 
 | `assets/js/canvas.js` | `NMMCanvas.create()`: map rendering shared by the editor and the share view (nodes, lines, motif, PNG export) |
 | `assets/js/editor.js` | Editor: save/draft/conflict logic, drag, modals, outline import, .ics export, Export Prompt (`promptText()`: map → described text outline) |
 | `assets/js/outline.js` | `NMMOutline.create()`: the phone list view (below 700px, List / Map switch) for the editor and share view; redrawn from the editor's wrapped `C.render` |
-| `assets/js/help.js` | The ? Help panel (all signed-in pages): questions and answers in `TOPICS`, matched by keywords. Keep the copy current when features change |
+| `assets/js/more.js` | The More menu (`templates/more.php` via `NMM_Shortcodes::more_menu($view)`), the same on Mind Map, Kanban, Timeline and Roadmap: Animate, Settings, Import, Google Calendar, Export PNG, Export for print (white, `.nmm-print` on the app while capturing), Export Prompt. Each view calls `NMMMore.init({view, maps(), image() or imageEl(), cards()})`; elsewhere Settings and Import open the editor with `&open=settings|outline` |
+| `assets/js/help.js` | The ? Help panel (all signed-in pages): questions and answers in `TOPICS`, matched by keywords. Opens on a short welcome (the page's own question first, `PAGE_Q`), with all topics folded behind "Browse all topics". The panel sits in its own `.nmm-app.nmm-help-host` on `<body>` so the theme header can't cover it; backdrop, × and Esc close it. Keep the copy current when features change |
 | `assets/js/{view,kanban,timeline,manager,landing}.js` | One script per page |
 | `assets/mindmaps.css` | All styles. App UI uses `--nmm-font` (Fira Sans); map cards stay Barlow Condensed because their size drives saved layouts |
 
@@ -42,7 +43,7 @@ Node: `{id, x, y, title, subs[], parent, collapsed, date, end, task, tag, sefiro
 
 **Featured.** `nmm_featured` meta (admins set it through `featured` on PUT). `can_read()` lets any signed-in member GET a featured map; writing still needs `can_access()`. `/featured` lists them, `/maps/<id>/copy` makes a copy for the current user (limit applies, islands not copied). `format_map` adds `created`, `featured`, `can_edit`; the editor sends `can_edit: false` maps to the read-only view, which shows "Use this map".
 
-**Hover cards and notices.** `NMMCore.hoverCard()` (mouse only) and `NMMCore.notice()` (screens 900px+) are shared by the editor, view, Kanban and timeline. `NMMCore.attention()` sorts dated cards not in Review or Done by days from today; Kanban keeps only overdue ones and those due within 2 days still in Triage or Start.
+**Hover cards and notices.** `NMMCore.hoverCard()` (mouse only) and `NMMCore.notice()` (screens 900px+) are shared by the editor, view, Kanban and timeline. `NMMCore.attention()` sorts dated cards not in Review or Done by days from today; Kanban keeps only overdue ones and those due within 2 days still in Triage or Start. "Don't remind me" mutes a card in this browser (localStorage `nmm_notice_muted`, by card id and date, so a new date brings it back).
 
 **Roadmap.** `roadmap.js`: bars from `date` to `end` (no end = 21 days, drawn fading). `settings.roadmap = {group: 'phase'|'branch', preset, lanes: [{id, label}]}`; in phase mode a card's `lane` is a lane id (unknown = Unsorted), in branch mode its lane is its top-level branch. Saves through `NMMCore.patchNode` / `patchMap`. Tray = undated tasks and leaf cards.
 

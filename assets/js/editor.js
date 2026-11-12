@@ -137,6 +137,12 @@ async function loadMap() {
   }
   C.autoCenter();
   if (changed) markDirty();
+  // Settings or Import an outline chosen from another view's More menu
+  const want = new URLSearchParams(location.search).get('open');
+  if (want === 'settings' || want === 'outline') {
+    history.replaceState(null, '', NMM.editorUrl + '?map_id=' + MAP_ID);
+    setTimeout(want === 'settings' ? window.nmmOpenSettings : window.nmmOpenOutlineImport, 300);
+  }
   // Opened from the maps list's Next up: show that card and open it
   const card = new URLSearchParams(location.search).get('card');
   if (card && find(card)) {
@@ -161,7 +167,6 @@ NMMCore.dropdown($('nmm-map-picker'), $('nmm-picker-menu'), function() {
       : '<span class="nmm-menu-note">No other maps yet</span>';
   }).catch(function() { pickerLoaded = false; $('nmm-picker-list').innerHTML = '<span class="nmm-menu-note">Could not load your maps</span>'; });
 });
-NMMCore.dropdown($('nmm-more-btn'), $('nmm-more-menu'));
 
 function renderEmpty() {
   $('nmm-canvas').innerHTML = '<div style="padding:60px;text-align:center;color:#999;font-size:18px;">Map not found. <a href="' + NMM.mapsUrl + '">Return to maps</a>.</div>';
@@ -834,8 +839,6 @@ window.nmmSaveSettings = function() {
 };
 
 window.nmmToggleMobileMenu = function() { $('nmm-mobile-menu').classList.toggle('open'); };
-window.nmmExportPNG = function() { C.exportPNG('mindmap.png'); };
-
 // ============================================================
 // OUTLINE IMPORT — indented text, bullets or numbered lists
 // ============================================================
@@ -889,122 +892,6 @@ window.nmmBuildFromOutline = function() {
 };
 
 // ============================================================
-// GOOGLE CALENDAR (.ics) EXPORT
-// ============================================================
-window.nmmOpenGCalModal = function() {
-  const dated = nodes.filter(function(n) { return n.date && !n._readonly; });
-  if (!dated.length) { alert('No nodes have dates. Edit nodes and add dates first.'); return; }
-  const list = $('nmm-gcal-list'); list.innerHTML = '';
-  dated.forEach(function(n) {
-    const row = document.createElement('div');
-    row.className = 'nmm-gcal-item';
-    row.innerHTML = '<input type="checkbox" id="gcal_' + n.id + '" data-nid="' + n.id + '" checked />' +
-      '<label for="gcal_' + n.id + '"><strong>' + NMMCore.esc(n.title) + '</strong><span class="nmm-gcal-date"> · 📅 ' + n.date + '</span></label>';
-    list.appendChild(row);
-  });
-  $('nmm-gcal-modal').classList.add('open');
-};
-window.nmmCloseGCalModal = function() { $('nmm-gcal-modal').classList.remove('open'); };
-window.nmmDoGCalExport = function() {
-  const checked = document.querySelectorAll('#nmm-gcal-list input[type=checkbox]:checked');
-  if (!checked.length) { alert('No nodes selected.'); return; }
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//NavigatorMindMaps//EN'];
-  checked.forEach(function(cb) {
-    const n = find(cb.dataset.nid); if (!n) return;
-    const d = n.date.replace(/-/g, '');
-    lines.push('BEGIN:VEVENT', 'DTSTART;VALUE=DATE:' + d, 'DTEND;VALUE=DATE:' + (n.end ? NMMCore.dayAfter(n.end) : d), 'SUMMARY:' + n.title, 'DESCRIPTION:' + (n.subs || []).join('\\n'), 'END:VEVENT');
-  });
-  lines.push('END:VCALENDAR');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([lines.join('\r\n')], { type: 'text/calendar' }));
-  a.download = 'mindmap_events.ics'; a.click();
-  nmmCloseGCalModal();
-};
-
-// ============================================================
-// EXPORT PROMPT — the map as a text outline plus a description of it,
-// ready to paste into Basecamp or an AI to build a project, document or synthesis
-// ============================================================
-const PROMPT_PURPOSES = {
-  basecamp: 'Turn this outline into a Basecamp project. Suggest a project name and a one-paragraph project description. Use each main branch as a to-do list and the cards under it as to-dos (deeper cards can become sub-steps in the to-do notes). Keep each card\'s notes as the to-do description, use dates as due dates, and use the Kanban stage as the status (or as Card Table columns: Triage, Start, Doing, Sprint, Review, Done). Flag anything that looks like a milestone.',
-  document: 'Write a clear, well-structured document from this outline. Use the main branches as sections and their cards as headings and paragraphs, turn the notes into flowing prose, and keep dates and status where they help the reader. Open with a short summary of the whole map.',
-  synthesis: 'Read this outline as a whole and write a synthesis: the main themes and how the branches connect, what is in motion right now (dated cards and Kanban stages), what seems missing, stuck or in tension, and three to five clear next steps.',
-  outline: 'Use this outline as context. Keep its structure and wording when you refer to it.'
-};
-function promptText(purpose) {
-  const live = nodes; // collapsed branches included
-  function kids(id) {
-    const ch = live.filter(function(n) { return n.parent === id; });
-    // Reading order follows the layout: top to bottom for Mind Map, left to right otherwise
-    return ch.sort(settings.layout === 'mind' ? function(a, b) { return a.y - b.y || a.x - b.x; } : function(a, b) { return a.x - b.x || a.y - b.y; });
-  }
-  function tags(n) {
-    const t = [];
-    if (n.date) t.push(n.end ? '[dates: ' + n.date + ' to ' + n.end + ']' : '[date: ' + n.date + ']');
-    if (NMMCore.isTask(n)) t.push('[task' + (n.tag && NMMCore.TAG_COLORS[n.tag] ? ', stage: ' + NMMCore.TAG_COLORS[n.tag].label : ', stage: Triage') + ']');
-    if (n.sefirot && NMMCore.SEFIROT_LABELS[n.sefirot]) t.push('[Tree of Life: ' + NMMCore.SEFIROT_LABELS[n.sefirot] + ']');
-    if (n._readonly) t.push('[linked from: ' + n._island_title + ']');
-    return t.length ? '  ' + t.join(' ') : '';
-  }
-  const lines = [];
-  function walk(n, depth) {
-    const pad = '  '.repeat(depth);
-    lines.push(pad + '- ' + (n.title || 'Untitled') + tags(n));
-    (n.subs || []).forEach(function(s) { if (s.trim()) lines.push(pad + '  ' + s.trim()); });
-    kids(n.id).forEach(function(c) { walk(c, depth + 1); });
-  }
-  const roots = live.filter(isRoot).sort(function(a, b) { return a.x - b.x || a.y - b.y; });
-  roots.forEach(function(r) { walk(r, 0); });
-
-  const dated = live.filter(function(n) { return n.date; }).length, tasks = live.filter(NMMCore.isTask).length;
-  const today = new Date().toISOString().slice(0, 10);
-  return [
-    '# ' + mapTitle,
-    'Navigator Life Map' + (mapCategory ? ' · Category: ' + mapCategory : '') + ' · Exported ' + today,
-    '',
-    '## About this outline',
-    'This is a mind map from Navigator Life Maps written out as an indented outline. Each line starting with "-" is a card; the lines indented beneath it are the cards that grow from it, so indentation shows how ideas branch. Plain lines directly under a card are its notes. The top-level cards are the map\'s islands, its main areas.',
-    'Labels in square brackets:',
-    '- [date: YYYY-MM-DD] the day the card is due or scheduled',
-    '- [task, stage: …] the card is a task on the Kanban board, in that stage (Triage, Start, Doing, Sprint, Review, Done)',
-    '- [Tree of Life: …] the card\'s position on the Tree of Life',
-    '- [linked from: …] the card comes from another map linked into this one',
-    'The map has ' + live.length + ' cards in ' + roots.length + ' island' + (roots.length === 1 ? '' : 's') + ', ' + dated + ' with dates and ' + tasks + ' marked as tasks.',
-    '',
-    '## What to do with it',
-    PROMPT_PURPOSES[purpose] || PROMPT_PURPOSES.outline,
-    '',
-    '## Outline',
-    lines.join('\n')
-  ].join('\n');
-}
-window.nmmOpenPromptExport = function() {
-  if (!nodes.length) { alert('This map has no cards yet.'); return; }
-  nmmUpdatePrompt();
-  $('nmm-prompt-modal').classList.add('open');
-};
-window.nmmUpdatePrompt = function() { $('nmm-prompt-text').value = promptText($('nmm-prompt-purpose').value); };
-// Sending straight to Basecamp is planned; until then the button says so and points to the prompt
-window.nmmSendToBasecamp = function() {
-  const p = $('nmm-prompt-soon');
-  p.innerHTML = '<strong>Coming soon.</strong> Check back shortly. For now, choose <em>Create a Basecamp project</em> above, then copy the prompt into Claude or Basecamp.';
-  p.hidden = false;
-};
-window.nmmClosePromptExport = function() { $('nmm-prompt-modal').classList.remove('open'); };
-window.nmmCopyPrompt = function() {
-  const ta = $('nmm-prompt-text'), btn = $('nmm-prompt-copy');
-  const done = function() { btn.textContent = 'Copied ✓'; setTimeout(function() { btn.textContent = 'Copy'; }, 1800); };
-  if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(done, function() { ta.select(); document.execCommand('copy'); done(); });
-  else { ta.select(); document.execCommand('copy'); done(); }
-};
-window.nmmDownloadPrompt = function() {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([$('nmm-prompt-text').value], { type: 'text/markdown' }));
-  a.download = (mapTitle || 'map').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '-prompt.md';
-  a.click();
-};
-
-// ============================================================
 // KEYBOARD + MODAL DISMISS
 // ============================================================
 function closeModals() { nmmCloseNodeModal(); nmmCloseSettings(); nmmCloseOutlineImport(); nmmCloseGCalModal(); nmmClosePromptExport(); }
@@ -1016,6 +903,13 @@ document.addEventListener('keydown', function(e) {
 });
 document.querySelectorAll('.nmm-modal-overlay').forEach(function(o) {
   o.addEventListener('click', function(e) { if (e.target === o) closeModals(); });
+});
+
+// The More menu (shared with Kanban, Timeline and Roadmap): exports, Google Calendar, Export Prompt
+NMMMore.init({
+  view: 'map',
+  maps: function() { return [{ id: MAP_ID, title: mapTitle, category: mapCategory, layout: settings.layout, nodes: nodes }]; },
+  image: function(print, name) { C.exportPNG(name, { print: print }); }
 });
 
 loadMap();

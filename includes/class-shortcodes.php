@@ -21,6 +21,12 @@ class NMM_Shortcodes {
         return ob_get_clean();
     }
 
+    // The More menu and its dialogs (Animate, Settings, Import, Google Calendar, images, Export Prompt),
+    // the same on the Mind Map, Kanban, Timeline and Roadmap. assets/js/more.js runs it.
+    public static function more_menu( $view ) {
+        include NMM_PATH . 'templates/more.php';
+    }
+
     // Map ids from ?map_id=1,2 (Kanban and timeline take several)
     public static function ids_from_url() {
         if ( empty( $_GET['map_id'] ) ) return [];

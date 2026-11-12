@@ -29,6 +29,7 @@
       <button class="nmm-btn nmm-btn-primary nmm-btn-keep" id="nmm-tl-apply-btn">Apply</button>
     </div>
     <span class="nmm-toolbar-gap"></span>
+    <button class="nmm-btn nmm-btn-keep" id="nmm-more-btn" type="button">More ▾</button>
     <button type="button" class="nmm-btn nmm-btn-keep nmm-help-btn" title="Help: how Life Maps works" aria-label="Help">?</button>
   </div>
 
@@ -76,4 +77,6 @@
       </div>
     </div>
   </div>
+
+  <?php NMM_Shortcodes::more_menu( 'timeline' ); ?>
 </div>

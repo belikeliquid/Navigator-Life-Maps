@@ -271,6 +271,13 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.12.0 — More menu in every view, Export for print <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        The More menu is now on the Mind Map, Kanban, Timeline and Roadmap, and works in each: Animate reveals the cards one at a time, Export PNG saves the view as an image, Google Calendar and Export Prompt use the maps on screen (one section per map when there are several). Settings and Import an outline open the map in the Mind Map with that dialog showing.<br>
+                        New: Export for print, the same image on a white background with outlined cards, easy to read on paper.<br>
+                        Reminders (Next up, Needs attention) have a Don't remind me button that stops them pointing to that card on this device; a new date brings it back.<br>
+                        Help opens on a short welcome with a few questions (the one for the page first) and all topics folded behind Browse all topics. It now sits above the site header, closes with ×, Esc or a click outside, and fills the screen on phones.
+                    </div>
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.11.1 — Reminders and older timelines <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         Next up and Needs attention no longer point to cards in Review or Done.<br>

@@ -210,5 +210,18 @@ window.nmmKbSaveEdit = async function() {
 $('nmm-kb-edit-modal').addEventListener('click', function(e) { if (e.target === this) nmmKbCloseEdit(); });
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') nmmKbCloseEdit(); });
 
+// The More menu (shared with the other views)
+NMMMore.init({
+  view: 'kanban',
+  maps: function() {
+    return selectedMapIds.map(function(id) {
+      const m = allMaps.find(function(x) { return x.id === id; }) || {};
+      return { id: id, title: m.title || 'Untitled', category: m.category || '', nodes: mapNodes[id] || [] };
+    });
+  },
+  imageEl: function() { return root.querySelector('.nmm-kb-body'); },
+  cards: function() { return Array.prototype.slice.call(root.querySelectorAll('.nmm-kb-card')); }
+});
+
 loadAll();
 })();

@@ -77,16 +77,16 @@ const TOPICS = [
       a: '<p>Click <b>Edit</b> on a card. Set a <b>Start date</b> (and an <b>End date</b> if it runs over time), tick <b>Kanban task</b>, and choose its stage.</p>' +
          '<p>Dated cards appear on the Timeline and Roadmap. Tasks appear on the Kanban board. You can also change both straight from those views.</p>',
       rel: ['kanban', 'timeline', 'nextup'] },
-    { id: 'nextup', q: 'What is the Next up notice?', k: 'next up notice attention overdue reminder bottom right priority',
+    { id: 'nextup', q: 'What is the Next up notice?', k: 'next up notice attention overdue reminder bottom right priority dismiss stop remind mute',
       a: '<p>On a computer, the mind map and roadmap show one card at the bottom right: the dated card most in need of a look. Overdue cards come first, then the soonest. Cards in Review or Done are left out.</p>' +
-         '<p><b>Open card</b> takes you to it. Change its date or stage and the notice moves on to the next one. Dismiss it with × for the rest of your visit.</p>',
+         '<p><b>Open card</b> takes you to it. Change its date or stage and the notice moves on to the next one. Dismiss it with × for the rest of your visit, or choose <b>Don&rsquo;t remind me</b> to stop it pointing to that card on this device. If the card gets a new date, it can come back.</p>',
       rel: ['dates', 'kanban'] },
-    { id: 'tools', q: 'What do Export Prompt, Export PNG and Google Calendar do?', k: 'export prompt png image google calendar gcal ics download tools more menu',
-      a: '<ul><li><b>Export Prompt</b> writes your whole map as a text outline, with instructions for Basecamp, a document or a synthesis. Copy it into Basecamp or any AI.</li>' +
-         '<li><b>Export PNG</b> saves the map as an image.</li>' +
+    { id: 'tools', q: 'What do Export Prompt, Export PNG and Google Calendar do?', k: 'export prompt png image print printing white google calendar gcal ics download tools more menu animate',
+      a: '<p>They are in the <b>More</b> menu, in every view: Mind Map, Kanban, Timeline and Roadmap.</p><ul><li><b>Export Prompt</b> writes your whole map as a text outline, with instructions for Basecamp, a document or a synthesis. Copy it into Basecamp or any AI.</li>' +
+         '<li><b>Export PNG</b> saves what you see as an image. <b>Export for print</b> does the same on a white background, easy to read on paper.</li>' +
          '<li><b>Google Calendar</b> makes a calendar file from the dated cards you pick.</li>' +
          '<li><b>Import an outline</b> adds cards from an indented list.</li></ul>' +
-         '<p>All of them are in <b>More ▾</b> in the mind map.</p>',
+         '<p>Animate reveals the cards one at a time. Settings and Import an outline belong to one map, so in the other views they open it in the Mind Map.</p>',
       rel: ['basecamp', 'mindmap'] },
     { id: 'basecamp', q: 'How do I connect a map to Basecamp?', k: 'basecamp connect project to-do sync integration export',
       a: '<p>Open the map, choose <b>More › Export Prompt</b> and pick <b>Basecamp</b>. You get the map as a project outline: a name, a description, to-do lists from your branches and to-dos from the cards, with dates and stages.</p>' +
@@ -150,15 +150,20 @@ function match(text) {
 }
 
 // ---------- the panel ----------
+// It lives in its own .nmm-app host on <body>, so the theme's sticky header can't cover it.
+const host = document.createElement('div');
+host.className = 'nmm-app nmm-help-host';
+const backdrop = document.createElement('div');
+backdrop.className = 'nmm-help-backdrop';
 const panel = document.createElement('aside');
 panel.className = 'nmm-help'; panel.setAttribute('aria-label', 'Life Maps help'); panel.setAttribute('aria-hidden', 'true');
 panel.innerHTML =
   '<div class="nmm-help-head"><div><strong>Life Maps guide</strong><span>Ask a question, or pick one below</span></div>' +
-    '<button type="button" class="nmm-help-close" aria-label="Close help">×</button></div>' +
+    '<button type="button" class="nmm-help-close" aria-label="Close help" title="Close (Esc)">×</button></div>' +
   '<div class="nmm-help-chat" aria-live="polite"></div>' +
   '<form class="nmm-help-ask"><input type="text" placeholder="Ask about Life Maps…" aria-label="Your question" autocomplete="off" />' +
     '<button type="submit">Ask</button></form>';
-root.appendChild(panel);
+host.appendChild(backdrop); host.appendChild(panel); document.body.appendChild(host);
 const chat = panel.querySelector('.nmm-help-chat'), input = panel.querySelector('input');
 
 function scrollDown() { chat.scrollTop = chat.scrollHeight; }
@@ -175,16 +180,27 @@ function answer(it, asked) {
   say('nmm-help-you', esc(asked || it.q));
   say('nmm-help-bot', it.a + (it.rel && it.rel.length ? '<div class="nmm-help-more">Related</div>' + chips(it.rel) : ''));
 }
+// The question that fits the page you are on comes first
+const PAGE_Q = { 'nmm-editor': 'mindmap', 'nmm-view': 'mindmap', 'nmm-kanban': 'kanban', 'nmm-timeline': 'timeline', 'nmm-roadmap': 'roadmap', 'nmm-manager': 'start' };
 function welcome() {
   chat.innerHTML = '';
-  say('nmm-help-bot', '<p>Hi. I can answer the key questions about Life Maps: how it works, the four views, what you can map, sharing and your account.</p>' +
-    TOPICS.map(function(t) { return '<div class="nmm-help-more">' + esc(t.name) + '</div>' + chips(t.items.map(function(i) { return i.id; })); }).join(''));
+  const first = PAGE_Q[root.id] || 'start';
+  const picks = [first].concat(['how', 'views', 'share'].filter(function(id) { return id !== first; })).slice(0, 4);
+  say('nmm-help-bot', '<p>Hi. Ask me anything about Life Maps, or start with one of these:</p>' + chips(picks) +
+    '<p class="nmm-help-small" style="margin-top:12px"><button type="button" class="nmm-help-link" data-act="all">Browse all topics</button></p>');
   chat.scrollTop = 0;
+}
+// Every topic, folded, so the list stays short until you open one
+function allTopics() {
+  say('nmm-help-bot', '<p>All topics. Tap one to see its questions.</p>' +
+    TOPICS.map(function(t) {
+      return '<details class="nmm-help-topic"><summary>' + esc(t.name) + ' <span>' + t.items.length + '</span></summary>' + chips(t.items.map(function(i) { return i.id; })) + '</details>';
+    }).join(''));
 }
 chat.addEventListener('click', function(e) {
   const b = e.target.closest('[data-q]');
   if (b) answer(byId[b.dataset.q]);
-  if (e.target.closest('[data-act="topics"]')) welcome();
+  if (e.target.closest('[data-act="topics"]') || e.target.closest('[data-act="all"]')) allTopics();
 });
 panel.querySelector('form').addEventListener('submit', function(e) {
   e.preventDefault();
@@ -202,17 +218,20 @@ panel.querySelector('form').addEventListener('submit', function(e) {
     '<p class="nmm-help-small">Still stuck? Ask your Guide, or reach us through navigatorproject.org. <button type="button" class="nmm-help-link" data-act="topics">See all topics</button></p>');
 });
 panel.querySelector('.nmm-help-close').addEventListener('click', close);
+backdrop.addEventListener('click', close);
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && panel.classList.contains('open')) close(); });
 
 let opener = null;
 function open() {
   opener = document.activeElement;
   if (!chat.childElementCount) welcome();
-  panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false');
-  setTimeout(function() { input.focus(); }, 50);
+  panel.classList.add('open'); host.classList.add('open'); panel.setAttribute('aria-hidden', 'false');
+  // On touch screens the keyboard would cover the questions, so only focus the box with a mouse
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) setTimeout(function() { input.focus(); }, 50);
+  else panel.querySelector('.nmm-help-close').focus();
 }
 function close() {
-  panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true');
+  panel.classList.remove('open'); host.classList.remove('open'); panel.setAttribute('aria-hidden', 'true');
   if (opener && opener.focus) opener.focus();
 }
 window.nmmOpenHelp = open;

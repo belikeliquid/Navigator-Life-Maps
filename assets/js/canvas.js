@@ -367,21 +367,26 @@
     }
     setupZoom();
 
-    function exportPNG(filename) {
+    // opts.print: white background and plain cards, for printing
+    function exportPNG(filename, opts) {
+      const print = !!(opts && opts.print), app = canvas.closest('.nmm-app');
       const overlay = document.getElementById('nmm-export-overlay');
       overlay.style.display = 'flex';
+      if (print && app) app.classList.add('nmm-print');
       canvas.style.transform = ''; // export at full size whatever the zoom
       NMMCore.loadHtml2Canvas().then(function(h2c) {
         const b = bounds(), pad = 80;
         if (!b) throw new Error('Nothing to export');
-        return h2c(canvas, { backgroundColor: '#e8e4db', x: b.minX - pad, y: b.minY - pad,
+        return h2c(canvas, { backgroundColor: print ? '#ffffff' : '#e8e4db', x: b.minX - pad, y: b.minY - pad,
           width: b.maxX - b.minX + pad * 2, height: b.maxY - b.minY + pad * 2, scale: 2, logging: false });
       }).then(function(c) {
+        if (app) app.classList.remove('nmm-print');
         applyZoom();
         overlay.style.display = 'none';
         const a = document.createElement('a');
         a.download = filename; a.href = c.toDataURL('image/png'); a.click();
       }).catch(function(e) {
+        if (app) app.classList.remove('nmm-print');
         applyZoom();
         overlay.style.display = 'none';
         alert('PNG export failed: ' + e.message);
