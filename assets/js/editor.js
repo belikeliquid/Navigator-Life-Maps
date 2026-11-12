@@ -892,9 +892,148 @@ window.nmmBuildFromOutline = function() {
 };
 
 // ============================================================
+// REORGANIZE WITH AI — the member says what they want, answers a few questions,
+// and the server rewrites the map (one AI action). The map as it was is kept on
+// the server, so it can be brought back from this dialog.
+// ============================================================
+const reorg = { step: 'ask', questions: [], questionsFor: '', busy: false };
+function reorgError(msg) { const el = $('nmm-reorg-error'); el.textContent = msg || ''; el.style.display = msg ? 'block' : 'none'; }
+function reorgStep(step) {
+  reorg.step = step;
+  ['ask', 'questions', 'working'].forEach(function(s) { $('nmm-reorg-step-' + s).style.display = s === step ? '' : 'none'; });
+  $('nmm-reorg-actions').style.display = step === 'working' ? 'none' : '';
+  $('nmm-reorg-cancel').textContent = step === 'questions' ? 'Back' : 'Cancel';
+  $('nmm-reorg-next').textContent = step === 'questions' ? 'Rewrite my map' : 'Next';
+  $('nmm-reorg-next').disabled = false;
+}
+function allowanceText(ai) {
+  if (!ai) return '';
+  if (!ai.limit) return 'No limit for admins. AI actions this week: ' + ai.used + '.';
+  const left = Math.max(0, ai.limit - ai.used);
+  if (!left) return 'You have used your ' + ai.limit + ' AI actions for this ' + ai.period + '. Your next one is available on ' + ai.next + '.';
+  return 'Uses 1 of your AI actions. You have ' + left + ' of ' + ai.limit + ' left this ' + ai.period + '.';
+}
+window.nmmOpenReorganize = function() {
+  layoutMenu.classList.remove('open');
+  if (!MAP_ID) return;
+  reorgError(''); reorgStep('ask');
+  $('nmm-reorg-allowance').textContent = '';
+  $('nmm-reorg-restore').style.display = 'none';
+  $('nmm-reorganize-modal').classList.add('open');
+  setTimeout(function() { $('nmm-reorg-wish').focus(); }, 50);
+  api('GET', 'auth/me').then(function(me) {
+    const ai = me && me.ai;
+    $('nmm-reorg-allowance').textContent = allowanceText(ai);
+    if (ai && ai.limit && ai.used >= ai.limit && reorg.step === 'ask') $('nmm-reorg-next').disabled = true; // none left: nothing to send
+  }).catch(function() {});
+  api('GET', 'maps/' + MAP_ID + '/reorganize/before').then(function(b) {
+    if (!b || !b.at || !Array.isArray(b.nodes)) return;
+    const el = $('nmm-reorg-restore');
+    el.innerHTML = 'Want the earlier version back? <button type="button" class="nmm-link-btn">Bring back the map from before the last Reorganize</button> (' + NMMCore.esc(b.when) + ').';
+    el.style.display = '';
+    el.querySelector('button').onclick = function() { restoreBefore(b); };
+  }).catch(function() {});
+};
+window.nmmCloseReorganize = function() { if (!reorg.busy) $('nmm-reorganize-modal').classList.remove('open'); };
+
+document.querySelectorAll('.nmm-reorg-ideas .nmm-chip').forEach(function(chip) {
+  chip.addEventListener('click', function() {
+    const box = $('nmm-reorg-wish'), t = box.value.trim();
+    box.value = t ? t.replace(/[.\s]*$/, '') + '. ' + chip.textContent : chip.textContent;
+    box.focus();
+  });
+});
+$('nmm-reorg-cancel').addEventListener('click', function() {
+  reorgError('');
+  if (reorg.step === 'questions') { reorgStep('ask'); return; }
+  nmmCloseReorganize();
+});
+$('nmm-reorg-next').addEventListener('click', function() {
+  reorgError('');
+  if (reorg.step === 'questions') { runReorganize(); return; }
+  const wish = $('nmm-reorg-wish').value.trim();
+  if (!wish) { reorgError('Say what you would like changed first.'); return; }
+  // Going back and forward with the same request doesn't ask (or pay) for new questions
+  if (reorg.questionsFor === wish) { reorgStep('questions'); return; }
+  const btn = this; btn.disabled = true; btn.textContent = 'Reading your map...';
+  api('POST', 'maps/' + MAP_ID + '/reorganize/questions', { wish: wish }).then(function(data) {
+    if (data && data.code) { reorgError(data.message); reorgStep('ask'); return; }
+    showReorgQuestions(wish, (data && data.questions) || []);
+  }).catch(function() { showReorgQuestions(wish, []); });
+});
+function showReorgQuestions(wish, questions) {
+  reorg.questions = questions; reorg.questionsFor = wish;
+  $('nmm-reorg-questions').innerHTML = questions.map(function(q, i) {
+    return '<div class="nmm-field"><label for="nmm-reorg-a' + i + '">' + NMMCore.esc(q) + '</label>' +
+      '<textarea id="nmm-reorg-a' + i + '" class="nmm-input" rows="2" placeholder="Your answer (optional)"></textarea></div>';
+  }).join('');
+  reorgStep('questions');
+  const first = $('nmm-reorg-a0'); if (first) first.focus();
+}
+
+// Waits until what's on screen is saved, so the AI works on the same map
+async function saveFirst() {
+  for (let i = 0; i < 60; i++) {
+    if (!isDirty && !saving) return true;
+    if (!saving) await nmmSave();
+    await new Promise(function(r) { setTimeout(r, 300); });
+  }
+  return !isDirty && !saving;
+}
+
+async function runReorganize() {
+  const wish = $('nmm-reorg-wish').value.trim();
+  const answers = reorg.questions.map(function(q, i) { const a = $('nmm-reorg-a' + i); return { question: q, answer: a ? a.value.trim() : '' }; });
+  reorg.busy = true; reorgStep('working');
+  try {
+    if (!(await saveFirst())) throw new Error('Your latest changes could not be saved, so the map was not changed.');
+    const data = await api('POST', 'maps/' + MAP_ID + '/reorganize', { wish: wish, answers: answers, base_rev: mapRev });
+    if (!data || !Array.isArray(data.nodes)) throw new Error((data && data.message) || 'No cards came back, so the map was not changed.');
+    applyReorganized(data.nodes);
+    reorg.busy = false; reorg.questionsFor = '';
+    $('nmm-reorg-wish').value = '';
+    $('nmm-reorganize-modal').classList.remove('open');
+    setStatus('Map reorganized ✓', true);
+  } catch (e) {
+    reorg.busy = false;
+    // A timeout from the server comes back as an HTML page, which shows up here as a JSON error
+    reorgError(e instanceof SyntaxError ? 'The AI took too long to answer, so the map was not changed. Please try again.' : e.message);
+    reorgStep('questions');
+  }
+}
+
+// The new cards keep everything the AI didn't send (colors, lanes, etc.) and get laid out fresh
+function applyReorganized(fresh) {
+  pushUndo();
+  const old = {};
+  nodes.forEach(function(n) { if (!n._readonly) old[n.id] = n; });
+  const live = fresh.map(function(r) {
+    const o = old[r.id];
+    return Object.assign({}, o || { x: 0, y: 0 }, r, { collapsed: false, x: o ? o.x : 0, y: o ? o.y : 0 });
+  });
+  nodes = live.concat(nodes.filter(function(n) { return n._readonly; }));
+  replaceCards(live);
+}
+function replaceCards(live) {
+  if (live.length) (layoutStyle() === 'tol' && !hasSefirot() ? tidyLayout : LAYOUT_STYLES[layoutStyle()])(live);
+  keepOnCanvas();
+  C.render(); C.autoCenter();
+  markDirty();
+}
+function restoreBefore(b) {
+  if (!confirm('Bring back the map as it was before the last Reorganize (' + b.when + ')?\n\nThe cards on screen now are replaced. Undo brings them back.')) return;
+  pushUndo();
+  const live = clone(b.nodes);
+  nodes = live.concat(nodes.filter(function(n) { return n._readonly; }));
+  C.render(); C.autoCenter(); markDirty();
+  $('nmm-reorganize-modal').classList.remove('open');
+  setStatus('Earlier version restored ✓', true);
+}
+
+// ============================================================
 // KEYBOARD + MODAL DISMISS
 // ============================================================
-function closeModals() { nmmCloseNodeModal(); nmmCloseSettings(); nmmCloseOutlineImport(); nmmCloseGCalModal(); nmmClosePromptExport(); }
+function closeModals() { nmmCloseNodeModal(); nmmCloseSettings(); nmmCloseOutlineImport(); nmmCloseGCalModal(); nmmClosePromptExport(); nmmCloseReorganize(); }
 document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.target.closest('input,textarea')) { e.preventDefault(); nmmUndo(); return; }
   if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); nmmSave(); return; }

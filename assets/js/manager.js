@@ -317,7 +317,7 @@ $new('nmm-new-confirm').addEventListener('click', function() {
     if (data && data.questions && data.questions.length) {
       questions = data.questions; answers = []; questionIdx = 0; questionsFor = notes;
       showStep('question');
-    } else if (data && data.code === 'nmm_map_limit') {
+    } else if (data && (data.code === 'nmm_map_limit' || data.code === 'nmm_ai_limit' || data.code === 'too_long')) {
       showNewError(data.message); showStep('details');
     } else {
       questions = []; answers = []; organizeWithAI(); // no questions came back: the notes alone are enough to go on

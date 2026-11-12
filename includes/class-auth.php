@@ -45,6 +45,81 @@ class NMM_Auth {
         return null;
     }
 
+    // ------------------------------------------------------------
+    // AI allowance: AI actions (a map built from notes, or a Reorganize) use the site's
+    // paid Anthropic key, so each person gets a few per rolling period. Admins have no
+    // limit, but every action is logged so unusual use shows in Settings.
+    // ------------------------------------------------------------
+    const AI_MEMBER = [ 'limit' => 3, 'days' => 30, 'label' => 'month' ];
+    const AI_HOST   = [ 'limit' => 3, 'days' => 7,  'label' => 'week' ];
+    const AI_QUESTIONS_PER_DAY = 15; // the cheap question step, so it can't be looped either
+    const AI_LOG_DAYS = 60;
+
+    // [limit, days, label] for this person, or null when there is no limit (admins).
+    public static function ai_allowance( $user = null ) {
+        $user = $user ?: wp_get_current_user();
+        if ( $user->has_cap( 'manage_options' ) ) return null;
+        return ( self::is_host( $user ) || $user->has_cap( 'edit_others_posts' ) ) ? self::AI_HOST : self::AI_MEMBER;
+    }
+
+    // Times of this person's AI actions inside the window, oldest first.
+    private static function ai_times( $user_id, $days ) {
+        $since = time() - $days * DAY_IN_SECONDS;
+        $times = array_filter( array_map( 'intval', (array) get_user_meta( $user_id, 'nmm_ai_log', true ) ), function ( $t ) use ( $since ) { return $t > $since; } );
+        sort( $times );
+        return array_values( $times );
+    }
+
+    // What the app shows: used, limit (0 = none), period label, and when the next one frees up.
+    public static function ai_status( $user = null ) {
+        $user  = $user ?: wp_get_current_user();
+        $allow = self::ai_allowance( $user );
+        if ( ! $allow ) return [ 'used' => count( self::ai_times( $user->ID, 7 ) ), 'limit' => 0, 'period' => 'week', 'next' => '' ];
+        $times = self::ai_times( $user->ID, $allow['days'] );
+        $next  = count( $times ) >= $allow['limit'] ? wp_date( 'F j', $times[ count( $times ) - $allow['limit'] ] + $allow['days'] * DAY_IN_SECONDS ) : '';
+        return [ 'used' => count( $times ), 'limit' => $allow['limit'], 'period' => $allow['label'], 'next' => $next ];
+    }
+
+    // A WP_Error when the current user has no AI actions left, otherwise null.
+    public static function ai_error() {
+        $s = self::ai_status();
+        if ( $s['limit'] && $s['used'] >= $s['limit'] ) {
+            return new WP_Error( 'nmm_ai_limit', 'You have used your ' . $s['limit'] . ' AI actions for this ' . $s['period'] . '. Your next one is available on ' . $s['next'] . '.', [ 'status' => 429 ] );
+        }
+        return null;
+    }
+
+    // The question step is cheap but still paid: a daily cap per person (none for admins).
+    public static function ai_questions_error() {
+        if ( current_user_can( 'manage_options' ) ) return null;
+        $key = 'nmm_aiq_' . get_current_user_id() . '_' . gmdate( 'Ymd' );
+        $n   = (int) get_transient( $key );
+        if ( $n >= self::AI_QUESTIONS_PER_DAY ) return new WP_Error( 'nmm_ai_limit', 'That is enough AI questions for today. Please try again tomorrow.', [ 'status' => 429 ] );
+        set_transient( $key, $n + 1, DAY_IN_SECONDS );
+        self::ai_log( 'questions', 0, false );
+        return null;
+    }
+
+    // Records an AI call: against the person's allowance ($counts) and in the site log admins see.
+    public static function ai_log( $kind, $map_id = 0, $counts = true ) {
+        $uid = get_current_user_id();
+        if ( $counts ) {
+            $times   = self::ai_times( $uid, self::AI_LOG_DAYS );
+            $times[] = time();
+            update_user_meta( $uid, 'nmm_ai_log', $times );
+        }
+        $since = time() - self::AI_LOG_DAYS * DAY_IN_SECONDS;
+        $log   = array_values( array_filter( (array) get_option( 'nmm_ai_usage', [] ), function ( $e ) use ( $since ) { return is_array( $e ) && (int) ( $e['t'] ?? 0 ) > $since; } ) );
+        $log[] = [ 't' => time(), 'u' => $uid, 'k' => $kind, 'm' => (int) $map_id ];
+        update_option( 'nmm_ai_usage', array_slice( $log, -5000 ), false );
+    }
+
+    // Site log entries from the last $days days.
+    public static function ai_usage( $days = 7 ) {
+        $since = time() - $days * DAY_IN_SECONDS;
+        return array_values( array_filter( (array) get_option( 'nmm_ai_usage', [] ), function ( $e ) use ( $since ) { return is_array( $e ) && (int) ( $e['t'] ?? 0 ) > $since; } ) );
+    }
+
     // Checks the Turnstile token. Returns true, or the message to show. If Cloudflare can't
     // be reached the attempt is refused: a bot could otherwise get through during an outage.
     private static function verify_turnstile( $params ) {
@@ -193,6 +268,7 @@ class NMM_Auth {
             'display'  => $user->display_name,
             'maps'     => self::map_count( $user ),
             'limit'    => self::map_limit( $user ),
+            'ai'       => self::ai_status( $user ),
         ]);
     }
 }

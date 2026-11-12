@@ -72,7 +72,12 @@ const TOPICS = [
       a: '<p>When you create a map, choose <b>AI Organize</b> and paste your notes as they are: lists, paragraphs, half thoughts.</p>' +
          '<p>It asks a few questions about what it needs to know, one at a time, then builds the map in the layout you chose, with stages and dates where your notes call for them. It keeps the Kanban small on purpose and leaves the rest in Triage.</p>' +
          '<p>Read it through and change anything. It is a first draft of your thinking, not the final word.</p>',
-      rel: ['start', 'kanban', 'limits'] },
+      rel: ['reorganize', 'start', 'limits'] },
+    { id: 'reorganize', q: 'Can AI rewrite a map I already have?', k: 'reorganize rewrite ai redo rebuild change shorter personal language regroup undo restore',
+      a: '<p>Yes. In the Mind Map, open the layout menu (the ▾ next to <b>Harmony</b>) and choose <b>Reorganize with AI</b>.</p>' +
+         '<p>Say what you would like, for example <i>more personal language and less text</i>. It asks a couple of questions, then rewrites the whole map. Cards keep their dates and stages unless you ask otherwise.</p>' +
+         '<p>Changed your mind? <b>Undo</b> works straight away, and the same dialog can bring back the map from before the last Reorganize.</p>',
+      rel: ['ai', 'limits'] },
     { id: 'dates', q: 'How do I give a card a date or a stage?', k: 'date stage tag start end due deadline task kanban card edit how',
       a: '<p>Click <b>Edit</b> on a card. Set a <b>Start date</b> (and an <b>End date</b> if it runs over time), tick <b>Kanban task</b>, and choose its stage.</p>' +
          '<p>Dated cards appear on the Timeline and Roadmap. Tasks appear on the Kanban board. You can also change both straight from those views.</p>',
@@ -120,9 +125,10 @@ const TOPICS = [
       rel: ['share'] }
   ]},
   { name: 'Your account', items: [
-    { id: 'limits', q: 'How many maps can I have?', k: 'limit how many maps number account plan host guide',
-      a: '<p>Up to <b>3 maps</b> of your own, or <b>5</b> for Guides and Hosts. Maps others share with you do not count. Delete a map to make room for a new one.</p>',
-      rel: ['featured', 'share'] },
+    { id: 'limits', q: 'How many maps can I have?', k: 'limit how many maps number account plan host guide ai actions allowance month week',
+      a: '<p>Up to <b>3 maps</b> of your own, or <b>5</b> for Guides and Hosts. Maps others share with you do not count. Delete a map to make room for a new one.</p>' +
+         '<p>AI uses a paid service, so each person has a few <b>AI actions</b>: building a map from notes, or a Reorganize, is one each. Members get <b>3 a month</b>, Guides and Hosts <b>3 a week</b>. The dialog shows how many you have left.</p>',
+      rel: ['featured', 'share', 'reorganize'] },
     { id: 'privacy', q: 'Who can see my maps?', k: 'private privacy who see security safe visible public',
       a: '<p>Only you, the people you share a map with, and the site administrators. A <b>view link</b> lets anyone with that link read the map, so only send it where you mean to.</p>',
       rel: ['share', 'limits'] },

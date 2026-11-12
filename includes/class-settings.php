@@ -271,6 +271,14 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.13.0 — Reorganize with AI, AI allowance <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        New: Reorganize with AI, in the Mind Map layout menu (the ▾ next to Harmony). The member says what they want changed, answers two or three questions, is told the whole map will be rewritten, and the AI rewrites it. Cards keep their ids, dates and stages unless asked otherwise. Undo works straight away, and the map from before the last Reorganize is kept on the server so the dialog can bring it back.<br>
+                        AI allowance: building a map from notes and a Reorganize each count as one AI action. Members get 3 a month, Guides / Hosts (and editors) 3 a week, admins no limit. The question steps are capped at 15 a day per person. Notes over 30,000 characters and very large maps are refused before anything is sent.<br>
+                        New AI use card in Settings: AI actions in the last 7 and 30 days, and who used them, so unusual use stands out.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.12.0 — More menu in every view, Export for print <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         The More menu is now on the Mind Map, Kanban, Timeline and Roadmap, and works in each: Animate reveals the cards one at a time, Export PNG saves the view as an image, Google Calendar and Export Prompt use the maps on screen (one section per map when there are several). Settings and Import an outline open the map in the Mind Map with that dialog showing.<br>
@@ -560,6 +568,51 @@ class NMM_Settings {
               <button type="button" id="nmm-test-api-btn" class="nmm-btn-small">Test API connection</button>
               <span id="nmm-test-api-result" style="font-size:12px"></span>
             </div>
+          </div>
+
+          <?php
+          // AI use in the last 7 days, so unusual activity (a stolen login, a loop) stands out
+          $week   = NMM_Auth::ai_usage( 7 );
+          $month  = NMM_Auth::ai_usage( 30 );
+          $counts = function ( $log ) { return count( array_filter( $log, function ( $e ) { return ( $e['k'] ?? '' ) !== 'questions'; } ) ); };
+          $people = [];
+          foreach ( $week as $e ) {
+              $u = (int) ( $e['u'] ?? 0 );
+              if ( ! isset( $people[ $u ] ) ) $people[ $u ] = [ 'new map' => 0, 'reorganize' => 0, 'questions' => 0, 'last' => 0 ];
+              $k = $e['k'] ?? '';
+              if ( isset( $people[ $u ][ $k ] ) ) $people[ $u ][ $k ]++;
+              $people[ $u ]['last'] = max( $people[ $u ]['last'], (int) $e['t'] );
+          }
+          uasort( $people, function ( $a, $b ) { return ( $b['new map'] + $b['reorganize'] ) - ( $a['new map'] + $a['reorganize'] ) ?: $b['questions'] - $a['questions']; } );
+          ?>
+          <div class="nmm-settings-card" style="margin-bottom:20px">
+            <h2>📈 AI use</h2>
+            <p style="font-size:13px;margin:0 0 6px">
+              <strong><?php echo (int) $counts( $week ); ?></strong> AI actions in the last 7 days
+              (<?php echo (int) $counts( $month ); ?> in the last 30), plus <?php echo count( $week ) - (int) $counts( $week ); ?> question steps.
+            </p>
+            <p style="font-size:12px;color:#666;margin:0 0 10px">
+              An AI action is a map built from notes or a Reorganize. Members get <?php echo NMM_Auth::AI_MEMBER['limit']; ?> a month, Guides / Hosts <?php echo NMM_Auth::AI_HOST['limit']; ?> a week, admins no limit.
+              Question steps are capped at <?php echo NMM_Auth::AI_QUESTIONS_PER_DAY; ?> a day per person. A sudden jump here, or someone you don't know near the top, is worth a look.
+            </p>
+            <?php if ( $people ) : ?>
+              <table class="widefat striped" style="font-size:12px">
+                <thead><tr><th>Person</th><th>New maps</th><th>Reorganize</th><th>Questions</th><th>Last used</th></tr></thead>
+                <tbody>
+                <?php foreach ( $people as $uid => $p ) : $u = get_userdata( $uid ); ?>
+                  <tr>
+                    <td><?php echo $u ? esc_html( $u->display_name . ' (' . $u->user_login . ')' ) : 'Deleted user #' . (int) $uid; ?></td>
+                    <td><?php echo (int) $p['new map']; ?></td>
+                    <td><?php echo (int) $p['reorganize']; ?></td>
+                    <td><?php echo (int) $p['questions']; ?></td>
+                    <td><?php echo esc_html( wp_date( 'M j, g:i a', $p['last'] ) ); ?></td>
+                  </tr>
+                <?php endforeach; ?>
+                </tbody>
+              </table>
+            <?php else : ?>
+              <p style="font-size:12px;color:#888">No AI use in the last 7 days.</p>
+            <?php endif; ?>
           </div>
 
           <script>

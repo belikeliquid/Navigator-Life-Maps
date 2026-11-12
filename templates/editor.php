@@ -49,6 +49,11 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 2.5v19M6 6.5h12M6 11.5h12M6 16.5h12M6 6.5v10M18 6.5v10M12 2.5L6 6.5M12 2.5l6 4M6 6.5l6 3.5 6-3.5M6 11.5l6 3 6-3M6 16.5l6 2 6-2"/><g fill="currentColor" stroke="none"><circle cx="12" cy="2.5" r="1.8"/><circle cx="6" cy="6.5" r="1.8"/><circle cx="18" cy="6.5" r="1.8"/><circle cx="12" cy="9.5" r="1.8"/><circle cx="6" cy="11.5" r="1.8"/><circle cx="18" cy="11.5" r="1.8"/><circle cx="12" cy="14.5" r="1.8"/><circle cx="6" cy="16.5" r="1.8"/><circle cx="18" cy="16.5" r="1.8"/><circle cx="12" cy="18.5" r="1.8"/><circle cx="12" cy="21.5" r="1.8"/></g></svg>
       <span><strong>Tree of Life</strong><small>Cards by their Tree of Life position</small></span>
     </button>
+    <div class="nmm-layout-sep"></div>
+    <button type="button" id="nmm-reorganize-btn" role="menuitem" onclick="nmmOpenReorganize()">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.5l1.6 4.4 4.4 1.6-4.4 1.6L12 14.5l-1.6-4.4L6 8.5l4.4-1.6z" fill="currentColor"/><path d="M18.5 14l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8zM5.5 15l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg>
+      <span><strong>Reorganize with AI</strong><small>Rewrite the map the way you ask</small></span>
+    </button>
   </div>
 
   <div id="nmm-mobile-menu" class="nmm-mobile-menu">
@@ -58,6 +63,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button onclick="nmmCenter();nmmToggleMobileMenu()">⊙ Re-center</button>
     <button onclick="nmmExpandAll();nmmToggleMobileMenu()">Expand all</button>
     <button onclick="nmmCollapseAll();nmmToggleMobileMenu()">Collapse all</button>
+    <button onclick="nmmToggleMobileMenu();nmmOpenReorganize()">✦ Reorganize with AI</button>
     <button onclick="nmmToggleMobileMenu();nmmAnimate()">▶ Animate</button>
     <button onclick="nmmOpenSettings();nmmToggleMobileMenu()">Settings</button>
     <button onclick="nmmOpenOutlineImport();nmmToggleMobileMenu()">📋 Import</button>
@@ -173,6 +179,45 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
         <button class="nmm-btn" onclick="nmmCloseOutlineImport()">Cancel</button>
         <button class="nmm-btn" onclick="nmmPreviewOutline()">Preview</button>
         <button class="nmm-btn nmm-btn-primary" onclick="nmmBuildFromOutline()">Build Map →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reorganize with AI (opened from the layout menu) -->
+  <div class="nmm-modal-overlay" id="nmm-reorganize-modal">
+    <div class="nmm-modal nmm-reorg">
+      <h3>✦ Reorganize with AI</h3>
+      <div id="nmm-reorg-error" class="nmm-login-error" style="display:none"></div>
+
+      <div id="nmm-reorg-step-ask">
+        <div class="nmm-field">
+          <label for="nmm-reorg-wish">What would you like changed?</label>
+          <textarea id="nmm-reorg-wish" class="nmm-input" rows="4" maxlength="2000" placeholder="For example: rebuild this map with more personal language and less text"></textarea>
+        </div>
+        <div class="nmm-reorg-ideas">
+          <button type="button" class="nmm-chip">Less text on each card</button>
+          <button type="button" class="nmm-chip">More personal language</button>
+          <button type="button" class="nmm-chip">Group related cards together</button>
+          <button type="button" class="nmm-chip">Put the most important first</button>
+        </div>
+        <p id="nmm-reorg-allowance" class="nmm-reorg-note"></p>
+        <p id="nmm-reorg-restore" class="nmm-reorg-note" style="display:none"></p>
+      </div>
+
+      <div id="nmm-reorg-step-questions" style="display:none">
+        <p class="nmm-reorg-note">A few questions so the new version fits what you want. Skip any you like.</p>
+        <div id="nmm-reorg-questions"></div>
+        <div class="nmm-reorg-warn"><strong>This rewrites the whole map.</strong> Cards keep their dates and stages unless you asked otherwise. You can bring this version back afterwards from this dialog.</div>
+      </div>
+
+      <div id="nmm-reorg-step-working" class="nmm-new-working" style="display:none">
+        <div class="nmm-spinner"></div>
+        <p>Reorganizing your map. This can take a minute or two.</p>
+      </div>
+
+      <div class="nmm-modal-actions" id="nmm-reorg-actions">
+        <button type="button" class="nmm-btn" id="nmm-reorg-cancel">Cancel</button>
+        <button type="button" class="nmm-btn nmm-btn-primary" id="nmm-reorg-next">Next</button>
       </div>
     </div>
   </div>

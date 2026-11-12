@@ -89,6 +89,17 @@ class NMM_REST_API {
             'permission_callback' => [ __CLASS__, 'auth' ],
         ]);
 
+        // Reorganize an existing map: questions first, then the rewrite, and a way back
+        register_rest_route( $namespace, '/maps/(?P<id>\d+)/reorganize/questions', [
+            'methods' => 'POST', 'callback' => [ __CLASS__, 'reorganize_questions' ], 'permission_callback' => [ __CLASS__, 'auth' ],
+        ]);
+        register_rest_route( $namespace, '/maps/(?P<id>\d+)/reorganize', [
+            'methods' => 'POST', 'callback' => [ __CLASS__, 'reorganize' ], 'permission_callback' => [ __CLASS__, 'auth' ],
+        ]);
+        register_rest_route( $namespace, '/maps/(?P<id>\d+)/reorganize/before', [
+            'methods' => 'GET', 'callback' => [ __CLASS__, 'reorganize_before' ], 'permission_callback' => [ __CLASS__, 'auth' ],
+        ]);
+
     }
 
     public static function auth() {
@@ -514,9 +525,16 @@ class NMM_REST_API {
     public static function ai_questions( $request ) {
         $limit = NMM_Auth::limit_error(); // no new map possible, so don't spend AI credit on one
         if ( $limit ) return $limit;
+        $limit = NMM_Auth::ai_error();
+        if ( $limit ) return $limit;
         $params = $request->get_json_params();
         $title  = sanitize_text_field( $params['title'] ?? '' );
         $notes  = sanitize_textarea_field( $params['notes'] ?? '' );
+        if ( mb_strlen( $notes ) > self::NOTES_MAX ) return self::too_long();
+        if ( $notes ) {
+            $limit = NMM_Auth::ai_questions_error();
+            if ( $limit ) return $limit;
+        }
 
         if ( ! $notes ) {
             return new WP_Error( 'no_notes', 'No notes provided', [ 'status' => 400 ] );
@@ -557,16 +575,49 @@ Return the JSON array only.';
         $error = self::anthropic_error( $response );
         if ( $error ) return $error;
 
-        $body  = json_decode( wp_remote_retrieve_body( $response ), true );
-        $text  = $body['content'][0]['text'] ?? '[]';
-        $text  = preg_replace('/```json|```/', '', $text);
-        $questions = json_decode( trim($text), true );
-
+        $questions = self::reply_json( $response );
         if ( ! is_array( $questions ) ) {
             return new WP_Error( 'parse_error', 'Could not parse questions', [ 'status' => 500 ] );
         }
 
-        return rest_ensure_response( [ 'questions' => $questions ] );
+        return rest_ensure_response( [ 'questions' => array_values( array_filter( $questions, 'is_string' ) ) ] );
+    }
+
+    const NOTES_MAX = 30000;  // characters of notes the AI will read
+    const MAP_MAX   = 40000;  // characters of map JSON a Reorganize will send
+    private static function too_long() {
+        return new WP_Error( 'too_long', 'That is more text than the AI can take in one go. Please shorten it and try again.', [ 'status' => 400 ] );
+    }
+
+    // The JSON array in a Claude reply (its first text block, code fences and extra words removed), or null.
+    private static function reply_json( $response ) {
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $text = '';
+        foreach ( (array) ( $body['content'] ?? [] ) as $block ) {
+            if ( ( $block['type'] ?? '' ) === 'text' ) { $text = $block['text']; break; }
+        }
+        $text  = trim( preg_replace( '/```json|```/', '', $text ) );
+        $start = strpos( $text, '[' );
+        $end   = strrpos( $text, ']' );
+        if ( $start === false || $end === false ) return null;
+        $data = json_decode( substr( $text, $start, $end - $start + 1 ), true );
+        return is_array( $data ) ? $data : null;
+    }
+
+    private static function claude( $model, $prompt, $max_tokens, $timeout ) {
+        return wp_remote_post( 'https://api.anthropic.com/v1/messages', [
+            'timeout' => $timeout,
+            'headers' => [
+                'Content-Type'      => 'application/json',
+                'x-api-key'         => get_option( 'nmm_anthropic_key', '' ),
+                'anthropic-version' => '2023-06-01',
+            ],
+            'body' => json_encode([
+                'model'      => $model,
+                'max_tokens' => $max_tokens,
+                'messages'   => [ [ 'role' => 'user', 'content' => $prompt ] ],
+            ]),
+        ]);
     }
 
     // Turns a failed Anthropic call (connection error or non-200) into a WP_Error
@@ -617,6 +668,8 @@ Return the JSON array only.';
     public static function ai_organize( $request ) {
         $limit = NMM_Auth::limit_error();
         if ( $limit ) return $limit;
+        $limit = NMM_Auth::ai_error();
+        if ( $limit ) return $limit;
         $params = $request->get_json_params();
         $title  = sanitize_text_field( $params['title'] ?? 'My Map' );
         $notes   = sanitize_textarea_field( $params['notes'] ?? '' );
@@ -626,26 +679,14 @@ Return the JSON array only.';
         if ( ! $notes ) {
             return new WP_Error( 'no_notes', 'No notes provided', [ 'status' => 400 ] );
         }
+        if ( mb_strlen( $notes ) > self::NOTES_MAX ) return self::too_long();
 
         $api_key = get_option( 'nmm_anthropic_key', '' );
         if ( ! $api_key ) {
             return new WP_Error( 'no_key', 'Anthropic API key not configured', [ 'status' => 500 ] );
         }
 
-        $answers_text = '';
-        if ( ! empty( $answers ) ) {
-            $answers_text = "
-
-User answers to clarifying questions:
-";
-            foreach ( $answers as $qa ) {
-                $q = sanitize_text_field( $qa['question'] ?? '' );
-                $a = sanitize_text_field( $qa['answer'] ?? '' );
-                if ( $q && $a ) $answers_text .= "Q: $q
-A: $a
-";
-            }
-        }
+        $answers_text = self::answers_text( $answers );
 
         $today  = date('Y-m-d');
         $kanban = 'Kanban stages — assign by urgency and importance, and keep each stage small so the board stays focused:
@@ -760,28 +801,193 @@ Return JSON array only. Start with [ end with ].';
         $error = self::anthropic_error( $response );
         if ( $error ) return $error;
 
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
-        $text = $body['content'][0]['text'] ?? '';
-
-        // Clean up any markdown code fences
-        $text = preg_replace('/```json|```/', '', $text );
-        $text = trim( $text );
-
-        // Extract JSON array if wrapped in extra text
-        if ( strpos( $text, '[' ) !== false ) {
-            $start = strpos( $text, '[' );
-            $end   = strrpos( $text, ']' );
-            if ( $end !== false ) {
-                $text = substr( $text, $start, $end - $start + 1 );
-            }
-        }
-
-        $nodes = json_decode( $text, true );
+        $nodes = self::reply_json( $response );
         if ( ! is_array( $nodes ) ) {
-            return new WP_Error( 'parse_error', 'Could not parse AI response: ' . substr( $text, 0, 200 ), [ 'status' => 500 ] );
+            return new WP_Error( 'parse_error', 'The AI answer could not be read. Please try again.', [ 'status' => 500 ] );
         }
+        NMM_Auth::ai_log( 'new map' );
 
         return rest_ensure_response( [ 'nodes' => self::limit_stages( $nodes ) ] );
+    }
+
+    private static function answers_text( $answers ) {
+        $text = '';
+        foreach ( (array) $answers as $qa ) {
+            if ( ! is_array( $qa ) ) continue;
+            $q = sanitize_text_field( $qa['question'] ?? '' );
+            $a = sanitize_textarea_field( $qa['answer'] ?? '' );
+            if ( $q && $a ) $text .= "Q: $q\nA: $a\n";
+        }
+        return $text ? "\n\nUser answers to clarifying questions:\n" . mb_substr( $text, 0, 6000 ) : '';
+    }
+
+    // ------------------------------------------------------------
+    // REORGANIZE: rewrite an existing map the way the member asks. One AI action;
+    // the map as it was is kept (nmm_before_reorganize) so it can be brought back.
+    // ------------------------------------------------------------
+    private static function reorganize_map( $request ) {
+        $post = get_post( $request['id'] );
+        if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::can_access( $post ) )
+            return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
+        if ( ! get_option( 'nmm_anthropic_key', '' ) )
+            return new WP_Error( 'no_key', 'Anthropic API key not configured', [ 'status' => 500 ] );
+        return $post;
+    }
+
+    // The saved cards, with only what the AI needs to see.
+    private static function reorganize_cards( $post ) {
+        $nodes = json_decode( get_post_meta( $post->ID, 'nmm_nodes', true ) ?: '[]', true );
+        $cards = [];
+        foreach ( (array) $nodes as $n ) {
+            if ( ! is_array( $n ) || empty( $n['id'] ) ) continue;
+            $c = [ 'id' => (string) $n['id'], 'title' => (string) ( $n['title'] ?? '' ), 'parent' => $n['parent'] ?? null ];
+            foreach ( [ 'subs', 'date', 'end', 'tag', 'sefirot' ] as $k ) if ( ! empty( $n[ $k ] ) ) $c[ $k ] = $n[ $k ];
+            if ( isset( $n['task'] ) ) $c['task'] = (bool) $n['task'];
+            $cards[] = $c;
+        }
+        return $cards;
+    }
+
+    public static function reorganize_questions( $request ) {
+        $post = self::reorganize_map( $request );
+        if ( is_wp_error( $post ) ) return $post;
+        $limit = NMM_Auth::ai_error();
+        if ( $limit ) return $limit;
+        $wish = sanitize_textarea_field( $request->get_json_params()['wish'] ?? '' );
+        if ( ! $wish ) return new WP_Error( 'no_wish', 'Say what you would like changed first.', [ 'status' => 400 ] );
+        if ( mb_strlen( $wish ) > 2000 ) return self::too_long();
+        $titles = implode( "\n", array_slice( array_map( function ( $c ) { return '- ' . $c['title']; }, self::reorganize_cards( $post ) ), 0, 80 ) );
+        $limit = NMM_Auth::ai_questions_error();
+        if ( $limit ) return $limit;
+
+        $prompt = 'A member wants to reorganize their mind map. Ask 2 or 3 short, friendly questions that will help you do exactly what they want. Ask only about what is unclear in their request: tone, how much text to keep, what matters most, what belongs together. Do not ask about anything they already said.
+
+Map title: ' . $post->post_title . '
+
+Some of the cards:
+' . $titles . '
+
+What they asked for:
+' . $wish . '
+
+Return ONLY a JSON array of question strings. No explanation. No markdown.';
+        $response = self::claude( 'claude-haiku-4-5-20251001', $prompt, 400, 45 );
+        $error = self::anthropic_error( $response );
+        if ( $error ) return $error;
+        $questions = self::reply_json( $response );
+        return rest_ensure_response( [ 'questions' => is_array( $questions ) ? array_slice( array_values( array_filter( $questions, 'is_string' ) ), 0, 3 ) : [] ] );
+    }
+
+    public static function reorganize( $request ) {
+        $post = self::reorganize_map( $request );
+        if ( is_wp_error( $post ) ) return $post;
+        $limit = NMM_Auth::ai_error();
+        if ( $limit ) return $limit;
+        $params = $request->get_json_params();
+        $wish   = sanitize_textarea_field( $params['wish'] ?? '' );
+        if ( ! $wish ) return new WP_Error( 'no_wish', 'Say what you would like changed first.', [ 'status' => 400 ] );
+        if ( mb_strlen( $wish ) > 2000 ) return self::too_long();
+        // The editor saves first and sends the revision it saw, so the AI works on what is on screen
+        $rev = (int) get_post_meta( $post->ID, 'nmm_rev', true );
+        if ( isset( $params['base_rev'] ) && (int) $params['base_rev'] !== $rev )
+            return new WP_Error( 'conflict', 'This map was changed somewhere else. Reload it and try again.', [ 'status' => 409 ] );
+
+        $settings = json_decode( get_post_meta( $post->ID, 'nmm_settings', true ) ?: '{}', true );
+        $tol   = is_array( $settings ) && ( $settings['layout'] ?? '' ) === 'tol';
+        $cards = self::reorganize_cards( $post );
+        if ( ! $cards ) return new WP_Error( 'empty', 'This map has no cards to reorganize yet.', [ 'status' => 400 ] );
+        $json = wp_json_encode( $cards, JSON_UNESCAPED_UNICODE );
+        if ( strlen( $json ) > self::MAP_MAX )
+            return new WP_Error( 'too_long', 'This map is too big to reorganize in one go (' . count( $cards ) . ' cards). Try it on a smaller map.', [ 'status' => 400 ] );
+
+        $today  = wp_date( 'Y-m-d' );
+        $prompt = 'You are reorganizing a member\'s existing mind map, the way they ask. Today is ' . $today . '.
+
+Map title: ' . $post->post_title . '
+
+What they asked for:
+' . $wish . self::answers_text( $params['answers'] ?? [] ) . '
+
+The map now, as JSON cards. parent is the id of the card it sits under; parent null is a root card (an island).
+' . $json . '
+
+Rules:
+- Do what they asked. You may reword, shorten, regroup, merge, split or reorder cards.
+- Keep their meaning. Do not invent facts, stories, people or tasks that are not in the map or their answers.
+- When a card stays (even reworded or moved), keep its id. New cards get new ids like "r1", "r2". When cards merge, keep one of their ids.
+- Keep each card\'s date, end, tag and task as they are, unless they asked to change them. tag is one of start/doing/sprint/review/done or "".
+- Keep the main root card and its id. Keep other root cards unless they asked to change them.
+- subs are short lines under the title, at most 4. Titles under 7 words.
+' . ( $tol
+    ? '- Give each card a Tree of Life position in sefirot: kether, chochma, binah, chesed, geburah, tiphereth, netzach, hod, yesod or malkuth. The main root card is tiphereth.'
+    : '- sefirot: keep it as it is, or "" when the card has none.' ) . '
+
+Return ONLY a JSON array of cards with: id, title, subs, parent, date, end, tag, task, sefirot. No explanation. No markdown. Start with [ end with ].';
+
+        @set_time_limit( 200 );
+        $max = min( 16000, max( 4000, (int) ( strlen( $json ) / 2 ) ) );
+        $response = self::claude( 'claude-opus-4-6', $prompt, $max, 180 );
+        $error = self::anthropic_error( $response );
+        if ( $error ) return $error;
+        $nodes = self::reply_json( $response );
+        $nodes = is_array( $nodes ) ? self::clean_reorganized( $nodes ) : [];
+        if ( ! $nodes ) return new WP_Error( 'parse_error', 'The AI answer could not be read, so your map was not changed. Please try again.', [ 'status' => 500 ] );
+
+        // Count it, and keep the map as it was, only once the new version is ready
+        NMM_Auth::ai_log( 'reorganize', $post->ID );
+        update_post_meta( $post->ID, 'nmm_before_reorganize', wp_slash( wp_json_encode( [
+            'at' => time(), 'by' => get_current_user_id(),
+            'nodes' => json_decode( get_post_meta( $post->ID, 'nmm_nodes', true ) ?: '[]', true ),
+        ] ) ) );
+        return rest_ensure_response( [ 'nodes' => self::limit_stages( $nodes ), 'ai' => NMM_Auth::ai_status() ] );
+    }
+
+    // The map as it was before its last Reorganize ({at: 0} when there is none).
+    public static function reorganize_before( $request ) {
+        $post = get_post( $request['id'] );
+        if ( ! $post || $post->post_type !== 'nmm_mindmap' || ! self::can_access( $post ) )
+            return new WP_Error( 'not_found', 'Map not found', [ 'status' => 404 ] );
+        $before = json_decode( get_post_meta( $post->ID, 'nmm_before_reorganize', true ) ?: 'null', true );
+        if ( ! is_array( $before ) ) return rest_ensure_response( [ 'at' => 0 ] );
+        $before['when'] = wp_date( 'F j, g:i a', (int) $before['at'] );
+        return rest_ensure_response( $before );
+    }
+
+    // Plain, safe cards from the AI: text only, real dates, parents that exist and no loops.
+    private static function clean_reorganized( $nodes ) {
+        $out = []; $ids = [];
+        foreach ( array_slice( $nodes, 0, 400 ) as $n ) {
+            if ( ! is_array( $n ) ) continue;
+            $id = substr( preg_replace( '/[^A-Za-z0-9_\-]/', '', (string) ( $n['id'] ?? '' ) ), 0, 40 );
+            if ( $id === '' || isset( $ids[ $id ] ) ) $id = 'r' . substr( md5( uniqid( '', true ) ), 0, 8 );
+            $ids[ $id ] = true;
+            $date = (string) ( $n['date'] ?? '' );
+            $end  = (string) ( $n['end'] ?? '' );
+            $out[] = [
+                'id'      => $id,
+                'title'   => sanitize_text_field( (string) ( $n['title'] ?? '' ) ) ?: 'Untitled',
+                'subs'    => array_slice( array_values( array_filter( array_map( function ( $x ) { return is_scalar( $x ) ? sanitize_text_field( (string) $x ) : ''; }, (array) ( $n['subs'] ?? [] ) ) ) ), 0, 6 ),
+                'parent'  => isset( $n['parent'] ) && is_scalar( $n['parent'] ) && $n['parent'] !== '' ? (string) $n['parent'] : null,
+                'date'    => preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ? $date : '',
+                'end'     => preg_match( '/^\d{4}-\d{2}-\d{2}$/', $end ) ? $end : '',
+                'tag'     => (string) ( $n['tag'] ?? '' ),
+                'task'    => ! empty( $n['task'] ),
+                'sefirot' => sanitize_key( (string) ( $n['sefirot'] ?? '' ) ),
+            ];
+        }
+        $by = [];
+        foreach ( $out as $i => $n ) $by[ $n['id'] ] = $i;
+        foreach ( $out as $i => $n ) {
+            if ( $n['parent'] === null ) continue;
+            if ( ! isset( $by[ $n['parent'] ] ) || $n['parent'] === $n['id'] ) { $out[ $i ]['parent'] = null; continue; }
+            // Walk up the parents; a loop makes this card a root
+            $seen = [ $n['id'] => true ]; $p = $n['parent'];
+            while ( $p !== null && isset( $by[ $p ] ) ) {
+                if ( isset( $seen[ $p ] ) ) { $out[ $i ]['parent'] = null; break; }
+                $seen[ $p ] = true; $p = $out[ $by[ $p ] ]['parent'];
+            }
+        }
+        return $out;
     }
 
     /**

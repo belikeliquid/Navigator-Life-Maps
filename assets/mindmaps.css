@@ -2204,3 +2204,26 @@ body:has(.nmm-app) .page-title {
 .nmm-print .nmm-kb-card, .nmm-print .nmm-tl-node { background: #ffffff !important; border-top: 1px solid #d0cbbf; border-right: 1px solid #d0cbbf; border-bottom: 1px solid #d0cbbf; }
 .nmm-print .nmm-rm-grid { background: #ffffff !important; }
 .nmm-print .nmm-rm-bar { border: 1px solid rgba(1,28,47,0.25); }
+
+/* ============================================================
+   REORGANIZE WITH AI (layout menu → dialog)
+   ============================================================ */
+.nmm-layout-menu .nmm-layout-sep { height: 1px; background: var(--nmm-border); margin: 6px 4px; }
+.nmm-app .nmm-reorg { width: 520px; max-width: 95vw; }
+.nmm-app .nmm-reorg-ideas { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 12px; }
+.nmm-app .nmm-reorg-ideas .nmm-chip {
+  font-family: var(--nmm-font); font-size: 12px; padding: 5px 10px; border-radius: 14px;
+  border: 1px solid var(--nmm-border); background: #fff; color: var(--nmm-navy); cursor: pointer;
+}
+.nmm-app .nmm-reorg-ideas .nmm-chip:hover { border-color: var(--nmm-indigo); color: var(--nmm-indigo); }
+.nmm-app .nmm-reorg-note { font-family: var(--nmm-font); font-size: 12px; color: var(--nmm-light); margin: 0 0 8px; }
+.nmm-app .nmm-reorg-warn {
+  font-family: var(--nmm-font); font-size: 13px; color: var(--nmm-navy); line-height: 1.45;
+  background: rgba(201, 164, 92, 0.14); border-left: 3px solid #C9A45C; border-radius: 6px; padding: 10px 12px; margin-top: 4px;
+}
+.nmm-app .nmm-link-btn {
+  background: none; border: 0; padding: 0; color: var(--nmm-indigo); text-decoration: underline;
+  font: inherit; cursor: pointer;
+}
+.nmm-app #nmm-reorg-step-working .nmm-spinner { width: 34px; height: 34px; margin: 0 auto 14px; }
+.nmm-app #nmm-reorg-questions label { font-weight: 600; text-transform: none; letter-spacing: 0; }
