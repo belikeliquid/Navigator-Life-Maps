@@ -1,4 +1,4 @@
-/* Navigator Mind Maps — list view for phones, used by the editor and the share view.
+/* Navigator Life Maps — list view for phones, used by the editor and the share view.
  * Below 700px wide a List / Map switch appears; List shows the map as stacked cards: each island
  * (root) is a section with its main branches as cards, and tapping a card opens the cards under it.
  * Open/closed state here is separate from the canvas's collapsed flags, so it never changes the map. */

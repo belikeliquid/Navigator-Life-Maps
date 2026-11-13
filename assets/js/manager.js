@@ -1,4 +1,4 @@
-/* Navigator Mind Maps — maps list (/maps/ when logged in). Markup: templates/manager.php */
+/* Navigator Life Maps — maps list (/maps/ when logged in). Markup: templates/manager.php */
 (function() {
 if (!document.getElementById('nmm-manager')) return;
 

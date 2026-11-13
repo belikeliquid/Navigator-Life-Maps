@@ -50,7 +50,7 @@
     <div id="nmm-tl-empty" style="display:none;text-align:center;padding:80px 20px;color:#aaa">
       <div style="font-size:48px;margin-bottom:16px">⬡</div>
       <p style="font-size:18px;font-weight:600;color:#4b5563">No dated cards yet</p>
-      <p style="font-size:15px;color:#6b7280">In a mind map, edit a card and give it a <strong>date</strong>. It will appear here.</p>
+      <p style="font-size:15px;color:#6b7280">In a map, edit a card and give it a <strong>date</strong>. It will appear here.</p>
     </div>
   </div>
 

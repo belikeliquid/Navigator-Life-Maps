@@ -1,4 +1,4 @@
-/* Navigator Mind Maps — view-only mind map (/map-share/?share=KEY, or ?map_id=N for a featured map).
+/* Navigator Life Maps — view-only mind map (/map-share/?share=KEY, or ?map_id=N for a featured map).
  * Markup: templates/view.php. The toolbar matches the editor's; anything that would change the map
  * says it is view only instead (NMMCore.viewOnlyNotice). */
 (function() {

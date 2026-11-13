@@ -12,7 +12,7 @@ const TOPICS = [
   { name: 'Start here', items: [
     { id: 'how', q: 'How does Life Maps work?', k: 'how work works start overview basics what is life maps',
       a: '<p>You put what is on your mind into a <strong>map</strong>: one card in the centre, with branches for the parts of your life or project, and cards under each branch for the details.</p>' +
-         '<p>The same cards then show up in four views. The <b>Mind Map</b> shows the whole picture, <b>Kanban</b> shows what is moving, the <b>Timeline</b> shows when, and the <b>Roadmap</b> shows how the phases unfold. Change a card in one view and it changes everywhere.</p>' +
+         '<p>The same cards then show up in five views. The <b>Mind Map</b> shows the whole picture, <b>Kanban</b> shows what is moving, the <b>Roadmap</b> shows how the phases unfold, the <b>Timeline</b> shows what is coming, and the <b>Calendar</b> shows each day. Change a card in one view and it changes everywhere.</p>' +
          '<p>Give cards a date and a stage, and Life Maps starts pointing you to what needs attention next.</p>',
       rel: ['why', 'start', 'views'] },
     { id: 'why', q: 'Why did we create Life Maps?', k: 'why created purpose reason made built story',
@@ -94,7 +94,7 @@ const TOPICS = [
          '<p><b>Open card</b> takes you to it. Change its date or stage and the notice moves on to the next one. Dismiss it with × for the rest of your visit, or choose <b>Don&rsquo;t remind me</b> to stop it pointing to that card on this device. If the card gets a new date, it can come back.</p>',
       rel: ['dates', 'kanban'] },
     { id: 'tools', q: 'What do Export Prompt, Export for print and Google Calendar do?', k: 'export prompt png image print printing white google calendar gcal ics download tools more menu animate',
-      a: '<p>They are in the <b>More</b> menu, in every view: Mind Map, Kanban, Timeline and Roadmap.</p><ul><li><b>Export Prompt</b> writes your whole map as a text outline, with instructions for Basecamp, a document or a synthesis. Copy it into Basecamp or any AI.</li>' +
+      a: '<p>They are in the <b>More</b> menu, in every view: Mind Map, Kanban, Roadmap, Timeline and Calendar.</p><ul><li><b>Export Prompt</b> writes your whole map as a text outline, with instructions for Basecamp, a document or a synthesis. Copy it into Basecamp or any AI.</li>' +
          '<li><b>Export for print</b> saves what you see as an image on a white background, easy to read on screen or paper.</li>' +
          '<li><b>Google Calendar</b> makes a calendar file from the dated cards you pick.</li>' +
          '<li><b>Import an outline</b> adds cards from an indented list.</li></ul>' +
@@ -115,7 +115,7 @@ const TOPICS = [
          '<p>Guides and Hosts can hold 5 maps of their own. Maps shared with them do not count.</p>',
       rel: ['share', 'featured', 'roadmap'] },
     { id: 'featured', q: 'What are featured maps?', k: 'featured template copy use this map ready made',
-      a: '<p>Ready-made maps chosen by the Navigator team, shown at the top of your maps page. <b>View</b> opens one read only, with the Mind Map, Kanban, Timeline and Roadmap all there to look through. <b>Use this map</b> makes your own copy to change however you like. The copy counts toward your map limit.</p>',
+      a: '<p>Ready-made maps chosen by the Navigator team, shown at the top of your maps page. <b>View</b> opens one read only, with the Mind Map, Kanban, Roadmap, Timeline and Calendar all there to look through. <b>Use this map</b> makes your own copy to change however you like. The copy counts toward your map limit.</p>',
       rel: ['journeys', 'what'] }
   ]},
   { name: 'Sharing', items: [

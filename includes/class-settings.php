@@ -12,7 +12,7 @@ class NMM_Settings {
     public static function add_menu() {
         add_submenu_page(
             'edit.php?post_type=nmm_mindmap',
-            'Mind Maps Settings',
+            'Life Maps Settings',
             'Settings',
             'manage_options',
             'nmm-settings',
@@ -129,7 +129,7 @@ class NMM_Settings {
         ?>
         <div class="wrap" style="font-family:-apple-system,sans-serif">
         <h1 style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:22px">⬡</span> Navigator Mind Maps — Settings
+            <span style="font-size:22px">⬡</span> Navigator Life Maps — Settings
         </h1>
 
         <?php if ( $saved ) : ?><div class="notice notice-success"><p>Settings saved.</p></div><?php endif; ?>
@@ -216,7 +216,7 @@ class NMM_Settings {
                 <span class="nmm-status <?php echo $rest_base; ?>"><?php echo $rest_base === 'ok' ? 'Responding' : 'Not responding'; ?></span>
             </div>
             <div class="nmm-page-row">
-                <span style="font-size:13px">Mind Maps endpoint <code style="font-size:11px">/nmm/v1/maps</code></span>
+                <span style="font-size:13px">Life Maps endpoint <code style="font-size:11px">/nmm/v1/maps</code></span>
                 <span class="nmm-status <?php echo $rest_maps; ?>"><?php echo $rest_maps === 'ok' ? 'Public' : 'Blocked'; ?></span>
             </div>
             <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
@@ -265,13 +265,19 @@ class NMM_Settings {
                 <tr><td><code>[navigator_mindmap id="123"]</code></td><td>Embed a specific map (editable if logged in).</td></tr>
                 <tr><td><code>[navigator_mindmap id="123" readonly="true"]</code></td><td>Read-only embed for clients or public pages.</td></tr>
             </table>
-            <p style="font-size:11px;color:#888;margin-top:8px">The <code>id</code> is the WordPress post ID of the mind map. Find it in the URL when editing a map.</p>
+            <p style="font-size:11px;color:#888;margin-top:8px">The <code>id</code> is the WordPress post ID of the Life Map. Find it in the URL when editing a map.</p>
           </div>
 
           <!-- Changelog -->
           <div class="nmm-settings-card">
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
+                <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.15.1 — Named Life Maps <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        The plugin, the admin menu (All Life Maps, Add New Life Map), this settings page and the signup page now say Life Maps instead of Mind Maps. Mind Map stays as the name of the canvas view and its layout. Nothing else changes: maps, links and data are the same.
+                    </div>
+                </div>
                 <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.15.0 — Calendar view <span>▾</span></div>
                     <div class="nmm-accordion-body">
@@ -715,7 +721,7 @@ class NMM_Settings {
 
     public static function default_enfold_css() {
         return '/* ============================================
-   Navigator Mind Maps — Enfold Layout Fix
+   Navigator Life Maps — Enfold Layout Fix
    Targets only pages containing .nmm-app
    so no other pages are affected.
    ============================================ */
@@ -751,7 +757,7 @@ body:has(.nmm-app) .entry-content {
 
     public static function default_theme_css() {
         return '/* ============================================
-   Navigator Mind Maps — Enfold Layout Fix
+   Navigator Life Maps — Enfold Layout Fix
    Targets only pages containing .nmm-app
    so no other pages are affected.
    ============================================ */

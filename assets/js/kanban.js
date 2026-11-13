@@ -1,4 +1,4 @@
-/* Navigator Mind Maps — Kanban board (/kanban/, /kanban/?map_id=N). Markup: templates/kanban.php
+/* Navigator Life Maps — Kanban board (/kanban/, /kanban/?map_id=N). Markup: templates/kanban.php
  * Cards marked as Kanban tasks (NMMCore.isTask) appear: islands, parents and children alike.
  * Untagged tasks sit in Triage; the tag decides the column. */
 (function() {

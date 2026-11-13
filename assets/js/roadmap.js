@@ -1,4 +1,4 @@
-/* Navigator Mind Maps — roadmap (/roadmap/?map_id=N). Markup: templates/roadmap.php
+/* Navigator Life Maps — roadmap (/roadmap/?map_id=N). Markup: templates/roadmap.php
  * One map at a time. Each dated card is a bar from its date (the start) to its end date; a card
  * with no end gets a 3-week bar drawn fading out, since the end is only assumed.
  * Lanes are either phases the person names (settings.roadmap.lanes, card.lane) or the map's main

@@ -12,13 +12,13 @@
         <line x1="2" y1="14" x2="8" y2="14" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
         <line x1="20" y1="14" x2="26" y2="14" stroke="#0BBFBF" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-      <span class="nmm-logo-text">NAVIGATOR MIND MAPS</span>
+      <span class="nmm-logo-text">NAVIGATOR LIFE MAPS</span>
     </div>
   </div>
 
   <!-- Copy band -->
   <div class="nmm-landing-copy">
-    <p>Navigator Mind Maps is where vision meets action.. where ideas find structure and goals find ground. Built on conscious, mental, and emotional models of planning and integration. Start with a list, build a map, set your compass.</p>
+    <p>Navigator Life Maps is where vision meets action.. where ideas find structure and goals find ground. Built on conscious, mental, and emotional models of planning and integration. Start with a list, build a map, set your compass.</p>
     <p class="nmm-landing-motif">In the ocean of life, you are the navigator.</p>
   </div>
 

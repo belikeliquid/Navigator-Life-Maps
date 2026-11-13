@@ -1,8 +1,8 @@
-/* Navigator Mind Maps — shared helpers for every app page.
+/* Navigator Life Maps — shared helpers for every app page.
  * Exposes window.NMMCore. Config comes from the inline `NMM` object printed in <head>. */
 (function() {
   if (typeof window.NMM === 'undefined') {
-    console.warn('Navigator Mind Maps: NMM config not found.');
+    console.warn('Navigator Life Maps: NMM config not found.');
     return;
   }
 

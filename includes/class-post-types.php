@@ -4,13 +4,20 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class NMM_Post_Types {
 
     public static function register() {
-        // Mind Map post type
+        // Life Map post type (the slug stays nmm_mindmap: stored maps and code use it)
         register_post_type( 'nmm_mindmap', [
             'labels' => [
-                'name'          => 'Mind Maps',
-                'singular_name' => 'Mind Map',
-                'add_new_item'  => 'Add New Mind Map',
-                'edit_item'     => 'Edit Mind Map',
+                'name'          => 'Life Maps',
+                'singular_name' => 'Life Map',
+                'menu_name'     => 'Life Maps',
+                'all_items'     => 'All Life Maps',
+                'add_new'       => 'Add New Life Map',
+                'add_new_item'  => 'Add New Life Map',
+                'edit_item'     => 'Edit Life Map',
+                'new_item'      => 'New Life Map',
+                'view_item'     => 'View Life Map',
+                'search_items'  => 'Search Life Maps',
+                'not_found'     => 'No Life Maps found',
             ],
             'public'       => false,
             'show_ui'      => true,

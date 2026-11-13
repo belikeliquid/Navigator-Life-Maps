@@ -1,4 +1,4 @@
-/* Navigator Mind Maps — map canvas rendering shared by the editor and the share view.
+/* Navigator Life Maps — map canvas rendering shared by the editor and the share view.
  * NMMCanvas.create(opts) returns helpers bound to one canvas.
  *   opts.getNodes()        current node array
  *   opts.editable          show Edit / + Child / Delete buttons

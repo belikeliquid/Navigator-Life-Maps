@@ -1,8 +1,8 @@
-# Navigator Mind Maps
+# Navigator Life Maps
 
 A visual mind mapping plugin for WordPress, built for Navigator Leadership Group.
 
-**Version:** 1.15.0  
+**Version:** 1.15.1  
 **Requires:** WordPress 5.8+, PHP 7.4+  
 **Author:** Liquid Media / Navigator Leadership Group
 
@@ -66,4 +66,4 @@ Never edit the plugin directly on the server. The next release would overwrite t
 
 ## Changelog
 
-See Mind Maps → Settings → Changelog in WP Admin.
+See Life Maps → Settings → Changelog in WP Admin.

@@ -631,7 +631,7 @@ Return the JSON array only.';
             $body = json_decode( wp_remote_retrieve_body( $response ), true );
             $msg  = $body['error']['message'] ?? 'HTTP ' . $code;
         }
-        error_log( 'Navigator Mind Maps: Anthropic request failed: ' . $msg );
+        error_log( 'Navigator Life Maps: Anthropic request failed: ' . $msg );
         return new WP_Error( 'api_error', 'AI request failed: ' . $msg, [ 'status' => 502 ] );
     }
 

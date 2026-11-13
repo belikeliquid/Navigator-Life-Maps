@@ -1,6 +1,6 @@
-# Navigator Mind Maps — notes for Claude
+# Navigator Life Maps — notes for Claude
 
-WordPress plugin `navigator-mindmaps`, live on navigatorproject.org. Mind maps, a Kanban board and a timeline over the same data. Read this before exploring; it should save you most of the searching.
+WordPress plugin `navigator-mindmaps`, live on navigatorproject.org, named **Life Maps** everywhere people see it (the code keeps the old `mindmap` / `nmm_` names). Maps with five views over the same cards: Mind Map, Kanban, Roadmap, Timeline, Calendar. "Mind Map" now only names that canvas view and its layout. Read this before exploring; it should save you most of the searching.
 
 ## Layout
 

@@ -1,4 +1,4 @@
-/* Navigator Mind Maps — map editor (/map-editor/?map_id=N). Markup: templates/editor.php */
+/* Navigator Life Maps — map editor (/map-editor/?map_id=N). Markup: templates/editor.php */
 (function() {
 const root = document.getElementById('nmm-editor');
 if (!root) return;

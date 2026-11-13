@@ -1,4 +1,4 @@
-/* Navigator Mind Maps — login / signup landing (/maps/ when logged out). Markup: templates/landing.php */
+/* Navigator Life Maps — login / signup landing (/maps/ when logged out). Markup: templates/landing.php */
 (function() {
 if (!document.getElementById('nmm-login-btn')) return;
 const REST  = NMM.restUrl;

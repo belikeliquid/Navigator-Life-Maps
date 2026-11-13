@@ -1,4 +1,4 @@
-/* Navigator Mind Maps — timeline (/timeline/, /timeline/?map_id=N). Markup: templates/timeline.php
+/* Navigator Life Maps — timeline (/timeline/, /timeline/?map_id=N). Markup: templates/timeline.php
  * Cards with a date inside the chosen range appear at their date, each in the nearest free spot
  * above or below the line, so they never overlap. Drag a card sideways to reschedule, click it
  * to see its notes and edit it, drag empty space to slide along the line. */
