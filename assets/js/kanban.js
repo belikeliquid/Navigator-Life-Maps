@@ -20,7 +20,7 @@ const LIMITS = {
 };
 
 async function loadAll() {
-  allMaps = (await api('GET', 'maps')) || [];
+  allMaps = await NMMCore.listMaps();
   const fromUrl = NMMCore.mapIdsFromUrl().filter(function(id) { return allMaps.some(function(m) { return m.id === id; }); });
   NMMCore.mapFilter({
     button: $('nmm-kb-filter-btn'), panel: $('nmm-kb-filter-panel'), list: $('nmm-kb-filter-list'),
@@ -35,7 +35,7 @@ async function loadSelected() {
   const missing = selectedMapIds.filter(function(id) { return !mapNodes[id]; });
   if (missing.length) $('nmm-kb-loading').style.display = 'flex';
   await Promise.all(missing.map(async function(id) {
-    const full = await api('GET', 'maps/' + id);
+    const full = await NMMCore.getMap(id);
     const map  = allMaps.find(function(m) { return m.id === id; });
     mapNodes[id] = ((full && full.nodes) || []).filter(function(n) { return !n._readonly; }).map(function(n) {
       n._map_id = id; n._map_title = map ? map.title : ''; return n;
@@ -46,7 +46,8 @@ async function loadSelected() {
 
 // Keep the URL, the Mind Map button and the Timeline link on the same maps.
 function updateLinks() {
-  const all = selectedMapIds.length === allMaps.length;
+  // A view-only map is only on the board because the URL names it, so keep naming it
+  const all = selectedMapIds.length === allMaps.length && !allMaps.some(function(m) { return m.viewOnly; });
   const ids = all ? [] : selectedMapIds;
   history.replaceState(null, '', NMMCore.pageUrl(NMM.kanbanUrl, ids));
   NMMCore.setViewTabs(ids, selectedMapIds);
@@ -80,7 +81,7 @@ function renderBoard() {
     (zone || triage).appendChild(makeCard(n));
   });
   showColumnCounts();
-  attentionNotice.update(needsAttention(nodes));
+  attentionNotice.update(needsAttention(nodes.filter(function(n) { return !NMMCore.isViewOnly(n._map_id); })));
 }
 
 // Cards that need a decision: overdue and not done, or due within 2 days and not started yet.
@@ -123,7 +124,7 @@ function makeCard(n) {
   const card = document.createElement('div');
   card.className = 'nmm-kb-card';
   card.dataset.nodeId = n.id; card.dataset.mapId = n._map_id;
-  card.draggable = true;
+  card.draggable = !NMMCore.isViewOnly(n._map_id);
 
   const tag     = TAG_COLORS[n.tag];
   const badge   = tag ? '<span class="nmm-kb-badge" style="background:' + tag.bg + ';color:' + tag.text + '">' + tag.label + '</span>' : '';
@@ -166,7 +167,7 @@ document.querySelectorAll('.nmm-kb-col-cards,.nmm-kb-triage-cards').forEach(func
       await NMMCore.patchNode(n._map_id, n.id, { tag: newTag });
     } catch(err) {
       n.tag = oldTag; renderBoard();
-      alert('Could not move "' + n.title + '": ' + err.message);
+      if (!err.viewOnly) alert('Could not move "' + n.title + '": ' + err.message);
     }
   });
 });
@@ -182,7 +183,8 @@ function openKbEdit(n) {
   $('nmm-kb-tag').value     = n.tag || '';
   $('nmm-kb-task').checked  = true;
   $('nmm-kb-sefirot').value = n.sefirot || '';
-  $('nmm-kb-open-map').href = NMM.editorUrl + '?map_id=' + n._map_id;
+  $('nmm-kb-open-map').href = NMMCore.mapUrl(n._map_id);
+  NMMCore.lockModal($('nmm-kb-edit-modal'), n._map_id);
   $('nmm-kb-edit-modal').classList.add('open');
 }
 window.nmmKbCloseEdit = function() { $('nmm-kb-edit-modal').classList.remove('open'); kbEditNode = null; };

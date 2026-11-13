@@ -68,7 +68,6 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
     <button onclick="nmmOpenSettings();nmmToggleMobileMenu()">Settings</button>
     <button onclick="nmmOpenOutlineImport();nmmToggleMobileMenu()">📋 Import</button>
     <button onclick="nmmOpenGCalModal();nmmToggleMobileMenu()">→ GCal</button>
-    <button onclick="nmmExportPNG();nmmToggleMobileMenu()">Export PNG</button>
     <button onclick="nmmExportPrint();nmmToggleMobileMenu()">Export for print</button>
     <button onclick="nmmOpenPromptExport();nmmToggleMobileMenu()">Export Prompt</button>
     <button onclick="nmmSave();nmmToggleMobileMenu()">Save</button>

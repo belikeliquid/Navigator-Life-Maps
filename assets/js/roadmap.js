@@ -74,8 +74,7 @@ function trayCards() {
 
 // ---------- loading ----------
 async function load() {
-  maps = (await api('GET', 'maps')) || [];
-  if (!Array.isArray(maps)) maps = [];
+  maps = await NMMCore.listMaps();
   const wanted = NMMCore.mapIdsFromUrl()[0];
   const pick = maps.find(function(m) { return m.id === wanted; }) || maps[0];
   if (!pick) { $('nmm-rm-loading').style.display = 'none'; $('nmm-rm-empty').style.display = 'block'; return; }
@@ -83,7 +82,7 @@ async function load() {
 }
 async function openMap(id) {
   $('nmm-rm-loading').style.display = 'flex';
-  const m = await api('GET', 'maps/' + id);
+  const m = await NMMCore.getMap(id);
   $('nmm-rm-loading').style.display = 'none';
   if (!m || !m.id) { alert((m && m.message) || 'Could not open this map.'); return; }
   map = m; nodes = m.nodes || []; editable = m.can_edit !== false;
@@ -326,7 +325,7 @@ function render(first) {
   else { sc.scrollLeft = keepX; sc.scrollTop = keepY; }
 
   renderTray();
-  nextUp.update(NMMCore.attention(nodes));
+  nextUp.update(editable ? NMMCore.attention(nodes) : []);
 }
 
 function syncTools() {
@@ -471,9 +470,10 @@ function openEdit(n, add) {
   } else laneField.style.display = 'none';
   $('nmm-rm-where').textContent = pathOf(n) ? 'In ' + pathOf(n) : '';
   $('nmm-rm-clear').style.display = add || !n.date ? 'none' : '';
-  $('nmm-rm-open-map').href = NMM.editorUrl + '?map_id=' + map.id;
+  $('nmm-rm-open-map').href = NMMCore.mapUrl(map.id);
   ['nmm-rm-title', 'nmm-rm-sub', 'nmm-rm-start', 'nmm-rm-end', 'nmm-rm-tag', 'nmm-rm-lane'].forEach(function(id) { $(id).disabled = !editable; });
   $('nmm-rm-save').style.display = editable ? '' : 'none';
+  NMMCore.lockModal($('nmm-rm-modal'), map.id);
   $('nmm-rm-modal').classList.add('open');
 }
 function closeEdit() { $('nmm-rm-modal').classList.remove('open'); editing = null; }

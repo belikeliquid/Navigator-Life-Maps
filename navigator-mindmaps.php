@@ -3,13 +3,13 @@
  * Plugin Name: Navigator Mind Maps
  * Plugin URI: https://navigatorproject.org
  * Description: Visual mind mapping tool for Navigator Leadership Group. Multi-map manager, Kanban view, Tree of Life template, outline import, and WordPress user auth.
- * Version: 1.13.0
+ * Version: 1.14.0
  * Author: Liquid Media / Navigator Leadership Group
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'NMM_VERSION', '1.13.0' );
+define( 'NMM_VERSION', '1.14.0' );
 define( 'NMM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NMM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -105,6 +105,9 @@ class Navigator_MindMaps {
 
         $custom_css = get_option( 'nmm_custom_css', NMM_Settings::default_enfold_css() );
         if ( $custom_css ) {
+            // Layout fixes such as `body:has(.nmm-app) .container` would also strip the site footer,
+            // which uses the same Enfold classes: keep class rules out of the footer and #socket.
+            $custom_css = preg_replace( '/(body:has\(\.nmm-[\w-]+\)\s+)(\.[\w-]+(?:\.[\w-]+)*)(\s*[,{])/', '$1$2:not(#footer-page *, #socket *)$3', $custom_css );
             echo '<style id="nmm-custom-css">' . wp_strip_all_tags( $custom_css ) . '</style>';
         }
     }
@@ -122,7 +125,7 @@ class Navigator_MindMaps {
         'nmm-outline'  => [ 'outline.js',  [ 'nmm-core' ] ],
         'nmm-more'     => [ 'more.js',     [ 'nmm-core' ] ],
         'nmm-editor'   => [ 'editor.js',   [ 'nmm-canvas', 'nmm-outline', 'nmm-more' ] ],
-        'nmm-view'     => [ 'view.js',     [ 'nmm-canvas', 'nmm-outline' ] ],
+        'nmm-view'     => [ 'view.js',     [ 'nmm-canvas', 'nmm-outline', 'nmm-more' ] ],
         'nmm-kanban'   => [ 'kanban.js',   [ 'nmm-more' ] ],
         'nmm-timeline' => [ 'timeline.js', [ 'nmm-more' ] ],
         'nmm-roadmap'  => [ 'roadmap.js',  [ 'nmm-more' ] ],

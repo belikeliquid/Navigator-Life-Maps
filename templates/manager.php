@@ -59,10 +59,13 @@
     <div id="nmm-maps-grid" class="nmm-maps-grid" style="display:none"></div>
     <div id="nmm-empty" class="nmm-empty-state" style="display:none">
       <div class="nmm-empty-icon">⬡</div>
-      <p>No maps yet. Create your first map to get started.</p>
-      <?php if ( current_user_can('nmm_edit_maps') || current_user_can('edit_posts') || current_user_can('manage_options') ) : ?>
-      <button class="nmm-btn nmm-btn-primary" id="nmm-empty-new-btn">+ Create your first map</button>
-      <?php endif; ?>
+      <p>No maps yet. Create your first map or copy a featured map to get started.</p>
+      <div class="nmm-empty-actions">
+        <?php if ( current_user_can('nmm_edit_maps') || current_user_can('edit_posts') || current_user_can('manage_options') ) : ?>
+        <button class="nmm-btn nmm-btn-primary" id="nmm-empty-new-btn">+ Create your first map</button>
+        <?php endif; ?>
+        <button type="button" class="nmm-btn" onclick="nmmOpenHelp()">Need help to get started?</button>
+      </div>
     </div>
   </div>
 

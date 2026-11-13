@@ -44,7 +44,7 @@ function showRange() { $('nmm-tl-start').value = dayStr(tlStart); $('nmm-tl-end'
 showRange();
 
 async function loadAll() {
-  allMaps = (await api('GET', 'maps')) || [];
+  allMaps = await NMMCore.listMaps();
   const fromUrl = NMMCore.mapIdsFromUrl().filter(function(id) { return allMaps.some(function(m) { return m.id === id; }); });
   NMMCore.mapFilter({
     button: $('nmm-tl-filter-btn'), panel: $('nmm-tl-filter-panel'), list: $('nmm-tl-filter-list'),
@@ -62,7 +62,7 @@ async function loadSelected() {
   const missing = selectedMapIds.filter(function(id) { return !mapNodes[id]; });
   if (missing.length) $('nmm-tl-loading').style.display = 'flex';
   await Promise.all(missing.map(async function(id) {
-    const full = await api('GET', 'maps/' + id);
+    const full = await NMMCore.getMap(id);
     const map  = allMaps.find(function(m) { return m.id === id; }) || {};
     mapNodes[id] = ((full && full.nodes) || []).filter(function(n) { return !n._readonly; }).map(function(n) {
       n._map_id = id; n._map_title = map.title || ''; n._map_color = map.color || '#0BBFBF'; return n;
@@ -72,7 +72,7 @@ async function loadSelected() {
 }
 
 function updateLinks() {
-  const ids = selectedMapIds.length === allMaps.length ? [] : selectedMapIds;
+  const ids = selectedMapIds.length === allMaps.length && !allMaps.some(function(m) { return m.viewOnly; }) ? [] : selectedMapIds;
   history.replaceState(null, '', NMMCore.pageUrl(NMM.timelineUrl, ids));
   NMMCore.setViewTabs(ids, selectedMapIds);
 }
@@ -226,7 +226,9 @@ function renderTimeline() {
       e.preventDefault(); e.stopPropagation();
       const startX = e.clientX;
       let moved = false, newDay = c.day;
+      const locked = NMMCore.isViewOnly(n._map_id); // view only: a click still opens the card
       function onMove(ev) {
+        if (locked) return;
         if (Math.abs(ev.clientX - startX) > 3) moved = true;
         if (!moved) return;
         newDay = Math.max(tlStart, Math.min(tlEnd, c.day + Math.round((ev.clientX - startX) / pxPerDay)));
@@ -244,7 +246,7 @@ function renderTimeline() {
         n.date = dayStr(newDay); renderTimeline();
         NMMCore.patchNode(n._map_id, n.id, { date: n.date }).catch(function(err) {
           n.date = oldDate; renderTimeline();
-          alert('Could not reschedule "' + n.title + '": ' + err.message);
+          if (!err.viewOnly) alert('Could not reschedule "' + n.title + '": ' + err.message);
         });
       }
       document.addEventListener('mousemove', onMove);
@@ -275,6 +277,7 @@ function openEdit(n) {
   $('nmm-tl-sub').value   = (n.subs || []).join('\n');
   $('nmm-tl-date').value  = n.date || '';
   $('nmm-tl-tag').value   = n.tag || '';
+  NMMCore.lockModal($('nmm-tl-edit-modal'), n._map_id);
   $('nmm-tl-edit-modal').classList.add('open');
 }
 window.nmmTlCloseEdit = function() { $('nmm-tl-edit-modal').classList.remove('open'); editNode = null; };

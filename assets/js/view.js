@@ -1,11 +1,12 @@
-/* Navigator Mind Maps — read-only share view (/map-share/?share=KEY). Markup: templates/view.php */
+/* Navigator Mind Maps — view-only mind map (/map-share/?share=KEY, or ?map_id=N for a featured map).
+ * Markup: templates/view.php. The toolbar matches the editor's; anything that would change the map
+ * says it is view only instead (NMMCore.viewOnlyNotice). */
 (function() {
 const root = document.getElementById('nmm-view');
 if (!root) return;
 
-const MAP_ID    = parseInt(root.dataset.mapId, 10) || 0;
-const SHARE_KEY = root.dataset.shareKey || '';
-let nodes = [];
+const MAP_ID = parseInt(root.dataset.mapId, 10) || 0;
+let nodes = [], map = null;
 
 const C = NMMCanvas.create({
   getNodes: function() { return nodes; },
@@ -30,38 +31,50 @@ NMMCore.hoverCard({ root: root, selector: '.nmm-node', info: function(el) {
 
 async function loadMap() {
   try {
-    // The share endpoint is public; no nonce, since a cached page could carry a stale one.
-    const map = SHARE_KEY ? await fetch(NMM.restUrl + 'share/' + SHARE_KEY).then(function(r) { return r.json(); })
-              : MAP_ID    ? await NMMCore.api('GET', 'maps/' + MAP_ID) : null;
-    if (!map || map.code) { showError(); return; }
+    map = (NMMCore.shareKey || MAP_ID) ? await NMMCore.getMap(MAP_ID) : null;
+    if (!map || !map.id) { showError(); return; }
+    // Your own map (or one shared with you) opens in the editor instead
+    if (!NMMCore.shareKey && map.can_edit) { location.replace(NMM.editorUrl + '?map_id=' + map.id); return; }
     nodes = map.nodes || [];
     // Featured maps can be copied by any member
     const copyBtn = document.getElementById('nmm-view-copy');
-    if (copyBtn && map.featured && NMM.isLoggedIn && !SHARE_KEY) {
+    if (copyBtn && map.featured && NMM.isLoggedIn) {
       copyBtn.style.display = '';
       copyBtn.onclick = function() { NMMCore.copyMap(map.id, copyBtn); };
     }
+    document.getElementById('nmm-viewonly-badge').onclick = function() { NMMCore.viewOnlyNotice(map.id); };
+    NMMCore.setViewTabs(NMMCore.shareKey ? [] : [map.id], [map.id]);
     C.setSettings(map.settings);
     document.getElementById('nmm-view-title').textContent = map.title || '';
+    document.title = (map.title || 'Map') + ' · Life Maps';
     await C.loadLinkedIslands(map.islands, nodes);
     C.render();
+    C.autoCenter();
     outline.render();
   } catch(e) { showError(); }
 }
 
+// Missing, deleted, or (signed out) a featured map that needs a sign-in: say so, with a way on
 function showError() {
-  document.getElementById('nmm-canvas').innerHTML = '<div style="padding:60px;text-align:center;color:#999;font-size:18px;">Map not found or no longer available.</div>';
+  const signedOut = !NMM.isLoggedIn && !NMMCore.shareKey;
+  const box = document.createElement('div');
+  box.className = 'nmm-view-missing';
+  box.innerHTML = '<p>' + (signedOut ? 'Sign in to see this map.' : 'Map not found or no longer available.') + '</p>' +
+    '<a class="nmm-btn nmm-btn-primary" href="' + NMMCore.esc(NMM.mapsUrl) + '">' + (signedOut ? 'Sign in or join' : 'Go to your maps to get started') + '</a>';
+  document.getElementById('nmm-canvas-wrap').replaceChildren(box);
+  const outlineEl = root.querySelector('.nmm-outline'); if (outlineEl) outlineEl.replaceChildren(box.cloneNode(true));
 }
 
-window.nmmViewExpandAll   = function() { nodes.forEach(function(n) { n.collapsed = false; }); C.render(); };
-window.nmmViewCollapseAll = function() { nodes.forEach(function(n) { if (C.hasChildren(n.id)) n.collapsed = true; }); C.render(); };
-window.nmmViewExportPNG   = function() { C.exportPNG('mindmap_share.png'); };
-window.nmmViewAnimate     = function() {
-  const btn = document.getElementById('nmm-view-animate');
-  if (C.isAnimating()) { C.stopAnimation(); return; }
-  btn.textContent = '■ Stop';
-  C.animate({ onStop: function() { btn.textContent = '▶ Animate'; } });
-};
+window.nmmCenter       = function() { C.autoCenter(); };
+window.nmmExpandAll    = function() { nodes.forEach(function(n) { n.collapsed = false; }); C.render(); };
+window.nmmCollapseAll  = function() { nodes.forEach(function(n) { if (C.hasChildren(n.id)) n.collapsed = true; }); C.render(); };
+window.nmmAnimate      = function() { if (C.isAnimating()) C.stopAnimation(); else C.animate({}); };
+
+NMMMore.init({
+  view: 'map',
+  maps: function() { return map ? [{ id: map.id, title: map.title, category: map.category, layout: (map.settings || {}).layout, nodes: nodes }] : []; },
+  image: function(print, name) { return C.exportPNG(name, { print: print }); }
+});
 
 loadMap();
 })();

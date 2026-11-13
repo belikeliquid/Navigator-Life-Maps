@@ -47,8 +47,81 @@
       Object.assign(node, fields);
     });
   }
+  // ---- View-only maps: a featured map someone else made (signed in, ?map_id=N), or a
+  // view link (?share=KEY, signed in or not). Every view can show them; nothing saves.
+  const SHARE_KEY = (new URLSearchParams(location.search).get('share') || '').replace(/[^A-Za-z0-9]/g, '');
+  const viewOnly = {}; // map id -> the map's summary
+  function isViewOnly(id) { return !!viewOnly[id]; }
+  // One map, through the public share route when there is a view link
+  async function getMap(id) {
+    const map = SHARE_KEY ? await fetch(NMM.restUrl + 'share/' + SHARE_KEY).then(function(r) { return r.json(); })
+                          : await api('GET', 'maps/' + id);
+    if (map && map.id && (SHARE_KEY || map.can_edit === false)) {
+      map.can_edit = false;
+      viewOnly[map.id] = { id: map.id, title: map.title, color: map.color, featured: !!map.featured, viewOnly: true };
+    }
+    return map;
+  }
+  // The maps for a view's picker: your own, plus any view-only map the URL asks for
+  async function listMaps() {
+    let maps = SHARE_KEY ? [] : await api('GET', 'maps');
+    if (!Array.isArray(maps)) maps = [];
+    const wanted = SHARE_KEY ? [0] : mapIdsFromUrl().filter(function(id) { return !maps.some(function(m) { return m.id === id; }); });
+    for (const id of wanted) {
+      const m = await getMap(id);
+      if (m && m.id && viewOnly[m.id]) maps.push(viewOnly[m.id]);
+    }
+    return maps;
+  }
+  // Said when something would change a view-only map
+  function viewOnlyNotice(id) {
+    const m = viewOnly[id] || {};
+    let box = document.getElementById('nmm-viewonly-modal');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'nmm-viewonly-modal'; box.className = 'nmm-modal-overlay';
+      (document.querySelector('.nmm-app') || document.body).appendChild(box);
+      box.addEventListener('click', function(e) { if (e.target === box || e.target.dataset.act === 'close') box.classList.remove('open'); });
+    }
+    const canCopy = NMM.isLoggedIn && m.featured;
+    box.innerHTML = '<div class="nmm-modal nmm-viewonly"><h3>This map is view only</h3>' +
+      '<p>You can look through every view and use the tools that don’t change it, like exports and Animate. ' +
+      (canCopy ? 'To change it, make your own copy, or start a fresh map.' : NMM.isLoggedIn ? 'To work on your own version, start a fresh map.' : 'To make maps of your own, sign in or join.') + '</p>' +
+      '<div class="nmm-modal-actions"><button type="button" class="nmm-btn" data-act="close">Close</button>' +
+      (canCopy ? '<button type="button" class="nmm-btn" data-act="fresh">Start fresh</button><button type="button" class="nmm-btn nmm-btn-primary" data-act="copy">Use this map</button>'
+               : '<a class="nmm-btn nmm-btn-primary" href="' + esc(NMM.mapsUrl) + '">' + (NMM.isLoggedIn ? 'Start a fresh map' : 'Sign in or join') + '</a>') +
+      '</div></div>';
+    const copy = box.querySelector('[data-act="copy"]');
+    if (copy) copy.onclick = function() { copyMap(m.id, copy); };
+    const fresh = box.querySelector('[data-act="fresh"]');
+    if (fresh) fresh.onclick = function() { location.href = NMM.mapsUrl; };
+    box.classList.add('open');
+  }
+
+  // A card dialog opened on a view-only map: fields read only, no Save, a line saying why
+  function lockModal(modal, mapId) {
+    const locked = isViewOnly(mapId), h = modal.querySelector('h3');
+    modal.querySelectorAll('input,textarea,select').forEach(function(el) { el.disabled = locked; });
+    modal.querySelectorAll('.nmm-modal-actions .nmm-btn-primary').forEach(function(b) { b.style.display = locked ? 'none' : ''; });
+    if (h && locked) { if (h.textContent !== 'Card') h.dataset.text = h.textContent; h.textContent = 'Card'; }
+    else if (h && h.textContent === 'Card' && h.dataset.text) h.textContent = h.dataset.text;
+    let note = modal.querySelector('.nmm-viewonly-note');
+    if (locked && !note) {
+      note = document.createElement('p'); note.className = 'nmm-viewonly-note';
+      note.innerHTML = 'This map is view only. <button type="button" class="nmm-link-btn">How to edit it</button>';
+      if (h) h.after(note); else modal.prepend(note);
+    }
+    if (note) { note.style.display = locked ? '' : 'none'; note.querySelector('button').onclick = function() { viewOnlyNotice(mapId); }; }
+  }
+  // Where a map opens as a mind map: the editor, or the view-only page
+  function mapUrl(id) {
+    if (SHARE_KEY) return pageUrl(NMM.shareUrl);
+    return (isViewOnly(id) ? NMM.shareUrl : NMM.editorUrl) + '?map_id=' + id;
+  }
+
   // Change anything in a map (mutate(map) edits it in place) on top of the latest saved version
   async function patchMap(mapId, mutate) {
+    if (isViewOnly(mapId)) { viewOnlyNotice(mapId); const err = new Error('This map is view only.'); err.viewOnly = true; throw err; }
     const map = await api('GET', 'maps/' + mapId);
     if (!map || !map.nodes) throw new Error((map && map.message) || 'Map not found');
     map.settings = map.settings || {};
@@ -64,6 +137,7 @@
     return raw.split(',').map(function(x) { return parseInt(x, 10); }).filter(Boolean);
   }
   function pageUrl(base, mapIds) {
+    if (SHARE_KEY) return base + '?share=' + SHARE_KEY; // a view link carries its key from view to view
     return mapIds && mapIds.length ? base + '?map_id=' + mapIds.join(',') : base;
   }
 
@@ -99,13 +173,13 @@
       const v = a.dataset.view;
       if (v === 'map') {
         if (shownIds.length === 1) {
-          a.href = NMM.editorUrl + '?map_id=' + shownIds[0]; a.removeAttribute('aria-disabled'); a.removeAttribute('title');
+          a.href = SHARE_KEY ? pageUrl(NMM.shareUrl) : isViewOnly(shownIds[0]) ? NMM.shareUrl + '?map_id=' + shownIds[0] : NMM.editorUrl + '?map_id=' + shownIds[0]; a.removeAttribute('aria-disabled'); a.removeAttribute('title');
         } else if (!a.classList.contains('active')) {
           a.removeAttribute('href'); a.setAttribute('aria-disabled', 'true');
           a.title = shownIds.length ? 'Pick one map to open its mind map' : 'Open one map to see its mind map';
         }
       } else if (v === 'roadmap') {
-        a.href = NMM.roadmapUrl + (shownIds.length === 1 ? '?map_id=' + shownIds[0] : '');
+        a.href = SHARE_KEY ? pageUrl(NMM.roadmapUrl) : NMM.roadmapUrl + (shownIds.length === 1 ? '?map_id=' + shownIds[0] : '');
       } else {
         a.href = pageUrl(v === 'kanban' ? NMM.kanbanUrl : NMM.timelineUrl, linkIds);
       }
@@ -154,9 +228,16 @@
 
   // Dated cards still being worked on, most pressing first: overdue (oldest first), then today, then soonest.
   // Review and Done are left out: the work there is finished or waiting on someone else.
+  // Cards more than STALE_DAYS past their date (or end date) are left out: an old map
+  // that is still worth keeping shouldn't keep calling for attention.
+  const STALE_DAYS = 10;
   function attention(nodes) {
     const t = today();
-    return nodes.filter(function(n) { return n.date && n.tag !== 'done' && n.tag !== 'review' && !n._readonly && dayOf(n.date) !== null; })
+    return nodes.filter(function(n) {
+      if (!n.date || n.tag === 'done' || n.tag === 'review' || n._readonly || dayOf(n.date) === null) return false;
+      const last = Math.max(dayOf(n.date), (n.end && dayOf(n.end)) || dayOf(n.date));
+      return last >= t - STALE_DAYS;
+    })
       .map(function(n) { const days = dayOf(n.date) - t; return { n: n, days: days, tag: n.tag || '', when: whenText(days) }; })
       .sort(function(a, b) { return a.days - b.days; });
   }
@@ -209,7 +290,11 @@
   function notice(opts) {
     const el = document.createElement('div');
     el.className = 'nmm-notice'; el.setAttribute('role', 'status');
-    opts.root.appendChild(el);
+    // On <body>, in its own .nmm-app (for the styles): inside the page content the theme's
+    // stacking keeps it under the site footer, whatever its z-index
+    const host = document.createElement('div');
+    host.className = 'nmm-app nmm-notice-host';
+    host.appendChild(el); document.body.appendChild(host);
     let all = [], items = [], idx = 0, shownOnce = false;
     // "Don't remind me": muted cards are kept in this browser, by card and date,
     // so a card that gets a new date reminds again
@@ -342,6 +427,7 @@
 
   window.NMMCore = {
     api: api, refreshNonce: refreshNonce, patchNode: patchNode, patchMap: patchMap,
+    shareKey: SHARE_KEY, getMap: getMap, listMaps: listMaps, isViewOnly: isViewOnly, viewOnlyNotice: viewOnlyNotice, lockModal: lockModal, mapUrl: mapUrl,
     mapIdsFromUrl: mapIdsFromUrl, pageUrl: pageUrl, esc: esc,
     loadHtml2Canvas: loadHtml2Canvas, mapFilter: mapFilter,
     TAG_COLORS: TAG_COLORS, SEFIROT_LABELS: SEFIROT_LABELS, isTask: isTask,

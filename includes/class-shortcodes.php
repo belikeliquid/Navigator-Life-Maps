@@ -14,7 +14,7 @@ class NMM_Shortcodes {
     // Renders templates/<name>.php with $vars in scope and enqueues its script (assets/js/<name>.js).
     private static function render( $name, $vars = [] ) {
         wp_enqueue_script( 'nmm-' . $name );
-        if ( ! in_array( $name, [ 'landing', 'view' ], true ) ) wp_enqueue_script( 'nmm-help' ); // the ? panel
+        if ( $name !== 'landing' && is_user_logged_in() ) wp_enqueue_script( 'nmm-help' ); // the ? panel, for members
         extract( $vars );
         ob_start();
         include NMM_PATH . 'templates/' . $name . '.php';
@@ -27,6 +27,11 @@ class NMM_Shortcodes {
         include NMM_PATH . 'templates/more.php';
     }
 
+    // A view link's key (?share=KEY): it carries a view-only map from view to view
+    public static function share_key() {
+        return isset( $_GET['share'] ) ? preg_replace( '/[^A-Za-z0-9]/', '', wp_unslash( $_GET['share'] ) ) : '';
+    }
+
     // Map ids from ?map_id=1,2 (Kanban and timeline take several)
     public static function ids_from_url() {
         if ( empty( $_GET['map_id'] ) ) return [];
@@ -36,7 +41,7 @@ class NMM_Shortcodes {
     // The view tabs every app page shares, always in this order and place, so they can be found
     // without looking. $current: map / kanban / timeline, or '' on the maps list. $ids: the maps shown.
     // NMMCore.setViewTabs() keeps the links in step when the map filter changes. Roadmap shows one map.
-    public static function view_tabs( $current, $ids = [] ) {
+    public static function view_tabs( $current, $ids = [], $view_only = false ) {
         $ids = array_values( array_filter( array_map( 'intval', (array) $ids ) ) );
         $q   = $ids ? '?map_id=' . implode( ',', $ids ) : '';
         $tabs = [
@@ -45,6 +50,15 @@ class NMM_Shortcodes {
             'timeline' => [ '◷', 'Timeline', home_url( '/timeline/' . $q ) ],
             'roadmap'  => [ '▤', 'Roadmap',  home_url( '/roadmap/' . ( count( $ids ) === 1 ? '?map_id=' . $ids[0] : '' ) ) ],
         ];
+        // A view link: every tab shows the same view-only map
+        $share = self::share_key();
+        if ( $share ) {
+            foreach ( [ 'map' => '/map-share/', 'kanban' => '/kanban/', 'timeline' => '/timeline/', 'roadmap' => '/roadmap/' ] as $k => $path ) {
+                $tabs[ $k ][2] = home_url( $path . '?share=' . $share );
+            }
+        } elseif ( $current === 'map' && count( $ids ) === 1 && ! empty( $view_only ) ) {
+            $tabs['map'][2] = home_url( '/map-share/?map_id=' . $ids[0] );
+        }
         echo '<nav class="nmm-view-tabs" aria-label="Views">';
         foreach ( $tabs as $key => $t ) {
             $attrs = 'class="nmm-vtab' . ( $key === $current ? ' active' : '' ) . '" data-view="' . $key . '"' . ( $key === $current ? ' aria-current="page"' : '' );
@@ -90,7 +104,7 @@ class NMM_Shortcodes {
 
     // [navigator_timeline]
     public static function timeline( $atts ) {
-        if ( ! is_user_logged_in() ) {
+        if ( ! is_user_logged_in() && ! self::share_key() ) { // a view link works signed out
             wp_redirect( home_url( '/maps/?from=timeline' ) );
             exit;
         }
@@ -99,7 +113,7 @@ class NMM_Shortcodes {
 
     // [navigator_roadmap] — one map at a time (?map_id=N, else the most recently edited)
     public static function roadmap( $atts ) {
-        if ( ! is_user_logged_in() ) {
+        if ( ! is_user_logged_in() && ! self::share_key() ) { // a view link works signed out
             wp_redirect( home_url( '/maps/?from=roadmap' ) );
             exit;
         }
@@ -108,7 +122,7 @@ class NMM_Shortcodes {
 
     // [navigator_kanban]
     public static function kanban( $atts ) {
-        if ( ! is_user_logged_in() ) {
+        if ( ! is_user_logged_in() && ! self::share_key() ) { // a view link works signed out
             wp_redirect( home_url( '/maps/?from=kanban' ) );
             exit;
         }

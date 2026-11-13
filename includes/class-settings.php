@@ -271,6 +271,17 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.14.0 — View-only maps in every view, footer fix <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        The view-only map page (featured maps and view links) now has the same toolbar as the editor: ← Maps, the map name, a View only badge, the Mind Map / Kanban / Timeline / Roadmap tabs, Center, Expand all, Collapse, Use this map and More. Every view opens the same map read only: cards open without Save, nothing can be dragged, and anything that would change the map (Settings, Import an outline, moving a card) explains that it is view only, with Use this map or Start fresh. View links work in every view when signed out too.<br>
+                        Reminders leave out cards more than 10 days past their date (or end date), so old maps stop calling for attention. They also show above the site footer now.<br>
+                        Export PNG is gone from the More menu: Export for print does the same job, easier to read.<br>
+                        The site footer on Life Maps pages keeps its own padding (the app's layout fixes no longer reach it).<br>
+                        An empty maps page now suggests copying a featured map too, with a Need help to get started? button that opens Help. A map that is missing (or needs a sign-in) now says so with a button to the maps page.<br>
+                        Every signed-in member can now make maps, however they joined (Life Maps signup or My Navigator). Before, only Life Maps signups could, so members from My Navigator saw no New Map button. The map limit and AI allowance still apply.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.13.0 — Reorganize with AI, AI allowance <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         New: Reorganize with AI, in the Mind Map layout menu (the ▾ next to Harmony). The member says what they want changed, answers two or three questions, is told the whole map will be rewritten, and the AI rewrites it. Cards keep their ids, dates and stages unless asked otherwise. Undo works straight away, and the map from before the last Reorganize is kept on the server so the dialog can bring it back.<br>

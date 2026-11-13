@@ -86,9 +86,9 @@ const TOPICS = [
       a: '<p>On a computer, the mind map and roadmap show one card at the bottom right: the dated card most in need of a look. Overdue cards come first, then the soonest. Cards in Review or Done are left out.</p>' +
          '<p><b>Open card</b> takes you to it. Change its date or stage and the notice moves on to the next one. Dismiss it with × for the rest of your visit, or choose <b>Don&rsquo;t remind me</b> to stop it pointing to that card on this device. If the card gets a new date, it can come back.</p>',
       rel: ['dates', 'kanban'] },
-    { id: 'tools', q: 'What do Export Prompt, Export PNG and Google Calendar do?', k: 'export prompt png image print printing white google calendar gcal ics download tools more menu animate',
+    { id: 'tools', q: 'What do Export Prompt, Export for print and Google Calendar do?', k: 'export prompt png image print printing white google calendar gcal ics download tools more menu animate',
       a: '<p>They are in the <b>More</b> menu, in every view: Mind Map, Kanban, Timeline and Roadmap.</p><ul><li><b>Export Prompt</b> writes your whole map as a text outline, with instructions for Basecamp, a document or a synthesis. Copy it into Basecamp or any AI.</li>' +
-         '<li><b>Export PNG</b> saves what you see as an image. <b>Export for print</b> does the same on a white background, easy to read on paper.</li>' +
+         '<li><b>Export for print</b> saves what you see as an image on a white background, easy to read on screen or paper.</li>' +
          '<li><b>Google Calendar</b> makes a calendar file from the dated cards you pick.</li>' +
          '<li><b>Import an outline</b> adds cards from an indented list.</li></ul>' +
          '<p>Animate reveals the cards one at a time. Settings and Import an outline belong to one map, so in the other views they open it in the Mind Map.</p>',
@@ -108,7 +108,7 @@ const TOPICS = [
          '<p>Guides and Hosts can hold 5 maps of their own. Maps shared with them do not count.</p>',
       rel: ['share', 'featured', 'roadmap'] },
     { id: 'featured', q: 'What are featured maps?', k: 'featured template copy use this map ready made',
-      a: '<p>Ready-made maps chosen by the Navigator team, shown at the top of your maps page. <b>View</b> reads one, <b>Use this map</b> makes your own copy to change however you like. The copy counts toward your map limit.</p>',
+      a: '<p>Ready-made maps chosen by the Navigator team, shown at the top of your maps page. <b>View</b> opens one read only, with the Mind Map, Kanban, Timeline and Roadmap all there to look through. <b>Use this map</b> makes your own copy to change however you like. The copy counts toward your map limit.</p>',
       rel: ['journeys', 'what'] }
   ]},
   { name: 'Sharing', items: [

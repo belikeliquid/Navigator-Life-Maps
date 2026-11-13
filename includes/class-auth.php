@@ -9,7 +9,15 @@ class NMM_Auth {
 
     public static function register() {
         add_action( 'rest_api_init', [ __CLASS__, 'routes' ] );
+        add_filter( 'user_has_cap', [ __CLASS__, 'members_make_maps' ], 10, 4 );
         self::ensure_roles();
+    }
+
+    // Every signed-in member can make maps, however they joined (Life Maps signup or My Navigator).
+    // The map limit and the AI allowance still apply; they keep the paid AI in check.
+    public static function members_make_maps( $allcaps, $caps, $args, $user ) {
+        if ( $user instanceof WP_User && $user->ID ) $allcaps['nmm_edit_maps'] = true;
+        return $allcaps;
     }
 
     // Plugin updates don't run the activation hook, so the role is added here when missing.

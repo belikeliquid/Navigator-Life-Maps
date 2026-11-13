@@ -13,7 +13,6 @@
     <button type="button" role="menuitem" onclick="nmmOpenSettings()">Settings</button>
     <button type="button" role="menuitem" onclick="nmmOpenOutlineImport()">📋 Import an outline</button>
     <button type="button" role="menuitem" onclick="nmmOpenGCalModal()">→ Google Calendar</button>
-    <button type="button" role="menuitem" onclick="nmmExportPNG()">Export PNG</button>
     <button type="button" role="menuitem" onclick="nmmExportPrint()"><span>Export for print<small>White background, easy to read</small></span></button>
     <button type="button" role="menuitem" onclick="nmmOpenPromptExport()"><span>Export Prompt<small>Text outline for Basecamp or AI</small></span></button>
   </div>

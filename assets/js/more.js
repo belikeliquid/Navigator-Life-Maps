@@ -76,6 +76,7 @@ function animateCards() {
 function inEditor(what) {
   const maps = cfg.maps();
   if (maps.length !== 1) { alert('This works on one map at a time. Choose a single map in the map filter first.'); return; }
+  if (NMMCore.isViewOnly(maps[0].id)) { NMMCore.viewOnlyNotice(maps[0].id); return; } // nothing to change on a view-only map
   location.href = NMM.editorUrl + '?map_id=' + maps[0].id + '&open=' + what;
 }
 
