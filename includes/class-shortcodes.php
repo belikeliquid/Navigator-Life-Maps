@@ -9,6 +9,7 @@ class NMM_Shortcodes {
         add_shortcode( 'navigator_kanban',   [ __CLASS__, 'kanban' ] );
         add_shortcode( 'navigator_timeline', [ __CLASS__, 'timeline' ] );
         add_shortcode( 'navigator_roadmap',  [ __CLASS__, 'roadmap' ] );
+        add_shortcode( 'navigator_calendar', [ __CLASS__, 'calendar' ] );
     }
 
     // Renders templates/<name>.php with $vars in scope and enqueues its script (assets/js/<name>.js).
@@ -47,13 +48,14 @@ class NMM_Shortcodes {
         $tabs = [
             'map'      => [ '◈', 'Mind Map', count( $ids ) === 1 ? home_url( '/map-editor/?map_id=' . $ids[0] ) : '' ],
             'kanban'   => [ '⬡', 'Kanban',   home_url( '/kanban/' . $q ) ],
-            'timeline' => [ '◷', 'Timeline', home_url( '/timeline/' . $q ) ],
             'roadmap'  => [ '▤', 'Roadmap',  home_url( '/roadmap/' . ( count( $ids ) === 1 ? '?map_id=' . $ids[0] : '' ) ) ],
+            'timeline' => [ '◷', 'Timeline', home_url( '/timeline/' . $q ) ],
+            'calendar' => [ '▦', 'Calendar', home_url( '/calendar/' . $q ) ],
         ];
         // A view link: every tab shows the same view-only map
         $share = self::share_key();
         if ( $share ) {
-            foreach ( [ 'map' => '/map-share/', 'kanban' => '/kanban/', 'timeline' => '/timeline/', 'roadmap' => '/roadmap/' ] as $k => $path ) {
+            foreach ( [ 'map' => '/map-share/', 'kanban' => '/kanban/', 'roadmap' => '/roadmap/', 'timeline' => '/timeline/', 'calendar' => '/calendar/' ] as $k => $path ) {
                 $tabs[ $k ][2] = home_url( $path . '?share=' . $share );
             }
         } elseif ( $current === 'map' && count( $ids ) === 1 && ! empty( $view_only ) ) {
@@ -118,6 +120,15 @@ class NMM_Shortcodes {
             exit;
         }
         return self::render( 'roadmap' );
+    }
+
+    // [navigator_calendar] — dated tasks by month, week or list (?map_id=1,2 like Kanban)
+    public static function calendar( $atts ) {
+        if ( ! is_user_logged_in() && ! self::share_key() ) { // a view link works signed out
+            wp_redirect( home_url( '/maps/?from=calendar' ) );
+            exit;
+        }
+        return self::render( 'calendar' );
     }
 
     // [navigator_kanban]

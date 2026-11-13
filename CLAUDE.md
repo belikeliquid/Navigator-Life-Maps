@@ -23,7 +23,7 @@ WordPress plugin `navigator-mindmaps`, live on navigatorproject.org. Mind maps, 
 | `assets/js/{view,kanban,timeline,manager,landing}.js` | One script per page |
 | `assets/mindmaps.css` | All styles. App UI uses `--nmm-font` (Fira Sans); map cards stay Barlow Condensed because their size drives saved layouts |
 
-Pages (Enfold "Blank" template): `/maps` (manager or landing), `/map-editor/?map_id=N`, `/map-share/?share=KEY`, `/kanban/?map_id=N`, `/timeline/?map_id=N`, `/roadmap/?map_id=N` (one map; no id = most recently edited). Kanban and timeline take one or more ids (`?map_id=1,2`); no id means all maps.
+Pages (Enfold "Blank" template): `/maps` (manager or landing), `/map-editor/?map_id=N`, `/map-share/?share=KEY`, `/kanban/?map_id=N`, `/timeline/?map_id=N`, `/roadmap/?map_id=N` (one map; no id = most recently edited), `/calendar/?map_id=N`. Kanban, timeline and calendar take one or more ids (`?map_id=1,2`); no id means all maps.
 
 ## Data
 
@@ -51,11 +51,13 @@ Node: `{id, x, y, title, subs[], parent, collapsed, date, end, task, tag, sefiro
 
 **Roadmap.** `roadmap.js`: bars from `date` to `end` (no end = 21 days, drawn fading). `settings.roadmap = {group: 'phase'|'branch', preset, lanes: [{id, label}]}`; in phase mode a card's `lane` is a lane id (unknown = Unsorted), in branch mode its lane is its top-level branch. Saves through `NMMCore.patchNode` / `patchMap`. Tray = undated tasks and leaf cards.
 
+**Calendar.** `calendar.js`: dated Kanban tasks (`NMMCore.isTask` and a valid `date`) by month (default; whole weeks, Sunday first), week or list (phones start on list; `localStorage nmm_cal_mode`). A card with `end` shows on each day it covers. Dragging (HTML5 drag and drop, so mouse only) shifts `date` and `end` by the same days through `patchNode`; a click opens the card dialog (start, end, stage). First load jumps to the nearest card if none is in the current month.
+
 **Kanban limits.** Sprint 3; Start, Doing and Review 5 each. `limit_stages()` in `class-rest-api.php` enforces them on AI maps (overflow goes to Triage with `task: true`, soonest date stays). `LIMITS` in `kanban.js` only warns, counting the cards on the board across the selected maps. Keep the two in step.
 
 **Saving.** Every write sends the whole node array. `nmm_rev` increments on each save. The editor sends `base_rev` and gets a 409 if the map changed since it loaded; it then merges card by card against `baseBody` (`mergeBodies()`) and saves again. On shared maps it polls every 15 s while idle and shows other people's saves; Kanban/timeline/maps list use `NMMCore.patchNode()` (fresh GET, then PUT, no `base_rev`). The editor autosaves 2 s after a change and keeps a localStorage draft (`nmm_draft_<id>`) until the save is confirmed.
 
-**Toolbar.** Every app page uses the same order: ← Maps and the map picker, then `NMM_Shortcodes::view_tabs($current, $ids)` (Mind Map · Kanban · Timeline, kept current by `NMMCore.setViewTabs()`), then that view's tools, More and Save. Menus use `NMMCore.dropdown()` and sit outside the toolbar. Below 768px most `.nmm-btn` in a toolbar hide (the ☰ menu has them); add `.nmm-btn-keep` to keep one.
+**Toolbar.** Every app page uses the same order: ← Maps and the map picker, then `NMM_Shortcodes::view_tabs($current, $ids)` (Mind Map · Kanban · Roadmap · Timeline · Calendar, kept current by `NMMCore.setViewTabs()`), then that view's tools, More and Save. Menus use `NMMCore.dropdown()` and sit outside the toolbar. Below 768px most `.nmm-btn` in a toolbar hide (the ☰ menu has them); add `.nmm-btn-keep` to keep one.
 
 ## Gotchas
 

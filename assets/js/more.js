@@ -1,6 +1,6 @@
 /* Navigator Life Maps — the More menu, shared by the Mind Map, Kanban, Timeline and Roadmap.
  * Markup: templates/more.php (NMM_Shortcodes::more_menu). Each view calls NMMMore.init(cfg) once:
- *   view       'map' | 'kanban' | 'timeline' | 'roadmap'
+ *   view       'map' | 'kanban' | 'roadmap' | 'timeline' | 'calendar'
  *   maps()     the maps on screen: [{ id, title, category, layout, nodes }]
  *   image(print)  optional: make the image itself (the mind map uses its canvas)
  *   imageEl()  otherwise: the element to capture

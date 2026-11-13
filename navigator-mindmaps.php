@@ -3,13 +3,13 @@
  * Plugin Name: Navigator Mind Maps
  * Plugin URI: https://navigatorproject.org
  * Description: Visual mind mapping tool for Navigator Leadership Group. Multi-map manager, Kanban view, Tree of Life template, outline import, and WordPress user auth.
- * Version: 1.14.0
+ * Version: 1.15.0
  * Author: Liquid Media / Navigator Leadership Group
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'NMM_VERSION', '1.14.0' );
+define( 'NMM_VERSION', '1.15.0' );
 define( 'NMM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NMM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -61,7 +61,7 @@ class Navigator_MindMaps {
     private static function is_app_page() {
         global $post;
         if ( ! is_a( $post, 'WP_Post' ) ) return false;
-        foreach ( [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban', 'navigator_timeline', 'navigator_roadmap' ] as $sc ) {
+        foreach ( [ 'navigator_maps', 'navigator_mindmap', 'navigator_kanban', 'navigator_timeline', 'navigator_roadmap', 'navigator_calendar' ] as $sc ) {
             if ( has_shortcode( $post->post_content, $sc ) ) return true;
         }
         return false;
@@ -86,6 +86,7 @@ class Navigator_MindMaps {
             kanbanUrl:   '<?php echo esc_js( home_url( "/kanban/" ) ); ?>',
             timelineUrl: '<?php echo esc_js( home_url( "/timeline/" ) ); ?>',
             roadmapUrl:  '<?php echo esc_js( home_url( "/roadmap/" ) ); ?>',
+            calendarUrl: '<?php echo esc_js( home_url( "/calendar/" ) ); ?>',
             shareUrl:    '<?php echo esc_js( home_url( "/map-share/" ) ); ?>',
             logoutUrl:   '<?php echo esc_js( wp_logout_url( home_url( "/maps/" ) ) ); ?>',
             defaults:    {
@@ -129,6 +130,7 @@ class Navigator_MindMaps {
         'nmm-kanban'   => [ 'kanban.js',   [ 'nmm-more' ] ],
         'nmm-timeline' => [ 'timeline.js', [ 'nmm-more' ] ],
         'nmm-roadmap'  => [ 'roadmap.js',  [ 'nmm-more' ] ],
+        'nmm-calendar' => [ 'calendar.js', [ 'nmm-more' ] ],
         'nmm-help'     => [ 'help.js',     [ 'nmm-core' ] ],
         'nmm-manager'  => [ 'manager.js',  [ 'nmm-core' ] ],
         'nmm-landing'  => [ 'landing.js',  [ 'nmm-core' ] ],

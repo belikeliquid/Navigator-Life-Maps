@@ -181,7 +181,7 @@
       } else if (v === 'roadmap') {
         a.href = SHARE_KEY ? pageUrl(NMM.roadmapUrl) : NMM.roadmapUrl + (shownIds.length === 1 ? '?map_id=' + shownIds[0] : '');
       } else {
-        a.href = pageUrl(v === 'kanban' ? NMM.kanbanUrl : NMM.timelineUrl, linkIds);
+        a.href = pageUrl(v === 'kanban' ? NMM.kanbanUrl : v === 'calendar' ? NMM.calendarUrl : NMM.timelineUrl, linkIds);
       }
     });
   }
@@ -378,7 +378,7 @@
   function mapFilter(opts) {
     let selected = opts.selected.slice();
     function label() {
-      if (selected.length === opts.maps.length) return '⊞ All maps ▾';
+      if (selected.length === opts.maps.length && opts.maps.length !== 1) return '⊞ All maps ▾';
       if (!selected.length) return '⊞ No maps ▾';
       if (selected.length === 1) {
         const m = opts.maps.find(function(x) { return x.id === selected[0]; });

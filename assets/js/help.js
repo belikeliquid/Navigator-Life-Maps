@@ -28,12 +28,13 @@ const TOPICS = [
       rel: ['ai', 'what', 'dates'] }
   ]},
   { name: 'The four views', items: [
-    { id: 'views', q: 'What is the difference between Mind Map, Kanban, Timeline and Roadmap?', k: 'difference views mind map kanban timeline roadmap compare which view tabs',
-      a: '<p>They are four ways of looking at the same cards, in the same tabs at the top of every page.</p><ul>' +
+    { id: 'views', q: 'What is the difference between the Mind Map, Kanban, Roadmap, Timeline and Calendar?', k: 'difference views mind map kanban timeline roadmap calendar compare which view tabs',
+      a: '<p>They are five ways of looking at the same cards, in the same tabs at the top of every page.</p><ul>' +
          '<li><b>◈ Mind Map</b> answers <em>what is all of this?</em> The whole picture and how it connects.</li>' +
          '<li><b>⬡ Kanban</b> answers <em>what am I doing now?</em> Cards move through Start, Doing, Sprint, Review and Done.</li>' +
+         '<li><b>▤ Roadmap</b> answers <em>how does it unfold?</em> Cards as bars from start to end date, in lanes by phase.</li>' +
          '<li><b>◷ Timeline</b> answers <em>what is coming up?</em> Dated cards along a line, a month at a time.</li>' +
-         '<li><b>▤ Roadmap</b> answers <em>how does it unfold?</em> Cards as bars from start to end date, in lanes by phase.</li></ul>' +
+         '<li><b>▦ Calendar</b> answers <em>what is on which day?</em> Dated tasks by month, week or as a list.</li></ul>' +
          '<p>Change a card in one view and every view follows.</p>',
       rel: ['mindmap', 'kanban', 'roadmap'] },
     { id: 'mindmap', q: 'When should I use the Mind Map?', k: 'mind map when use canvas harmony layout tree of life flow chart branches',
@@ -47,7 +48,7 @@ const TOPICS = [
          '<p>Keep it light: no more than <b>3 in Sprint</b> and <b>5 each in Start, Doing and Review</b>. The board warns you when a column is over, because too much at once is how things stall. Everything else waits in <b>Triage</b> until there is room.</p>' +
          '<p>On a computer, the board also flags cards that need a decision: overdue, or due soon and not started.</p>',
       rel: ['views', 'dates', 'nextup'] },
-    { id: 'timeline', q: 'When should I use the Timeline?', k: 'timeline when use dates calendar upcoming month schedule',
+    { id: 'timeline', q: 'When should I use the Timeline?', k: 'timeline when use dates upcoming line schedule',
       a: '<p>When you want to see what is coming. Only cards with a date appear, spread along a line from today. Choose the date range at the top, or <b>Show all dates</b>.</p>' +
          '<p>Drag a card sideways to move its date, or click it to read and edit it.</p>',
       rel: ['dates', 'roadmap', 'views'] },
@@ -56,7 +57,13 @@ const TOPICS = [
          '<li><b>Lanes</b> are phases you name. Start from a preset like Healing, Launch or Career path, or use the map\'s own branches.</li>' +
          '<li>Drag bars to move them, drag the right edge to change the end, drag cards from <b>Not on the roadmap yet</b> to schedule them.</li>' +
          '<li>No end date? The bar runs three weeks and fades out. <b>Lanes… › Reset roadmap</b> starts the lanes over.</li></ul>',
-      rel: ['dates', 'journeys', 'views'] }
+      rel: ['dates', 'journeys', 'views'] },
+    { id: 'calendar', q: 'When should I use the Calendar?', k: 'calendar month week list day schedule dates drag reschedule plan',
+      a: '<p>When you plan by the day. The Calendar shows every Kanban task that has a date, by <b>Month</b>, <b>Week</b> or as a <b>List</b>. Cards without a date, or that are not tasks, stay off it.</p><ul>' +
+         '<li>Drag a card to another day to move it. A card with an end date moves as a whole.</li>' +
+         '<li>Click a card to edit its title, dates and stage.</li>' +
+         '<li>The arrows (or the arrow keys) move a month or week at a time; <b>Today</b> brings you back.</li></ul>',
+      rel: ['dates', 'timeline', 'views'] }
   ]},
   { name: 'What you can do', items: [
     { id: 'what', q: 'What can I map?', k: 'what can map ideas examples goals healing journey journeys routines habits systems change business launch career life uses',
@@ -187,7 +194,7 @@ function answer(it, asked) {
   say('nmm-help-bot', it.a + (it.rel && it.rel.length ? '<div class="nmm-help-more">Related</div>' + chips(it.rel) : ''));
 }
 // The question that fits the page you are on comes first
-const PAGE_Q = { 'nmm-editor': 'mindmap', 'nmm-view': 'mindmap', 'nmm-kanban': 'kanban', 'nmm-timeline': 'timeline', 'nmm-roadmap': 'roadmap', 'nmm-manager': 'start' };
+const PAGE_Q = { 'nmm-editor': 'mindmap', 'nmm-view': 'mindmap', 'nmm-kanban': 'kanban', 'nmm-timeline': 'timeline', 'nmm-roadmap': 'roadmap', 'nmm-calendar': 'calendar', 'nmm-manager': 'start' };
 function welcome() {
   chat.innerHTML = '';
   const first = PAGE_Q[root.id] || 'start';

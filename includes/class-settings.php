@@ -68,6 +68,7 @@ class NMM_Settings {
             'kanban'   => [ 'title' => 'Kanban',     'slug' => 'kanban',     'content' => '[navigator_kanban]' ],
             'timeline' => [ 'title' => 'Timeline',  'slug' => 'timeline',   'content' => '[navigator_timeline]' ],
             'roadmap'  => [ 'title' => 'Roadmap',   'slug' => 'roadmap',    'content' => '[navigator_roadmap]' ],
+            'calendar' => [ 'title' => 'Calendar',  'slug' => 'calendar',   'content' => '[navigator_calendar]' ],
         ];
         if ( isset( $pages[ $type ] ) ) {
             $p = $pages[ $type ];
@@ -119,6 +120,7 @@ class NMM_Settings {
             'kanban'   => [ 'label' => 'Kanban board',  'slug' => 'kanban',     'shortcode' => '[navigator_kanban]',       'type' => 'kanban' ],
             'timeline' => [ 'label' => 'Timeline',      'slug' => 'timeline',   'shortcode' => '[navigator_timeline]',     'type' => 'timeline' ],
             'roadmap'  => [ 'label' => 'Roadmap',       'slug' => 'roadmap',    'shortcode' => '[navigator_roadmap]',      'type' => 'roadmap' ],
+            'calendar' => [ 'label' => 'Calendar',      'slug' => 'calendar',   'shortcode' => '[navigator_calendar]',     'type' => 'calendar' ],
         ];
 
         // REST checks
@@ -270,6 +272,14 @@ class NMM_Settings {
           <div class="nmm-settings-card">
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
+                <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.15.0 — Calendar view <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        A fifth view, ▦ Calendar (page /calendar/, shortcode [navigator_calendar]). It shows every Kanban task with a date, by Month (the default), Week or List; cards without a date, or that are not tasks, stay off it. A card with an end date shows on each day it covers. Drag a card to another day to move it (the end moves with it); click it to edit its title, dates and stage. ‹ › and the arrow keys step a month or week; Today comes back. An older map opens on the month of its nearest card. Phones start on List, and the choice is remembered. View-only maps open read only, like the other views.<br>
+                        The view tabs are now in the order Mind Map, Kanban, Roadmap, Timeline, Calendar.<br>
+                        With only one map on screen, the map picker shows its name instead of All maps.
+                    </div>
+                </div>
                 <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.14.0 — View-only maps in every view, footer fix <span>▾</span></div>
                     <div class="nmm-accordion-body">

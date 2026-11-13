@@ -1,7 +1,7 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit;
 // The More menu and its dialogs, shared by the Mind Map, Kanban, Timeline and Roadmap.
 // Included through NMM_Shortcodes::more_menu( $view ); assets/js/more.js makes it work.
-// $view: map / kanban / timeline / roadmap
+// $view: map / kanban / roadmap / timeline / calendar
 ?>
   <div id="nmm-more-menu" class="nmm-menu" role="menu">
 <?php if ( 'map' === $view ) : ?>

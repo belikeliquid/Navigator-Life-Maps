@@ -2251,3 +2251,77 @@ body:has(.nmm-app) .page-title:not(#footer-page *, #socket *) {
 .nmm-app .nmm-view-missing { text-align: center; padding: 80px 20px; font-family: var(--nmm-font); }
 .nmm-app .nmm-view-missing p { font-size: 17px; color: var(--nmm-mid); margin: 0 0 18px; }
 .nmm-app .nmm-view-missing .nmm-btn { display: inline-flex; text-decoration: none; }
+
+/* ============================================================
+   CALENDAR (/calendar/): month (default), week or list of dated tasks
+   ============================================================ */
+.nmm-cal-tools { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.nmm-app .nmm-cal-tools #nmm-cal-prev, .nmm-app .nmm-cal-tools #nmm-cal-next { padding-left: 10px; padding-right: 10px; font-size: 16px; }
+.nmm-cal-label { font-family: var(--nmm-font); font-size: 15px; font-weight: 600; color: var(--nmm-white); white-space: nowrap; min-width: 128px; margin: 0 4px; }
+.nmm-cal-modes { display: inline-flex; border: 1px solid rgba(255,255,255,0.25); border-radius: 18px; padding: 2px; gap: 2px; }
+.nmm-app .nmm-cal-modes button {
+  font-family: var(--nmm-font); font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,0.8);
+  background: none; border: 0; border-radius: 14px; padding: 5px 11px; cursor: pointer;
+}
+.nmm-app .nmm-cal-modes button:hover { color: #fff; }
+.nmm-app .nmm-cal-modes button.active { background: var(--nmm-teal); color: var(--nmm-navy); font-weight: 600; }
+
+.nmm-cal-body { padding: 16px; min-height: calc(100vh - 60px); }
+.nmm-cal-note { font-family: var(--nmm-font); font-size: 13px; color: var(--nmm-mid); background: var(--nmm-white); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; display: inline-block; }
+.nmm-cal-empty { text-align: center; padding: 80px 20px; font-family: var(--nmm-font); color: var(--nmm-light); }
+.nmm-cal-empty-icon { font-size: 44px; color: var(--nmm-border); margin-bottom: 12px; }
+.nmm-cal-empty-title { font-size: 18px; font-weight: 600; color: var(--nmm-mid); margin-bottom: 6px !important; }
+
+.nmm-cal-grid { font-family: var(--nmm-font); }
+.nmm-cal-head, .nmm-cal-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.nmm-cal-head div { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nmm-light); padding: 0 8px 6px; }
+.nmm-cal-days { background: var(--nmm-border); gap: 1px; border: 1px solid var(--nmm-border); border-radius: 10px; overflow: hidden; }
+.nmm-cal-day { background: rgba(255,255,255,0.92); min-height: 118px; padding: 6px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.nmm-cal-week .nmm-cal-day { min-height: calc(100vh - 190px); }
+.nmm-cal-week .nmm-cal-head { display: none; }
+.nmm-cal-out { background: rgba(245,243,238,0.7); }
+.nmm-cal-out .nmm-cal-num { color: #b4b0a6; }
+.nmm-cal-num { font-size: 12px; font-weight: 600; color: var(--nmm-mid); padding: 1px 3px 3px; }
+.nmm-cal-num span { font-weight: 500; color: var(--nmm-light); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; }
+.nmm-cal-today .nmm-cal-num { color: var(--nmm-teal); }
+.nmm-cal-day.nmm-cal-today { box-shadow: inset 0 0 0 2px var(--nmm-teal); }
+.nmm-cal-over { background: rgba(11,191,191,0.14) !important; }
+
+.nmm-app .nmm-cal-card {
+  font-size: 12px; font-weight: 500; line-height: 1.3; padding: 3px 7px; border-radius: 5px; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid transparent; user-select: none;
+}
+.nmm-app .nmm-cal-card[draggable="true"] { cursor: grab; }
+.nmm-app .nmm-cal-card:hover, .nmm-app .nmm-cal-card:focus-visible { filter: brightness(0.95); outline: none; box-shadow: 0 0 0 2px rgba(1,28,47,0.25); }
+.nmm-cal-week .nmm-cal-card { white-space: normal; }
+.nmm-cal-multi.nmm-cal-goes { border-top-right-radius: 0; border-bottom-right-radius: 0; margin-right: -6px; }
+.nmm-cal-multi.nmm-cal-cont { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -6px; opacity: 0.85; }
+.nmm-cal-arrow { opacity: 0.6; margin-right: 3px; }
+.nmm-cal-done { text-decoration: line-through; opacity: 0.6; }
+.nmm-cal-dragging { opacity: 0.35; }
+.nmm-app .nmm-cal-more { font-family: var(--nmm-font); font-size: 12px; font-weight: 600; color: var(--nmm-indigo); background: none; border: 0; text-align: left; padding: 2px 4px; cursor: pointer; }
+.nmm-app .nmm-cal-more:hover { text-decoration: underline; }
+
+/* List: one block per day that has cards */
+.nmm-cal-list { max-width: 760px; }
+.nmm-cal-lday { background: rgba(255,255,255,0.92); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+.nmm-cal-lday h4 { font-family: var(--nmm-font); font-size: 13px; font-weight: 600; color: var(--nmm-navy); margin: 0 0 4px !important; }
+.nmm-cal-lday.nmm-cal-today h4 { color: var(--nmm-teal); }
+.nmm-cal-list .nmm-cal-card { font-size: 14px; padding: 6px 10px; white-space: normal; }
+
+.nmm-cal-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.nmm-cal-where { font-family: var(--nmm-font); font-size: 12px; color: var(--nmm-light); margin: -4px 0 8px !important; }
+.nmm-app .nmm-cal-day-modal { width: 380px; max-width: 95vw; }
+.nmm-cal-day-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+.nmm-cal-day-list .nmm-cal-card { font-size: 14px; padding: 6px 10px; white-space: normal; }
+
+@media (max-width: 768px) {
+  .nmm-cal-tools { order: 11; flex: 1 0 100%; flex-wrap: wrap; }
+  .nmm-cal-label { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .nmm-cal-modes { flex: 1 0 100%; }
+  .nmm-app .nmm-cal-modes button { flex: 1; }
+  .nmm-cal-body { padding: 10px; }
+  .nmm-cal-day { min-height: 74px; padding: 3px; }
+  .nmm-app .nmm-cal-card { font-size: 10.5px; padding: 2px 4px; }
+  .nmm-cal-head div { padding: 0 3px 4px; font-size: 10px; }
+}
