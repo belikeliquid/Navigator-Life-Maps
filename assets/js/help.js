@@ -37,9 +37,9 @@ const TOPICS = [
          '<li><b>▦ Calendar</b> answers <em>what is on which day?</em> Dated tasks by month, week or as a list.</li></ul>' +
          '<p>Change a card in one view and every view follows.</p>',
       rel: ['mindmap', 'kanban', 'roadmap'] },
-    { id: 'mindmap', q: 'When should I use the Mind Map?', k: 'mind map when use canvas harmony layout tree of life flow chart branches',
+    { id: 'mindmap', q: 'When should I use the Mind Map?', k: 'mind map when use canvas harmony layout tree of life flow chart bubble circles outline list type branches',
       a: '<p>Whenever you are thinking: gathering, sorting, seeing connections. It is the home of every map.</p><ul>' +
-         '<li><b>Harmony</b> tidies the cards in your chosen layout: Flow Chart, Mind Map or Tree of Life.</li>' +
+         '<li><b>Harmony</b> tidies the cards in your chosen layout: Flow Chart, Mind Map, Bubble or Tree of Life. Bubble shows each card as a circle with just its title; point at one to read the rest.</li><li><b>Outline</b>, in the same menu, shows the map as a list you can type in. Enter adds a card, Tab moves it in a level, Shift+Tab moves it out.</li>' +
          '<li><b>Animate</b> (in More) reveals the map card by card, good for walking a client or yourself through it.</li>' +
          '<li>Rest the mouse on a card to read it in full. Zoom with Ctrl and the scroll wheel, and drag empty space to move around.</li></ul>',
       rel: ['views', 'tools', 'phone'] },

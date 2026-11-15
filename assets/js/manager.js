@@ -215,6 +215,7 @@ var questions = [], questionIdx = 0, answers = [], questionsFor = '';
 var LAYOUT_HINTS = {
   flow: 'Top to bottom, like an org chart.',
   mind: 'Your main idea in the centre, with branches out to the left and right.',
+  bubble: 'Your main idea in a circle in the centre, with branches all around it.',
   tol: 'Topics placed on the ten positions of the Tree of Life.'
 };
 function $new(id) { return document.getElementById(id); }

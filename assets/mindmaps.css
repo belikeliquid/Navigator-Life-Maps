@@ -563,6 +563,45 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-node[data-depth="3"] .nmm-expander { background: var(--nmm-amber); }
 .nmm-node[data-depth="4"] .nmm-expander { background: var(--nmm-amber2); color: var(--nmm-navy); }
 
+/* === BUBBLE LAYOUT ===
+   Every card is a circle showing only its title, smaller at each level. Notes, dates and
+   stages show in the hover card. Edit / + Child / Delete sit under the circle on hover. */
+.nmm-bubble .nmm-node {
+  --nmm-bub: 84px;
+  width: var(--nmm-bub); height: var(--nmm-bub); min-width: 0; max-width: none;
+  padding: 10px; border-radius: 50% !important;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; background: #ffffff;
+  box-shadow: 0 2px 8px rgba(1,28,47,0.10);
+}
+.nmm-bubble .nmm-node[data-depth="0"] { --nmm-bub: 176px; padding: 18px; background: var(--nmm-navy); border: 3px solid var(--nmm-teal); }
+.nmm-bubble .nmm-node[data-depth="1"] { --nmm-bub: 122px; padding: 14px; background: var(--nmm-navy2); border: 2.5px solid var(--nmm-teal); }
+.nmm-bubble .nmm-node[data-depth="2"] { --nmm-bub: 96px; border: 2px solid var(--nmm-teal); }
+.nmm-bubble .nmm-node[data-depth="3"] { --nmm-bub: 84px; background: #F4F1EA; border: 2px solid #C9A45C; }
+.nmm-bubble .nmm-node[data-depth="4"] { --nmm-bub: 76px; background: #E7E4DB; border: 1.5px solid #C9A45C; }
+.nmm-bubble .nmm-node.nmm-selected { box-shadow: 0 0 0 4px rgba(11,191,191,0.4); }
+.nmm-bubble .nmm-node-title-row { display: block; position: static; }
+.nmm-bubble .nmm-node-title {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden;
+  font-size: 12px; line-height: 1.2; overflow-wrap: anywhere; hyphens: auto;
+}
+.nmm-bubble .nmm-node[data-depth="0"] .nmm-node-title { font-size: 20px; color: #ffffff; -webkit-line-clamp: 4; }
+.nmm-bubble .nmm-node[data-depth="1"] .nmm-node-title { font-size: 15px; color: #ffffff; }
+.nmm-bubble .nmm-node-sub, .nmm-bubble .nmm-node-date, .nmm-bubble .nmm-node-tag,
+.nmm-bubble .nmm-node-sefirot, .nmm-bubble .nmm-linked-badge { display: none; }
+/* The open / close dot sits on the circle's lower edge */
+.nmm-bubble .nmm-expander { position: absolute; left: 50%; bottom: -8px; margin: 0 0 0 -8px; box-shadow: 0 0 0 2px #ffffff; }
+.nmm-bubble .nmm-node-actions {
+  display: none; position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  margin: 0; flex-wrap: nowrap; padding: 4px; background: #ffffff; border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(1,28,47,0.18); z-index: 30;
+}
+.nmm-bubble .nmm-node:hover { z-index: 20; }
+.nmm-bubble .nmm-na-btn { white-space: nowrap; }
+.nmm-bubble .nmm-node:hover .nmm-node-actions, .nmm-bubble .nmm-node.nmm-selected .nmm-node-actions { display: flex; }
+.nmm-print .nmm-bubble .nmm-node[data-depth="0"], .nmm-print .nmm-bubble .nmm-node[data-depth="1"] { background: #ffffff !important; }
+.nmm-print .nmm-bubble .nmm-node[data-depth="0"] .nmm-node-title, .nmm-print .nmm-bubble .nmm-node[data-depth="1"] .nmm-node-title { color: var(--nmm-dark); }
+
 /* === MOTIF / QUOTE ===
    Sits at the top of the map area and stays put while the map scrolls.
    It lives outside the scrolling canvas (canvas.js places it), above the
@@ -2324,4 +2363,71 @@ body:has(.nmm-app) .page-title:not(#footer-page *, #socket *) {
   .nmm-cal-day { min-height: 74px; padding: 3px; }
   .nmm-app .nmm-cal-card { font-size: 10.5px; padding: 2px 4px; }
   .nmm-cal-head div { padding: 0 3px 4px; font-size: 10px; }
+}
+
+/* ============================================================
+   OUTLINE (layout menu → Outline; assets/js/doc.js)
+   The map as a written outline in place of the map area. Titles are typed in place.
+   ============================================================ */
+.nmm-doc { display: none; }
+.nmm-doc-mode .nmm-canvas-wrap, .nmm-doc-mode .nmm-zoom, .nmm-doc-mode .nmm-motif { display: none !important; }
+.nmm-doc-mode .nmm-doc { display: block; height: calc(100vh - 50px); overflow: auto; padding: 32px 20px 80px; }
+.admin-bar .nmm-doc-mode .nmm-doc { height: calc(100vh - 82px); }
+@media screen and (max-width: 782px) { .admin-bar .nmm-doc-mode .nmm-doc { height: calc(100vh - 96px); } }
+.nmm-list-mode .nmm-doc { display: none !important; }
+.nmm-doc-page {
+  max-width: 860px; margin: 0 auto; padding: 40px 48px 48px; background: #ffffff; border-radius: 14px;
+  box-shadow: 0 2px 14px rgba(1,28,47,0.08); font-family: var(--nmm-font); color: var(--nmm-dark);
+}
+.nmm-doc-island + .nmm-doc-island { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--nmm-border); }
+.nmm-app .nmm-doc-title {
+  display: flex; align-items: baseline; gap: 10px; margin: 0 0 18px; padding: 0;
+  font-family: var(--nmm-font); font-size: 30px; font-weight: 700; line-height: 1.25; color: var(--nmm-navy); text-transform: none; letter-spacing: 0;
+}
+.nmm-doc-list { list-style: none; margin: 0; padding: 0; }
+.nmm-doc-list .nmm-doc-list { margin-left: 11px; padding-left: 24px; border-left: 1.5px dashed var(--nmm-border); }
+.nmm-doc-list li { margin: 0; padding: 0; list-style: none; }
+.nmm-doc-list li::before { content: none; }
+.nmm-doc-line { display: flex; align-items: flex-start; gap: 6px; padding: 3px 0; position: relative; }
+.nmm-doc-toggle, .nmm-doc-toggle-space { flex: 0 0 18px; width: 18px; height: 26px; margin-left: -24px; }
+.nmm-app .nmm-doc-toggle {
+  border: 0; background: none; padding: 0; cursor: pointer; position: relative; border-radius: 4px; box-shadow: none;
+}
+.nmm-doc-toggle::before {
+  content: ''; position: absolute; left: 4px; top: 10px;
+  border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid var(--nmm-navy2);
+  transition: transform 0.15s;
+}
+.nmm-doc-toggle.closed::before { transform: rotate(-90deg); }
+.nmm-app .nmm-doc-toggle:hover { background: var(--nmm-sand2); }
+.nmm-doc-dot { flex: 0 0 7px; width: 7px; height: 7px; margin-top: 10px; border-radius: 50%; background: var(--nmm-navy2); }
+.nmm-doc-dot.has-hidden { box-shadow: 0 0 0 4px var(--nmm-sand); }
+.nmm-doc-text {
+  flex: 1 1 auto; min-width: 40px; font-size: 17px; line-height: 1.55; outline: none; border-radius: 4px;
+  padding: 0 4px; white-space: pre-wrap; overflow-wrap: anywhere; cursor: text;
+}
+.nmm-doc-text:empty::before { content: 'Type a card'; color: var(--nmm-light); }
+.nmm-doc-text:focus { background: rgba(11,191,191,0.08); }
+.nmm-doc-title .nmm-doc-text { font-size: inherit; line-height: inherit; flex: 0 1 auto; }
+.nmm-doc-list.nmm-doc-top > li > .nmm-doc-line > .nmm-doc-text { font-weight: 600; }
+.nmm-app .nmm-doc-edit {
+  flex: 0 0 auto; visibility: hidden; margin-top: 2px; padding: 2px 9px; border: 1px solid var(--nmm-border); border-radius: 6px;
+  background: #ffffff; color: var(--nmm-mid); font: 600 12px var(--nmm-font); cursor: pointer; box-shadow: none;
+}
+.nmm-doc-line:hover > .nmm-doc-edit, .nmm-doc-title:hover > .nmm-doc-edit, .nmm-doc-text:focus + .nmm-doc-edit { visibility: visible; }
+.nmm-app .nmm-doc-edit:hover { border-color: var(--nmm-teal); color: var(--nmm-teal); }
+.nmm-doc-title .nmm-doc-edit { align-self: center; }
+.nmm-app .nmm-doc-add {
+  margin: 12px 0 0 0; padding: 4px 10px; border: 0; background: none; color: var(--nmm-teal); box-shadow: none;
+  font: 600 14px var(--nmm-font); cursor: pointer; border-radius: 6px;
+}
+.nmm-app .nmm-doc-add:hover { background: var(--nmm-sand2); }
+.nmm-doc-empty { color: var(--nmm-light); }
+@media (hover: none) { .nmm-app .nmm-doc-edit { visibility: visible; } }
+@media (max-width: 700px) {
+  .nmm-doc-mode .nmm-doc { padding: 12px 10px 60px; }
+  .nmm-doc-page { padding: 24px 18px 28px 30px; }
+  .nmm-app .nmm-doc-title { font-size: 24px; }
+  .nmm-doc-text { font-size: 16px; }
+  .nmm-doc-list .nmm-doc-list { padding-left: 18px; }
 }

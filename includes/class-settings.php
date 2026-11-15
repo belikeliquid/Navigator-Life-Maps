@@ -273,6 +273,14 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.17.0 — Bubble layout and Outline <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        New layout: Bubble, in the layout menu next to Harmony and in the new map creator. Every card is a circle showing only its title, smaller at each level (navy for the main card and its branches, white, then tan). The main card sits in the middle with its branches all the way around it, clockwise from the top; each card's own cards fan outward, and more than 6 end cards sit in two staggered rows. Each branch gets room for everything under it, so nothing overlaps. Notes, dates and stages show in the hover card; Edit, + Child and Delete sit under the circle on hover. Lines run straight from centre to centre. Shared maps show it too.<br>
+                        New in the same menu: Outline. The map shows as a written outline in place of the canvas: each island is a heading, its cards are bullets with arrows to open and close branches. Click any line to type its title. Enter adds a card below, Tab moves a card in under the one above, Shift+Tab moves it back out, Backspace on an empty card removes it, and the arrow keys move between lines. Edit on each line opens notes, date and stage; "+ Add a card" adds one at the end. The chosen canvas layout is kept, and picking it again lays the map out in the outline's order (outline order is kept exactly through every layout). Undo covers typing and moves.<br>
+                        Switching a map into Bubble, or an AI rewrite in Bubble, keeps the cards in their list order; pressing Harmony again changes nothing.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.16.0 — Clearer AI maps, long lists wrap, big maps not cut off <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         AI Organize and Reorganize now follow shape rules for a map that is clear and good to look at: 3 to 6 main branches of similar size, 2 to 4 themed sub-branches under each, 1 to 4 cards under each sub-branch, never more than 5 cards under one card, 20 to 40 cards in all (45 at most), no grouping by month or week (the dates say when), titles under 6 words and at most 2 lines under each card.<br>

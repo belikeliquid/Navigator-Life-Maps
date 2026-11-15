@@ -40,8 +40,21 @@ const outline = NMMOutline.create({
   onAdd: function(id) { nmmAddChild(id); },
   onShowMap: function() { C.render(); C.autoCenter(); }
 });
+// Outline: the map as a list you can type in, chosen from the layout menu (settings.view = 'outline').
+// The canvas layout (settings.layout) is kept, and comes back when another layout is picked.
+const doc = NMMDoc.create({
+  el: $('nmm-doc'), getNodes: function() { return nodes; }, find: function(id) { return find(id); }, editable: true,
+  pushUndo: function() { pushUndo(); }, changed: function() { markDirty(); }, redraw: function() { C.render(); },
+  openEdit: function(id) { nmmOpenNodeModal(id); },
+  newId: function() { return 'n' + Date.now() + Math.random().toString(36).slice(2, 6); }
+});
+function outlineOn() { return settings.view === 'outline'; }
 const drawCanvas = C.render;
-C.render = function() { drawCanvas(); outline.render(); if (nextUp) nextUp.update(NMMCore.attention(nodes)); };
+C.render = function() {
+  root.classList.toggle('nmm-doc-mode', outlineOn());
+  if (outlineOn()) doc.render(); else drawCanvas();
+  outline.render(); if (nextUp) nextUp.update(NMMCore.attention(nodes));
+};
 
 // Where a card sits in the map, for the hover card
 function pathTo(n) {
@@ -50,7 +63,8 @@ function pathTo(n) {
   while (p && names.length < 4) { names.unshift(p.title); p = find(p.parent); }
   return names.join(' › ');
 }
-NMMCore.hoverCard({ root: root, selector: '.nmm-node', delay: 600, info: function(el) {
+NMMCore.hoverCard({ root: root, selector: '.nmm-node, .nmm-doc-line, .nmm-doc-title', delay: 600, info: function(el) {
+  if (el.closest('.nmm-doc') && $('nmm-doc').contains(document.activeElement)) return null; // not while typing in the Outline
   const n = find(el.dataset.id);
   return n && { title: n.title, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot, where: pathTo(n) };
 } });
@@ -129,6 +143,7 @@ async function loadMap() {
   await C.loadLinkedIslands(linkedIslands, nodes);
   C.render();
   if (arrange) { // a new map from the creator: lay it out in its chosen style
+    bubbleFresh = true;
     const live = nodes.filter(function(n) { return !n._readonly; });
     (layoutStyle() === 'tol' && !hasSefirot() ? tidyLayout : LAYOUT_STYLES[layoutStyle()])(live);
     keepOnCanvas();
@@ -472,6 +487,7 @@ window.nmmCenter      = function() { C.autoCenter(); };
 // Mind Map: the main card sits in the middle and its branches grow out to the
 // left and right; each card is centred beside its children, which stack top
 // to bottom in their current order.
+// Bubble: round cards around the main one, each branch fanning outward (bubbleLayout).
 // Tree of Life: each sefirot is a slot in the
 // three-pillar shape; cards sharing a slot sit side by side, each with its own
 // branch laid out beneath it; rows of the tree grow to fit what they hold.
@@ -671,6 +687,91 @@ function mindMapLayout(live) {
   });
 }
 
+// Bubble: cards are circles (canvas class nmm-bubble), the main one in the middle. Its branches sit
+// all the way around it, and every card's own branches fan outward, away from where it came from.
+// Each branch is given room for everything under it, so groups never run into each other.
+var bubbleFresh = false; // set when the next Bubble layout should follow list order, not positions
+function bubbleLayout(live) {
+  const sizes = measureSizes(live);
+  const GAP = 26, FAN = Math.PI * 1.1;
+  function kids(n) { return live.filter(function(c) { return c.parent === n.id; }); }
+  function r(n) { return Math.max(sizes[n.id].w, sizes[n.id].h) / 2; }
+  function centre(n) { return { x: n.x + sizes[n.id].w / 2, y: n.y + sizes[n.id].h / 2 }; }
+  function wrapAngle(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a <= -Math.PI) a += 2 * Math.PI; return a; }
+  // R = how far a card's whole branch reaches from its centre; ring = how far out its children sit
+  // A long list of end cards sits in two staggered rows (every other card a step further out),
+  // so it packs into about half the angle
+  const R = {}, ring = {}, step = {};
+  function staggered(ch) { return ch.length > 6 && ch.every(function(c) { return !kids(c).length; }); }
+  function width(c, rho, half) { return 2 * Math.asin(Math.min(1, (R[c.id] + GAP / 2) / rho)) * (half ? 0.55 : 1); }
+  function measure(n, fan) {
+    const ch = kids(n);
+    ch.forEach(function(c) { measure(c, FAN); });
+    if (!ch.length) { R[n.id] = r(n); return; }
+    const half = staggered(ch), far = Math.max.apply(null, ch.map(r));
+    let rho = r(n) + GAP + far;
+    function need(rho) { return ch.reduce(function(s, c) { return s + width(c, rho, half); }, 0); }
+    while (need(rho) > fan) rho += 8;
+    ring[n.id] = rho;
+    step[n.id] = half ? 2 * far + GAP / 2 : 0;
+    R[n.id] = Math.max(r(n), rho + step[n.id] + Math.max.apply(null, ch.map(function(c) { return R[c.id]; })));
+  }
+  // Children keep their current order, read clockwise: around the main card starting from the top,
+  // elsewhere from one side of the fan to the other
+  // Coming from another layout (or a map the AI just wrote), positions mean nothing here: keep the list order
+  const byList = bubbleFresh; bubbleFresh = false;
+  function ordered(n, dir, full) {
+    const p = centre(n);
+    if (byList) return kids(n);
+    return kids(n).map(function(c) {
+      const q = centre(c), d = wrapAngle(Math.atan2(q.y - p.y, q.x - p.x) - dir);
+      return { c: c, a: full && d < 0 ? d + 2 * Math.PI : d };
+    })
+      .sort(function(a, b) { return a.a - b.a; }).map(function(x) { return x.c; });
+  }
+  function place(n, cx, cy, dir, fan) {
+    const full = fan >= 2 * Math.PI - 0.01, ch = ordered(n, dir, full);
+    n.x = Math.round(cx - sizes[n.id].w / 2); n.y = Math.round(cy - sizes[n.id].h / 2);
+    if (!ch.length) return;
+    const rho = ring[n.id], half = step[n.id] > 0;
+    const widths = ch.map(function(c) { return width(c, rho, half); });
+    const total = widths.reduce(function(s, w) { return s + w; }, 0);
+    // All the way round the main card, clockwise from the top; a gentle spread elsewhere
+    const k = full ? fan / total : Math.min(fan / total, 1.25);
+    let a = full ? dir : dir - total * k / 2;
+    ch.forEach(function(c, i) {
+      const mid = a + widths[i] * k / 2, d = rho + (i % 2 ? step[n.id] : 0);
+      place(c, cx + d * Math.cos(mid), cy + d * Math.sin(mid), mid, FAN);
+      a += widths[i] * k;
+    });
+  }
+  function islandNodes(root) { return live.filter(function(n) { return n === root || C.isDescendant(n.id, root.id); }); }
+  function bounds(list) {
+    return {
+      x0: Math.min.apply(null, list.map(function(n) { return n.x; })), y0: Math.min.apply(null, list.map(function(n) { return n.y; })),
+      x1: Math.max.apply(null, list.map(function(n) { return n.x + sizes[n.id].w; })), y1: Math.max.apply(null, list.map(function(n) { return n.y + sizes[n.id].h; }))
+    };
+  }
+  // Branches go clockwise from the top; the main card stays where it is
+  function layoutIsland(root) {
+    measure(root, 2 * Math.PI);
+    const c = centre(root);
+    place(root, c.x, c.y, -Math.PI / 2, 2 * Math.PI);
+  }
+  const roots = live.filter(isRoot);
+  if (!roots.length) return;
+  const main = roots.slice().sort(function(a, b) { return islandNodes(b).length - islandNodes(a).length; })[0];
+  layoutIsland(main);
+  const mb = bounds(islandNodes(main));
+  let x = mb.x0;
+  roots.filter(function(r) { return r !== main; }).sort(function(a, b) { return a.x - b.x || a.y - b.y; }).forEach(function(r) {
+    layoutIsland(r);
+    const list = islandNodes(r), b = bounds(list), dx = x - b.x0, dy = mb.y1 + LAYOUT.islandGap - b.y0;
+    list.forEach(function(n) { n.x += dx; n.y += dy; });
+    x += b.x1 - b.x0 + LAYOUT.gapX * 2;
+  });
+}
+
 function treeOfLifeLayout(live) {
   const isSlotted = function(n) { return !!NMMCore.SEFIROT_LABELS[n.sefirot]; };
   const T = treeEngine(live, isSlotted);
@@ -698,9 +799,47 @@ function hasSefirot() { return nodes.some(function(n) { return !n._readonly && N
 function layoutStyle() {
   return LAYOUT_STYLES[settings.layout] ? settings.layout : hasSefirot() ? 'tol' : 'flow';
 }
-const LAYOUT_STYLES = { flow: tidyLayout, mind: mindMapLayout, tol: treeOfLifeLayout };
+const LAYOUT_STYLES = { flow: tidyLayout, mind: mindMapLayout, bubble: bubbleLayout, tol: treeOfLifeLayout };
+
+// Outline order <-> map positions.
+// Entering the Outline: put the card list in the order the map reads in its current layout.
+function sortToReadingOrder() {
+  const style = layoutStyle(), all = nodes.slice();
+  function mid(n) { const el = C.getEl(n.id); return { x: n.x + (el ? el.offsetWidth : 180) / 2, y: n.y + (el ? el.offsetHeight : 50) / 2 }; }
+  function angle(a, b) { return Math.atan2(b.y - a.y, b.x - a.x); }
+  function turn(a) { while (a < 0) a += 2 * Math.PI; while (a >= 2 * Math.PI) a -= 2 * Math.PI; return a; }
+  function kidsInOrder(n) {
+    const ch = all.filter(function(c) { return c.parent === n.id; });
+    if (style === 'mind') {
+      // The right side, then the left; outward column by column (long lists wrap); top to bottom in a column
+      const p = mid(n), pe = C.getEl(n.id), pw = pe ? pe.offsetWidth : 180;
+      const key = function(c) {
+        const e = C.getEl(c.id), w = e ? e.offsetWidth : 180, right = mid(c).x >= p.x;
+        return { side: right ? 0 : 1, col: Math.round((right ? c.x - (n.x + pw) : n.x - (c.x + w)) / 40) };
+      };
+      return ch.sort(function(a, b) { const ka = key(a), kb = key(b); return ka.side - kb.side || ka.col - kb.col || a.y - b.y; });
+    }
+    if (style === 'bubble') {
+      // Clockwise: from the top around the main card, from the start of the fan elsewhere
+      const p = mid(n), gp = n.parent && find(n.parent);
+      const from = gp ? angle(mid(gp), p) - Math.PI : -Math.PI / 2;
+      return ch.sort(function(a, b) { return turn(angle(p, mid(a)) - from) - turn(angle(p, mid(b)) - from); });
+    }
+    // Left to right, and top to bottom within a column (cards in one column share a centre)
+    return ch.sort(function(a, b) { const d = mid(a).x - mid(b).x; return Math.abs(d) > 20 ? d : a.y - b.y; });
+  }
+  const out = [];
+  (function walk(list) { list.forEach(function(n) { if (out.indexOf(n) < 0) { out.push(n); walk(kidsInOrder(n)); } }); })(all.filter(isRoot));
+  all.forEach(function(n) { if (out.indexOf(n) < 0) out.push(n); });
+  nodes = out;
+}
+// Leaving it: spread the cards out in list order, so the next layout reads them in that order
+function seedListOrder() {
+  nodes.filter(function(n) { return !n._readonly; }).forEach(function(n, i) { n.x = i * 1000; n.y = i * 1000; });
+}
 
 window.nmmHarmony = function() {
+  if (outlineOn()) return; // the Outline has nothing to arrange
   const live = nodes.filter(function(n) { return !n._readonly; });
   if (!live.length) return;
   const style = layoutStyle();
@@ -715,6 +854,7 @@ window.nmmHarmony = function() {
 };
 // The canvas can't scroll to negative positions
 function keepOnCanvas() {
+  bubbleFresh = false; // runs after every layout, so the list-order request never lingers
   const minX = Math.min.apply(null, nodes.map(function(n) { return n.x; }));
   const minY = Math.min.apply(null, nodes.map(function(n) { return n.y; }));
   const sx = Math.max(0, LAYOUT.margin - minX), sy = Math.max(0, LAYOUT.margin - minY);
@@ -724,7 +864,7 @@ function keepOnCanvas() {
 // Layout style menu next to Harmony. Picking a style saves it with the map and applies it.
 const layoutMenu = $('nmm-layout-menu');
 function showLayoutStyle() {
-  const style = layoutStyle(), opt = layoutMenu.querySelector('[data-layout="' + style + '"]');
+  const style = outlineOn() ? 'outline' : layoutStyle(), opt = layoutMenu.querySelector('[data-layout="' + style + '"]');
   $('nmm-layout-icon').innerHTML = opt.querySelector('svg').outerHTML;
   $('nmm-layout-btn').title = 'Layout: ' + opt.querySelector('strong').textContent;
   layoutMenu.querySelectorAll('[data-layout]').forEach(function(b) { b.classList.toggle('active', b === opt); });
@@ -740,10 +880,24 @@ window.nmmToggleLayoutMenu = function(e) {
 layoutMenu.querySelectorAll('[data-layout]').forEach(function(b) {
   b.addEventListener('click', function() {
     layoutMenu.classList.remove('open');
+    if (b.dataset.layout === 'outline') {
+      if (outlineOn()) return;
+      sortToReadingOrder();
+      settings.view = 'outline';
+      showLayoutStyle(); C.render(); markDirty();
+      return;
+    }
     if (b.dataset.layout === 'tol' && !hasSefirot()) {
       alert('No cards have a Tree of Life position yet. Edit a card and pick its position, then choose Tree of Life again.');
       return;
     }
+    if (outlineOn()) {
+      // Back from the Outline: lay the map out in the outline's order
+      delete settings.view;
+      seedListOrder();
+      bubbleFresh = true;
+    }
+    if (settings.layout !== b.dataset.layout) bubbleFresh = true;
     settings.layout = b.dataset.layout;
     C.setSettings(settings); showLayoutStyle();
     window.nmmHarmony();
@@ -1038,6 +1192,7 @@ function applyReorganized(fresh) {
   replaceCards(live);
 }
 function replaceCards(live) {
+  bubbleFresh = true; // new cards from the AI: keep its order
   if (live.length) (layoutStyle() === 'tol' && !hasSefirot() ? tidyLayout : LAYOUT_STYLES[layoutStyle()])(live);
   keepOnCanvas();
   C.render(); C.autoCenter();

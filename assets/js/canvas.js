@@ -73,6 +73,8 @@
     function render() {
       canvas.querySelectorAll('.nmm-node').forEach(function(el) { el.remove(); });
       const sel = opts.selectedId ? opts.selectedId() : null;
+      // Bubble layout draws every card as a circle with only its title; the rest shows on hover
+      canvas.classList.toggle('nmm-bubble', settings.layout === 'bubble');
       nodes().forEach(function(n) {
         if (!isVisible(n.id)) return;
         const el = document.createElement('div');
@@ -113,7 +115,10 @@
         let d;
         // Mind Map style grows sideways: join the facing sides of cards that sit beside each other
         const side = settings.layout === 'mind' ? (n.x >= p.x + pw ? 1 : n.x + cw <= p.x ? -1 : 0) : 0;
-        if (side) {
+        if (settings.layout === 'bubble') {
+          // Straight from centre to centre; the circles sit on top of the line ends
+          d = 'M' + (p.x + pw / 2) + ',' + (p.y + ph / 2) + ' L' + (n.x + cw / 2) + ',' + (n.y + ch / 2);
+        } else if (side) {
           const sx = side > 0 ? p.x + pw : p.x, sy = p.y + ph / 2, ex = side > 0 ? n.x : n.x + cw, ey = n.y + ch / 2;
           d = 'M' + sx + ',' + sy + ' C' + (sx + ex) / 2 + ',' + sy + ' ' + (sx + ex) / 2 + ',' + ey + ' ' + ex + ',' + ey;
         } else {
@@ -124,7 +129,7 @@
         }
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', d); path.setAttribute('fill', 'none'); path.setAttribute('stroke', s.stroke);
-        path.setAttribute('stroke-width', s.width); path.setAttribute('stroke-dasharray', s.dash); path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-width', s.width); if (settings.layout !== 'bubble') path.setAttribute('stroke-dasharray', s.dash); path.setAttribute('stroke-linecap', 'round');
         svg.appendChild(path);
       });
     }
