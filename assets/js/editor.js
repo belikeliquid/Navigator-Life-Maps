@@ -475,7 +475,13 @@ window.nmmCenter      = function() { C.autoCenter(); };
 // Tree of Life: each sefirot is a slot in the
 // three-pillar shape; cards sharing a slot sit side by side, each with its own
 // branch laid out beneath it; rows of the tree grow to fit what they hold.
-const LAYOUT = { gapX: 40, gapY: 70, stackGap: 22, islandGap: 140, margin: 40, pillarGap: 40, sideGap: 60 };
+const LAYOUT = { gapX: 40, gapY: 70, stackGap: 22, islandGap: 140, margin: 40, pillarGap: 40, sideGap: 60, maxStack: 5 };
+// A long list of end cards wraps into side-by-side columns of at most LAYOUT.maxStack, filled in turn
+function wrapList(list) {
+  const cols = Math.ceil(list.length / LAYOUT.maxStack), per = Math.ceil(list.length / cols), out = [];
+  for (let i = 0; i < list.length; i += per) out.push(list.slice(i, i + per));
+  return out;
+}
 const SEFIROT_ROWS = [
   [['kether', 'mid']],
   [['chochma', 'left'], ['binah', 'right']],
@@ -529,6 +535,10 @@ function treeEngine(live, stop) {
         b.cols.push({ items: [c] });
       }
     });
+    // Long stacks wrap into several columns side by side
+    b.cols = b.cols.reduce(function(acc, col) {
+      return acc.concat(col.items.length > LAYOUT.maxStack ? wrapList(col.items).map(function(items) { return { items: items }; }) : [col]);
+    }, []);
     let rowW = 0, rowH = 0;
     b.cols.forEach(function(col) {
       col.w = Math.max.apply(null, col.items.map(function(c) { return box[c.id].w; }));
@@ -591,9 +601,16 @@ function mindMapLayout(live) {
   function centreX(n) { return n.x + sizes[n.id].w / 2; }
   // Height of a branch growing sideways: its children stacked, or the card itself
   const H = {};
-  function height(n) {
+  // A long list of end cards grows outward in columns instead of one tall stack
+  function grid(n) {
     const ch = kids(n);
-    const stacked = ch.reduce(function(sum, c) { return sum + height(c); }, 0) + LAYOUT.stackGap * Math.max(0, ch.length - 1);
+    return ch.length > LAYOUT.maxStack && ch.every(function(c) { return !kids(c).length; }) ? wrapList(ch.sort(byTop)) : null;
+  }
+  function height(n) {
+    const ch = kids(n), g = grid(n);
+    const stacked = g
+      ? Math.max.apply(null, g.map(function(col) { col.forEach(height); return stackHeight(col); }))
+      : ch.reduce(function(sum, c) { return sum + height(c); }, 0) + LAYOUT.stackGap * Math.max(0, ch.length - 1);
     return (H[n.id] = Math.max(sizes[n.id].h, stacked));
   }
   function stackHeight(list) { return list.reduce(function(sum, c) { return sum + H[c.id]; }, 0) + LAYOUT.stackGap * Math.max(0, list.length - 1); }
@@ -602,7 +619,13 @@ function mindMapLayout(live) {
     const sz = sizes[n.id];
     // Whole pixels, so pressing Harmony again reproduces exactly the same positions
     n.x = Math.round(side > 0 ? edge : edge - sz.w); n.y = Math.round(cy - sz.h / 2);
-    placeStack(kids(n).sort(byTop), side > 0 ? n.x + sz.w + LAYOUT.sideGap : n.x - LAYOUT.sideGap, cy, side);
+    let next = side > 0 ? n.x + sz.w + LAYOUT.sideGap : n.x - LAYOUT.sideGap;
+    const g = grid(n);
+    if (!g) { placeStack(kids(n).sort(byTop), next, cy, side); return; }
+    g.forEach(function(col) {
+      placeStack(col, next, cy, side);
+      next += side * (Math.max.apply(null, col.map(function(c) { return sizes[c.id].w; })) + LAYOUT.gapX);
+    });
   }
   function placeStack(list, edge, cy, side) {
     let y = cy - stackHeight(list) / 2;

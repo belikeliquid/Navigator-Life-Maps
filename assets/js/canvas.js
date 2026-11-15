@@ -84,8 +84,20 @@
         if (opts.decorate) opts.decorate(el, n);
         canvas.appendChild(el);
       });
+      fitCanvas();
       drawLines();
       renderMotif();
+    }
+
+    // The canvas starts at 3200 x 2800 and grows to hold the furthest card, with room to spare:
+    // a big map (a full life map laid out as a Mind Map) would otherwise be cut off at the edge
+    function fitCanvas() {
+      const MIN_W = 3200, MIN_H = 2800, ROOM = 600;
+      const b = bounds();
+      const w = Math.max(MIN_W, b ? Math.ceil(b.maxX + ROOM) : 0), h = Math.max(MIN_H, b ? Math.ceil(b.maxY + ROOM) : 0);
+      if (canvas.offsetWidth === w && canvas.offsetHeight === h) return;
+      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      applyZoom();
     }
 
     function drawLines() {

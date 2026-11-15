@@ -273,6 +273,14 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.16.0 — Clearer AI maps, long lists wrap, big maps not cut off <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        AI Organize and Reorganize now follow shape rules for a map that is clear and good to look at: 3 to 6 main branches of similar size, 2 to 4 themed sub-branches under each, 1 to 4 cards under each sub-branch, never more than 5 cards under one card, 20 to 40 cards in all (45 at most), no grouping by month or week (the dates say when), titles under 6 words and at most 2 lines under each card.<br>
+                        Harmony wraps long lists: in Flow Chart and Mind Map, more than 5 end cards under one card now sit in side-by-side columns of up to 5 (growing outward in Mind Map) instead of one tall column.<br>
+                        The map canvas was a fixed 3200 by 2800 pixels, so the far side of a big map (a full life map laid out as a Mind Map) was cut off. It now grows to hold the furthest card, with room to spare, in the editor and on shared maps.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.15.2 — Room for bigger AI maps <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         AI Organize can now write maps of 50 cards or more (a full life map across Self, Health, Love and Work). Its answer could run out of room at about 30 cards and come back as "The AI answer could not be read". It now has three times the room and up to three minutes, and writes only the fields the app needs. When an answer still can't be read, the message says whether it was too big, and the reason goes in the server's error log.

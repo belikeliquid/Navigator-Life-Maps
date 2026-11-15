@@ -583,6 +583,19 @@ Return the JSON array only.';
         return rest_ensure_response( [ 'questions' => array_values( array_filter( $questions, 'is_string' ) ) ] );
     }
 
+    // How a map should be shaped, for the AI that builds or rewrites one: a few balanced main branches,
+    // themed sub-branches, short lists. Long flat lists are what make a map hard to read.
+    const SHAPE = 'Shape of the map (this is what makes it clear and good to look at):
+- One root card. Under it 3 to 6 main branches, aim for 4 or 5, of similar size.
+- Under each main branch, 2 to 4 sub-branches that group its cards by theme. A sub-branch holds at least 2 cards.
+- Under each sub-branch, 1 to 4 cards. Go one level deeper only when a card truly breaks into steps.
+- No card has more than 5 cards directly under it. When a branch would have more, group them into themed sub-branches instead.
+- Never group by time (such as "January", "Week 1" or "Phase 2 tasks"): dates already say when. Group by what the cards are about.
+- 20 to 40 cards in all, never more than 45. Fewer, stronger cards beat many thin ones: merge what repeats.
+- Titles under 6 words, and at most 2 short lines under each card.
+- If the notes ask for a particular structure, follow it within these limits.
+Before you answer, check the shape: count all the cards and the cards under each one.';
+
     const NOTES_MAX = 30000;  // characters of notes the AI will read
     const MAP_MAX   = 40000;  // characters of map JSON a Reorganize will send
     private static function too_long() {
@@ -757,7 +770,9 @@ Map title: ' . $title . '
 Notes:
 ' . $notes . $answers_text . '
 
-Group the notes into 3 to 7 main branches under one root card, with the details as cards beneath them. Keep the wording of the notes where you can. Use the answers to set Kanban tags based on urgency and priority, and add dates where they are mentioned.
+Group the notes into branches under one root card, with the details as cards beneath them. Keep the wording of the notes where you can. Use the answers to set Kanban tags based on urgency and priority, and add dates where they are mentioned.
+
+' . self::SHAPE . '
 
 ' . $kanban . '
 
@@ -766,7 +781,7 @@ Return ONLY a JSON array of nodes. No explanation. No markdown.
 Each node has only these fields (leave out anything else, the app adds the rest):
 - id: short unique string like "n1"
 - title: short topic title (under 6 words)
-- subs: array of subtitle strings (key points, max 4; [] when there are none)
+- subs: array of subtitle strings (key points, max 2; [] when there are none)
 - parent: the id of the card it belongs under
 - date: "YYYY-MM-DD" if date mentioned, otherwise ""
 - end: "YYYY-MM-DD" only when the card runs over several days, otherwise leave it out
@@ -932,7 +947,9 @@ Rules:
 - When a card stays (even reworded or moved), keep its id. New cards get new ids like "r1", "r2". When cards merge, keep one of their ids.
 - Keep each card\'s date, end, tag and task as they are, unless they asked to change them. tag is one of start/doing/sprint/review/done or "".
 - Keep the main root card and its id. Keep other root cards unless they asked to change them.
-- subs are short lines under the title, at most 4. Titles under 7 words.
+- subs are short lines under the title, at most 2. Titles under 6 words.
+
+' . self::SHAPE . '
 ' . ( $tol
     ? '- Give each card a Tree of Life position in sefirot: kether, chochma, binah, chesed, geburah, tiphereth, netzach, hod, yesod or malkuth. The main root card is tiphereth.'
     : '- sefirot: keep it as it is, or "" when the card has none.' ) . '
