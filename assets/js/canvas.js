@@ -51,6 +51,13 @@
     }
     function getEl(id) { return canvas.querySelector('.nmm-node[data-id="' + id + '"]'); }
 
+    // Bubble layout only (hidden otherwise): a small round badge on the circle's edge, "11" over "Nov"
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    function bubbleDate(d) {
+      const p = String(d || '').split('-');
+      if (p.length !== 3 || !MONTHS[+p[1] - 1]) return '';
+      return '<span class="nmm-bub-date" aria-hidden="true"><b>' + (+p[2]) + '</b><i>' + MONTHS[+p[1] - 1] + '</i></span>';
+    }
     function nodeHtml(n) {
       const ro       = !!n._readonly;
       const expander = hasChildren(n.id) ? '<span class="nmm-expander" data-eid="' + esc(n.id) + '">' + (n.collapsed ? '+' : '−') + '</span>' : '';
@@ -67,7 +74,7 @@
         '<button class="nmm-na-btn" data-action="add">+ Child</button>' +
         '<button class="nmm-na-btn nmm-na-red" data-action="del">Delete</button></div>' : '';
       return '<div class="nmm-node-title-row"><span class="nmm-node-title">' + esc(n.title) + '</span>' + expander + '</div>' +
-        subs + date + linked + actions + tag + sef;
+        subs + date + linked + actions + tag + sef + bubbleDate(n.date);
     }
 
     function render() {

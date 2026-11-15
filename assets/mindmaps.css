@@ -598,6 +598,23 @@ body:has(.nmm-app) .entry-content > *:first-child {
 }
 .nmm-bubble .nmm-node:hover { z-index: 20; }
 .nmm-bubble .nmm-na-btn { white-space: nowrap; }
+/* Date badge: a small navy disc with a gold ring on the circle's upper right edge (gold on the navy circles) */
+.nmm-bub-date { display: none; }
+.nmm-bubble .nmm-bub-date {
+  position: absolute; left: 85.4%; top: 14.6%; transform: translate(-50%, -50%);
+  width: 34px; height: 34px; border-radius: 50%; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--nmm-navy); color: #ffffff; border: 1.5px solid #C9A45C;
+  box-shadow: 0 1px 4px rgba(1,28,47,0.25); pointer-events: none; line-height: 1;
+  font-family: var(--nmm-font);
+}
+.nmm-bub-date b { font-size: 12px; font-weight: 700; letter-spacing: 0; }
+.nmm-bub-date i { font-size: 7.5px; font-style: normal; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 1px; opacity: 0.85; }
+.nmm-bubble .nmm-node[data-depth="0"] .nmm-bub-date, .nmm-bubble .nmm-node[data-depth="1"] .nmm-bub-date {
+  background: #C9A45C; color: var(--nmm-navy); border-color: #ffffff;
+}
+.nmm-bubble .nmm-node[data-depth="0"] .nmm-bub-date { width: 40px; height: 40px; }
+.nmm-bubble .nmm-node[data-depth="0"] .nmm-bub-date b { font-size: 14px; }
 .nmm-bubble .nmm-node:hover .nmm-node-actions, .nmm-bubble .nmm-node.nmm-selected .nmm-node-actions { display: flex; }
 .nmm-print .nmm-bubble .nmm-node[data-depth="0"], .nmm-print .nmm-bubble .nmm-node[data-depth="1"] { background: #ffffff !important; }
 .nmm-print .nmm-bubble .nmm-node[data-depth="0"] .nmm-node-title, .nmm-print .nmm-bubble .nmm-node[data-depth="1"] .nmm-node-title { color: var(--nmm-dark); }

@@ -273,6 +273,12 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.17.2 — Dates on Bubble circles <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        In the Bubble layout, a card with a date shows a small round badge on the upper right edge of its circle: the day over the short month (14 over DEC). Navy with a gold ring on light circles, gold on the navy ones. The full date and end date still show in the hover card.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.17.1 — Tighter Bubble maps, maps open to fit, room to scroll <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         Bubble spacing: each branch was given a whole circle of room around it, though its cards only grow outward, so big branches pushed everything far apart. Branches are now packed as closely as their actual circles allow, never closer than the gap between cards. A 33 card map went from about 2660 by 1830 pixels to 1030 by 910, with no overlaps.<br>
