@@ -273,6 +273,12 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.15.2 — Room for bigger AI maps <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        AI Organize can now write maps of 50 cards or more (a full life map across Self, Health, Love and Work). Its answer could run out of room at about 30 cards and come back as "The AI answer could not be read". It now has three times the room and up to three minutes, and writes only the fields the app needs. When an answer still can't be read, the message says whether it was too big, and the reason goes in the server's error log.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.15.1 — Named Life Maps <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         The plugin, the admin menu (All Life Maps, Add New Life Map), this settings page and the signup page now say Life Maps instead of Mind Maps. Mind Map stays as the name of the canvas view and its layout. Nothing else changes: maps, links and data are the same.

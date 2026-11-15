@@ -763,27 +763,27 @@ Group the notes into 3 to 7 main branches under one root card, with the details 
 
 Return ONLY a JSON array of nodes. No explanation. No markdown.
 
-Each node must have:
+Each node has only these fields (leave out anything else, the app adds the rest):
 - id: short unique string like "n1"
-- x: 0
-- y: 0
 - title: short topic title (under 6 words)
-- subs: array of subtitle strings (key points, max 4)
+- subs: array of subtitle strings (key points, max 4; [] when there are none)
 - parent: the id of the card it belongs under
-- sefirot: ""
-- collapsed: false
 - date: "YYYY-MM-DD" if date mentioned, otherwise ""
+- end: "YYYY-MM-DD" only when the card runs over several days, otherwise leave it out
 - tag: one of start/doing/sprint/review/done or ""
 - task: true if the card is something to do, false if it is a heading or only information
 
 Include the root card: id "c", title = map title, parent null, tag "", task false, date "".
 
+Write compact JSON on as few lines as you like: a big map must fit in one answer.
+
 Return JSON array only. Start with [ end with ].';
         }
 
-        // Longer notes need longer answers, and the model can take a minute to write them
+        // A full life map can run to 50 cards: give the model room to finish and time to write it
+        @set_time_limit( 200 );
         $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
-            'timeout' => 120,
+            'timeout' => 180,
             'headers' => [
                 'Content-Type'      => 'application/json',
                 'x-api-key'         => $api_key,
@@ -791,7 +791,7 @@ Return JSON array only. Start with [ end with ].';
             ],
             'body' => json_encode([
                 'model'      => 'claude-opus-4-6',
-                'max_tokens' => 4000,
+                'max_tokens' => 12000,
                 'messages'   => [
                     [ 'role' => 'user', 'content' => $prompt ]
                 ],
@@ -802,12 +802,27 @@ Return JSON array only. Start with [ end with ].';
         if ( $error ) return $error;
 
         $nodes = self::reply_json( $response );
-        if ( ! is_array( $nodes ) ) {
-            return new WP_Error( 'parse_error', 'The AI answer could not be read. Please try again.', [ 'status' => 500 ] );
+        if ( ! is_array( $nodes ) ) return self::unreadable( $response, 'new map' );
+        // Fields the prompt leaves to the app
+        foreach ( $nodes as $i => $n ) {
+            if ( ! is_array( $n ) ) continue;
+            $nodes[ $i ] += [ 'x' => 0, 'y' => 0, 'subs' => [], 'collapsed' => false, 'sefirot' => '', 'date' => '', 'tag' => '' ];
         }
         NMM_Auth::ai_log( 'new map' );
 
         return rest_ensure_response( [ 'nodes' => self::limit_stages( $nodes ) ] );
+    }
+
+    // An answer that held no readable map: say why (cut off for length, or something else) and log it
+    private static function unreadable( $response, $what ) {
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $stop = $body['stop_reason'] ?? 'unknown';
+        $out  = (int) ( $body['usage']['output_tokens'] ?? 0 );
+        error_log( 'Navigator Life Maps: unreadable AI answer (' . $what . '), stop_reason=' . $stop . ', output_tokens=' . $out );
+        $msg = $stop === 'max_tokens'
+            ? 'This map is too big for the AI to write in one go. Try shorter notes, or fewer cards per area, then try again.'
+            : 'The AI answer could not be read. Please try again.';
+        return new WP_Error( 'parse_error', $msg, [ 'status' => 500 ] );
     }
 
     private static function answers_text( $answers ) {
@@ -931,7 +946,10 @@ Return ONLY a JSON array of cards with: id, title, subs, parent, date, end, tag,
         if ( $error ) return $error;
         $nodes = self::reply_json( $response );
         $nodes = is_array( $nodes ) ? self::clean_reorganized( $nodes ) : [];
-        if ( ! $nodes ) return new WP_Error( 'parse_error', 'The AI answer could not be read, so your map was not changed. Please try again.', [ 'status' => 500 ] );
+        if ( ! $nodes ) {
+            $e = self::unreadable( $response, 'reorganize' );
+            return new WP_Error( 'parse_error', $e->get_error_message() . ' Your map was not changed.', [ 'status' => 500 ] );
+        }
 
         // Count it, and keep the map as it was, only once the new version is ready
         NMM_Auth::ai_log( 'reorganize', $post->ID );
