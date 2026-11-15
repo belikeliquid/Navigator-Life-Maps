@@ -48,19 +48,23 @@ body:has(.nmm-app) .entry-content > *:first-child {
 
 /* ============================================================
    TOPOGRAPHIC BACKGROUND — watermap-1.png from the media library
-   (an 80% sand wash over it keeps the contours faint)
+   (an 80% wash of the light background, #F2F1EC, over it keeps the contours faint)
    ============================================================ */
 
 /* Background on plugin divs directly — not on body to avoid Enfold conflicts */
 .nmm-app,
 .nmm-landing-page {
-    background-color: #e8e4db !important;
-    background-image: linear-gradient(rgba(232,228,219,0.8), rgba(232,228,219,0.8)), url('/wp-content/uploads/2021/06/watermap-1.png') !important;
+    background-color: #F2F1EC !important;
+    background-image: linear-gradient(rgba(242,241,236,0.8), rgba(242,241,236,0.8)), url('/wp-content/uploads/2021/06/watermap-1.png') !important;
     background-repeat: no-repeat !important;
     background-size: cover !important;
     background-position: center !important;
     background-attachment: fixed;
 }
+/* The page behind the app. A rule in the saved custom CSS sets it to the older tan (#e8e4db);
+   this one is more specific, so the light background wins without changing the saved CSS. */
+html body:has(.nmm-app),
+html body:has(.nmm-landing-page) { background-color: #F2F1EC !important; }
 .nmm-canvas-wrap,
 .nmm-manager-body {
     background-color: transparent;
@@ -976,8 +980,8 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-menu-current { background: var(--nmm-sand2) !important; font-weight: 600 !important; }
 
 .nmm-rm-body {
-  background: var(--nmm-sand);
-  background-image: linear-gradient(rgba(232,228,219,0.8), rgba(232,228,219,0.8)), url('/wp-content/uploads/2021/06/watermap-1.png');
+  background: #F2F1EC;
+  background-image: linear-gradient(rgba(242,241,236,0.8), rgba(242,241,236,0.8)), url('/wp-content/uploads/2021/06/watermap-1.png');
   background-size: cover; background-attachment: fixed; background-position: center;
   min-height: calc(100vh - 60px); padding: 16px 20px 32px; font-family: var(--nmm-font);
 }
@@ -1449,8 +1453,8 @@ body:has(.nmm-app) .entry-content > *:first-child {
    ============================================================ */
 
 .nmm-kb-body {
-  background: var(--nmm-sand);
-  background-image: linear-gradient(rgba(232,228,219,0.8), rgba(232,228,219,0.8)), url('/wp-content/uploads/2021/06/watermap-1.png');
+  background: #F2F1EC;
+  background-image: linear-gradient(rgba(242,241,236,0.8), rgba(242,241,236,0.8)), url('/wp-content/uploads/2021/06/watermap-1.png');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -1582,8 +1586,8 @@ body:has(.nmm-app) .entry-content > *:first-child {
 .nmm-landing-bg {
   position: fixed;
   inset: 0;
-  background: var(--nmm-sand);
-  background-image: linear-gradient(rgba(232,228,219,0.8), rgba(232,228,219,0.8)), url('/wp-content/uploads/2021/06/watermap-1.png');
+  background: #F2F1EC;
+  background-image: linear-gradient(rgba(242,241,236,0.8), rgba(242,241,236,0.8)), url('/wp-content/uploads/2021/06/watermap-1.png');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -2041,7 +2045,7 @@ body:has(.nmm-app) .page-title:not(#footer-page *, #socket *) {
 }
 
 .nmm-landing-page {
-  background: var(--nmm-sand);
+  background: #F2F1EC;
   min-height: 100vh;
   display: flex;
   flex-direction: column;

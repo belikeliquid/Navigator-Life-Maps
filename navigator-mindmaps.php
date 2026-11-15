@@ -3,13 +3,13 @@
  * Plugin Name: Navigator Life Maps
  * Plugin URI: https://navigatorproject.org
  * Description: Navigator Life Maps: visual life and project mapping for Navigator Leadership Group. Multi-map manager, Kanban view, Tree of Life template, outline import, and WordPress user auth.
- * Version: 1.17.3
+ * Version: 1.17.4
  * Author: Liquid Media / Navigator Leadership Group
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'NMM_VERSION', '1.17.3' );
+define( 'NMM_VERSION', '1.17.4' );
 define( 'NMM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NMM_URL', plugin_dir_url( __FILE__ ) );
 

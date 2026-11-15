@@ -273,6 +273,12 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.17.4 — Lighter background <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        The map background is lighter: #F2F1EC instead of the tan #E8E4DB, in the Mind Map, Kanban, Roadmap, Timeline and Calendar, with the same faint contour lines. The page behind the app follows it too; the rule in the saved custom CSS that set it tan is left as it is and simply overridden.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.17.3 — Bubble date badge outside the circle <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         The date badge moved just outside the circle, at about four o'clock, so it no longer covers the title. It is smaller (26px, 32px on the main card) with smaller month letters, and takes the circle's own outline colour: teal, or gold on the tan circles, with navy text. The day number now always shows (the site theme was colouring it the same as the badge). Dated circles get a little extra room in the Bubble layout so badges never touch a neighbour; press Harmony once to apply it.
