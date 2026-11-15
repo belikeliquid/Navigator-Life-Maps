@@ -698,7 +698,8 @@ function bubbleLayout(live) {
   const sizes = measureSizes(live);
   const GAP = 26, FAN = Math.PI * 1.1, TOP = -Math.PI / 2;
   function kids(n) { return live.filter(function(c) { return c.parent === n.id; }); }
-  function r(n) { return Math.max(sizes[n.id].w, sizes[n.id].h) / 2; }
+  // A dated card has its date badge just outside the circle: give it a little more room
+  function r(n) { return Math.max(sizes[n.id].w, sizes[n.id].h) / 2 + (n.date ? 12 : 0); }
   function centre(n) { return { x: n.x + sizes[n.id].w / 2, y: n.y + sizes[n.id].h / 2 }; }
   function wrapAngle(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a <= -Math.PI) a += 2 * Math.PI; return a; }
 

@@ -273,6 +273,12 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.17.3 — Bubble date badge outside the circle <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        The date badge moved just outside the circle, at about four o'clock, so it no longer covers the title. It is smaller (26px, 32px on the main card) with smaller month letters, and takes the circle's own outline colour: teal, or gold on the tan circles, with navy text. The day number now always shows (the site theme was colouring it the same as the badge). Dated circles get a little extra room in the Bubble layout so badges never touch a neighbour; press Harmony once to apply it.
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.17.2 — Dates on Bubble circles <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         In the Bubble layout, a card with a date shows a small round badge on the upper right edge of its circle: the day over the short month (14 over DEC). Navy with a gold ring on light circles, gold on the navy ones. The full date and end date still show in the hover card.

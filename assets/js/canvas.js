@@ -51,12 +51,12 @@
     }
     function getEl(id) { return canvas.querySelector('.nmm-node[data-id="' + id + '"]'); }
 
-    // Bubble layout only (hidden otherwise): a small round badge on the circle's edge, "11" over "Nov"
+    // Bubble layout only (hidden otherwise): a small round badge just outside the circle, lower right, "11" over "Nov"
     const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     function bubbleDate(d) {
       const p = String(d || '').split('-');
       if (p.length !== 3 || !MONTHS[+p[1] - 1]) return '';
-      return '<span class="nmm-bub-date" aria-hidden="true"><b>' + (+p[2]) + '</b><i>' + MONTHS[+p[1] - 1] + '</i></span>';
+      return '<span class="nmm-bub-date" aria-hidden="true"><span class="nmm-bd-day">' + (+p[2]) + '</span><span class="nmm-bd-mon">' + MONTHS[+p[1] - 1] + '</span></span>';
     }
     function nodeHtml(n) {
       const ro       = !!n._readonly;
