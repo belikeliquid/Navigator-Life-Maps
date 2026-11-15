@@ -161,8 +161,9 @@
     function centerOn(id) {
       const el = getEl(id), n = find(id);
       if (!el || !n || !wrap) return;
-      wrap.scrollLeft = Math.max(0, (n.x + el.offsetWidth / 2) * zoom - wrap.clientWidth / 2);
-      wrap.scrollTop  = Math.max(0, (n.y + el.offsetHeight / 2) * zoom - wrap.clientHeight / 2);
+      const pad = room();
+      wrap.scrollLeft = Math.max(0, pad.x + (n.x + el.offsetWidth / 2) * zoom - wrap.clientWidth / 2);
+      wrap.scrollTop  = Math.max(0, pad.y + (n.y + el.offsetHeight / 2) * zoom - wrap.clientHeight / 2);
     }
     // ---- Animate ----
     const STILL = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -264,8 +265,9 @@
     function centerNow() {
       const b = bounds();
       if (!b || !wrap) return;
-      wrap.scrollLeft = Math.max(0, (b.minX + b.maxX) / 2 * zoom - wrap.clientWidth / 2);
-      wrap.scrollTop  = Math.max(0, (b.minY + b.maxY) / 2 * zoom - wrap.clientHeight / 2);
+      const pad = room();
+      wrap.scrollLeft = Math.max(0, pad.x + (b.minX + b.maxX) / 2 * zoom - wrap.clientWidth / 2);
+      wrap.scrollTop  = Math.max(0, pad.y + (b.minY + b.maxY) / 2 * zoom - wrap.clientHeight / 2);
     }
 
     // ---- Zoom ----
@@ -302,6 +304,7 @@
         else setZoom(a === 'in' ? zoom * 1.2 : a === 'out' ? zoom / 1.2 : 1);
       });
       applyZoom();
+      window.addEventListener('resize', applyZoom); // the room around the map follows the screen size
 
       // Ctrl/⌘ + wheel. Trackpad pinch arrives as a wheel event with ctrlKey set.
       wrap.addEventListener('wheel', function(e) {
@@ -350,8 +353,13 @@
         if (e.key === '-' || e.key === '_') setZoom(zoom / 1.2);
       });
     }
+    // Room around the map, half a screen on every side, so any card (even one at the very edge
+    // of the map) can be scrolled to the middle of the screen, and Center always centres
+    function room() { return { x: wrap ? Math.round(wrap.clientWidth / 2) : 0, y: wrap ? Math.round(wrap.clientHeight / 2) : 0 }; }
     function applyZoom() {
       if (!sizer) return;
+      const pad = room();
+      sizer.style.padding = pad.y + 'px ' + pad.x + 'px';
       canvas.style.transform = zoom === 1 ? '' : 'scale(' + zoom + ')';
       sizer.style.width  = canvas.offsetWidth * zoom + 'px';
       sizer.style.height = canvas.offsetHeight * zoom + 'px';
@@ -370,12 +378,18 @@
       wrap.scrollLeft += r.left + p.x * zoom - cx;
       wrap.scrollTop  += r.top  + p.y * zoom - cy;
     }
-    function zoomToFit() {
+    function zoomToFit(min) {
       const b = bounds(); if (!b || !sizer) return;
       const pad = 60;
-      zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.min(
+      zoom = Math.min(ZOOM_MAX, Math.max(min || ZOOM_MIN, Math.min(
         wrap.clientWidth / (b.maxX - b.minX + pad * 2), wrap.clientHeight / (b.maxY - b.minY + pad * 2), 1)));
       applyZoom(); centerNow();
+    }
+    // Opening a map or laying it out again: show all of it when it fits at a readable size (never
+    // above 100%, never below FIT_MIN; a bigger map is centred at that zoom)
+    const FIT_MIN = 0.5;
+    function autoFit() {
+      setTimeout(function() { if (wrap && wrap.clientWidth) zoomToFit(FIT_MIN); }, 300);
     }
     // Pointer position → unzoomed canvas coordinates (what node x, y use)
     function toCanvas(clientX, clientY) {
@@ -425,7 +439,7 @@
     return {
       find: find, depth: depth, isVisible: isVisible, hasChildren: hasChildren, isDescendant: isDescendant,
       getEl: getEl, render: render, drawLines: drawLines, setSettings: setSettings, renderMotif: renderMotif,
-      autoCenter: autoCenter, centerOn: centerOn, exportPNG: exportPNG,
+      autoCenter: autoCenter, autoFit: autoFit, centerOn: centerOn, exportPNG: exportPNG,
       animate: animate, stopAnimation: stopAnimation, isAnimating: function() { return !!anim; }, loadLinkedIslands: loadLinkedIslands,
       toCanvas: toCanvas, setZoom: setZoom, zoomToFit: zoomToFit
     };

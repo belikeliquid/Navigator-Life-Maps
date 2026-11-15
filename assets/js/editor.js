@@ -150,7 +150,7 @@ async function loadMap() {
     C.render();
     changed = true;
   }
-  C.autoCenter();
+  C.autoFit();
   if (changed) markDirty();
   // Settings or Import an outline chosen from another view's More menu
   const want = new URLSearchParams(location.search).get('open');
@@ -689,60 +689,83 @@ function mindMapLayout(live) {
 
 // Bubble: cards are circles (canvas class nmm-bubble), the main one in the middle. Its branches sit
 // all the way around it, and every card's own branches fan outward, away from where it came from.
-// Each branch is given room for everything under it, so groups never run into each other.
+// Built from the outside in: each branch is first laid out on its own, then its parent packs its
+// branches side by side as tightly as their actual circles allow (seen from the parent, no two
+// branches share an angle, and nothing comes closer than GAP), so groups never run into each other
+// and nothing is spread further apart than it needs to be.
 var bubbleFresh = false; // set when the next Bubble layout should follow list order, not positions
 function bubbleLayout(live) {
   const sizes = measureSizes(live);
-  const GAP = 26, FAN = Math.PI * 1.1;
+  const GAP = 26, FAN = Math.PI * 1.1, TOP = -Math.PI / 2;
   function kids(n) { return live.filter(function(c) { return c.parent === n.id; }); }
   function r(n) { return Math.max(sizes[n.id].w, sizes[n.id].h) / 2; }
   function centre(n) { return { x: n.x + sizes[n.id].w / 2, y: n.y + sizes[n.id].h / 2 }; }
   function wrapAngle(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a <= -Math.PI) a += 2 * Math.PI; return a; }
-  // R = how far a card's whole branch reaches from its centre; ring = how far out its children sit
-  // A long list of end cards sits in two staggered rows (every other card a step further out),
-  // so it packs into about half the angle
-  const R = {}, ring = {}, step = {};
-  function staggered(ch) { return ch.length > 6 && ch.every(function(c) { return !kids(c).length; }); }
-  function width(c, rho, half) { return 2 * Math.asin(Math.min(1, (R[c.id] + GAP / 2) / rho)) * (half ? 0.55 : 1); }
-  function measure(n, fan) {
-    const ch = kids(n);
-    ch.forEach(function(c) { measure(c, FAN); });
-    if (!ch.length) { R[n.id] = r(n); return; }
-    const half = staggered(ch), far = Math.max.apply(null, ch.map(r));
-    let rho = r(n) + GAP + far;
-    function need(rho) { return ch.reduce(function(s, c) { return s + width(c, rho, half); }, 0); }
-    while (need(rho) > fan) rho += 8;
-    ring[n.id] = rho;
-    step[n.id] = half ? 2 * far + GAP / 2 : 0;
-    R[n.id] = Math.max(r(n), rho + step[n.id] + Math.max.apply(null, ch.map(function(c) { return R[c.id]; })));
-  }
-  // Children keep their current order, read clockwise: around the main card starting from the top,
-  // elsewhere from one side of the fan to the other
-  // Coming from another layout (or a map the AI just wrote), positions mean nothing here: keep the list order
+
+  // Order of each card's children, read clockwise from where they are now: around the main card
+  // from the top, elsewhere from one side of the fan to the other. Coming from another layout (or a
+  // map the AI just wrote), positions mean nothing here, so the list order is kept.
   const byList = bubbleFresh; bubbleFresh = false;
-  function ordered(n, dir, full) {
-    const p = centre(n);
-    if (byList) return kids(n);
-    return kids(n).map(function(c) {
+  const order = {};
+  function sortKids(n, dir, full) {
+    const p = centre(n), ch = kids(n);
+    order[n.id] = byList ? ch : ch.map(function(c) {
       const q = centre(c), d = wrapAngle(Math.atan2(q.y - p.y, q.x - p.x) - dir);
       return { c: c, a: full && d < 0 ? d + 2 * Math.PI : d };
-    })
-      .sort(function(a, b) { return a.a - b.a; }).map(function(x) { return x.c; });
+    }).sort(function(a, b) { return a.a - b.a; }).map(function(x) { return x.c; });
+    order[n.id].forEach(function(c) { const q = centre(c); sortKids(c, Math.atan2(q.y - p.y, q.x - p.x), false); });
   }
-  function place(n, cx, cy, dir, fan) {
-    const full = fan >= 2 * Math.PI - 0.01, ch = ordered(n, dir, full);
-    n.x = Math.round(cx - sizes[n.id].w / 2); n.y = Math.round(cy - sizes[n.id].h / 2);
-    if (!ch.length) return;
-    const rho = ring[n.id], half = step[n.id] > 0;
-    const widths = ch.map(function(c) { return width(c, rho, half); });
-    const total = widths.reduce(function(s, w) { return s + w; }, 0);
+
+  // build(n) lays n's branch out around n, facing +x, and returns its circles ({x, y, r}) relative to n.
+  // rel[c.id] = where child c sits from its parent: angle off the parent's facing, and distance.
+  // A long list of end cards sits in two staggered rows (every other card a step further out),
+  // so it packs into about half the angle.
+  const rel = {};
+  function build(n, fan) {
+    const ch = order[n.id], rn = r(n);
+    if (!ch.length) return [{ x: 0, y: 0, r: rn }];
+    const sub = ch.map(function(c) { return build(c, FAN); });
+    const far = Math.max.apply(null, ch.map(r));
+    const half = ch.length > 6 && ch.every(function(c) { return !order[c.id].length; });
+    const step = half ? 2 * far + GAP / 2 : 0;
+    function dist(i, rho) { return rho + (half && i % 2 ? step : 0); }
+    // The angle each branch takes up seen from n, with its children at distance rho; null if too close
+    function spans(rho) {
+      const out = [];
+      for (let i = 0; i < ch.length; i++) {
+        const d0 = dist(i, rho);
+        let lo = Infinity, hi = -Infinity;
+        for (let j = 0; j < sub[i].length; j++) {
+          const q = sub[i][j], px = d0 + q.x, py = q.y, d = Math.hypot(px, py);
+          if (d < rn + q.r + GAP) return null;
+          const a = Math.atan2(py, px), w = Math.asin(Math.min(1, (q.r + GAP / 2) / d)) * (half ? 0.55 : 1);
+          lo = Math.min(lo, a - w); hi = Math.max(hi, a + w);
+        }
+        out.push({ lo: lo, hi: hi });
+      }
+      return out;
+    }
+    function total(sp) { return sp.reduce(function(s, x) { return s + x.hi - x.lo; }, 0); }
+    let rho = rn + far + GAP, sp = spans(rho);
+    while (!sp || total(sp) > fan) { rho += 4; sp = spans(rho); }
     // All the way round the main card, clockwise from the top; a gentle spread elsewhere
-    const k = full ? fan / total : Math.min(fan / total, 1.25);
-    let a = full ? dir : dir - total * k / 2;
+    const full = fan >= 2 * Math.PI - 0.01, spare = fan - total(sp);
+    const extra = full ? spare : Math.min(spare, total(sp) * 0.25), each = extra / ch.length;
+    let a = full ? 0 : -(total(sp) + extra) / 2;
+    const out = [{ x: 0, y: 0, r: rn }];
     ch.forEach(function(c, i) {
-      const mid = a + widths[i] * k / 2, d = rho + (i % 2 ? step[n.id] : 0);
-      place(c, cx + d * Math.cos(mid), cy + d * Math.sin(mid), mid, FAN);
-      a += widths[i] * k;
+      const theta = a - sp[i].lo + each / 2, d0 = dist(i, rho), cos = Math.cos(theta), sin = Math.sin(theta);
+      rel[c.id] = { a: theta, d: d0 };
+      sub[i].forEach(function(q) { out.push({ x: cos * (d0 + q.x) - sin * q.y, y: sin * (d0 + q.x) + cos * q.y, r: q.r }); });
+      a += sp[i].hi - sp[i].lo + each;
+    });
+    return out;
+  }
+  function place(n, cx, cy, dir) {
+    n.x = Math.round(cx - sizes[n.id].w / 2); n.y = Math.round(cy - sizes[n.id].h / 2);
+    order[n.id].forEach(function(c) {
+      const a = dir + rel[c.id].a, d = rel[c.id].d;
+      place(c, cx + d * Math.cos(a), cy + d * Math.sin(a), a);
     });
   }
   function islandNodes(root) { return live.filter(function(n) { return n === root || C.isDescendant(n.id, root.id); }); }
@@ -754,9 +777,10 @@ function bubbleLayout(live) {
   }
   // Branches go clockwise from the top; the main card stays where it is
   function layoutIsland(root) {
-    measure(root, 2 * Math.PI);
+    sortKids(root, TOP, true);
+    build(root, 2 * Math.PI);
     const c = centre(root);
-    place(root, c.x, c.y, -Math.PI / 2, 2 * Math.PI);
+    place(root, c.x, c.y, TOP);
   }
   const roots = live.filter(isRoot);
   if (!roots.length) return;
@@ -850,7 +874,7 @@ window.nmmHarmony = function() {
   pushUndo();
   LAYOUT_STYLES[style](live);
   keepOnCanvas();
-  markDirty(); C.render(); C.autoCenter();
+  markDirty(); C.render(); C.autoFit();
 };
 // The canvas can't scroll to negative positions
 function keepOnCanvas() {
@@ -1195,7 +1219,7 @@ function replaceCards(live) {
   bubbleFresh = true; // new cards from the AI: keep its order
   if (live.length) (layoutStyle() === 'tol' && !hasSefirot() ? tidyLayout : LAYOUT_STYLES[layoutStyle()])(live);
   keepOnCanvas();
-  C.render(); C.autoCenter();
+  C.render(); C.autoFit();
   markDirty();
 }
 function restoreBefore(b) {

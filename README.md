@@ -2,7 +2,7 @@
 
 A visual mind mapping plugin for WordPress, built for Navigator Leadership Group.
 
-**Version:** 1.17.0  
+**Version:** 1.17.1  
 **Requires:** WordPress 5.8+, PHP 7.4+  
 **Author:** Liquid Media / Navigator Leadership Group
 

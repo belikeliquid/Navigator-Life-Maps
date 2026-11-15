@@ -273,6 +273,14 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.17.1 — Tighter Bubble maps, maps open to fit, room to scroll <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        Bubble spacing: each branch was given a whole circle of room around it, though its cards only grow outward, so big branches pushed everything far apart. Branches are now packed as closely as their actual circles allow, never closer than the gap between cards. A 33 card map went from about 2660 by 1830 pixels to 1030 by 910, with no overlaps.<br>
+                        Maps now open zoomed to show the whole map when it fits at 50% or more (never above 100%), and do the same after Harmony, a layout change or an AI rewrite. The Center button still only centres.<br>
+                        There is now half a screen of room around the map on every side, so a map near the edge can be dragged and centred properly (before, the left side stopped at the edge and Center could not centre).
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.17.0 — Bubble layout and Outline <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         New layout: Bubble, in the layout menu next to Harmony and in the new map creator. Every card is a circle showing only its title, smaller at each level (navy for the main card and its branches, white, then tan). The main card sits in the middle with its branches all the way around it, clockwise from the top; each card's own cards fan outward, and more than 6 end cards sit in two staggered rows. Each branch gets room for everything under it, so nothing overlaps. Notes, dates and stages show in the hover card; Edit, + Child and Delete sit under the circle on hover. Lines run straight from centre to centre. Shared maps show it too.<br>

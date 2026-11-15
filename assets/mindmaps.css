@@ -424,7 +424,7 @@ body:has(.nmm-app) .entry-content > *:first-child {
   width: 3200px;
   height: 2800px;
 }
-.nmm-canvas-sizer { position: relative; overflow: hidden; }
+.nmm-canvas-sizer { position: relative; overflow: hidden; box-sizing: content-box; }
 .nmm-canvas { transform-origin: 0 0; }
 /* Pinch zooms the map, not the page */
 .nmm-canvas-wrap { touch-action: pan-x pan-y; cursor: grab; }

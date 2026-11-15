@@ -49,7 +49,7 @@ async function loadMap() {
     document.title = (map.title || 'Map') + ' · Life Maps';
     await C.loadLinkedIslands(map.islands, nodes);
     C.render();
-    C.autoCenter();
+    C.autoFit();
     outline.render();
   } catch(e) { showError(); }
 }
