@@ -44,7 +44,7 @@
         : '<span class="nmm-doc-toggle-space"></span>';
       const edit = ro ? '' : '<button type="button" class="nmm-doc-edit" data-edit="' + esc(n.id) + '" title="Notes, date and stage">Edit</button>';
       const row = '<div class="nmm-doc-line" data-id="' + esc(n.id) + '">' + toggle + '<span class="nmm-doc-dot' + (ch.length && n.collapsed ? ' has-hidden' : '') + '"></span>' +
-        '<span class="nmm-doc-text"' + (ro ? '' : ' contenteditable="plaintext-only" spellcheck="true"') + ' data-text="' + esc(n.id) + '">' + esc(n.title || '') + '</span>' + edit + '</div>';
+        '<span class="nmm-doc-text"' + (ro ? '' : ' contenteditable="plaintext-only" spellcheck="true"') + ' data-text="' + esc(n.id) + '">' + esc(n.title || '') + '</span>' + NMMCore.linkChip(n.link) + edit + '</div>';
       const under = ch.length && !n.collapsed
         ? '<ul class="nmm-doc-list">' + ch.map(function(c) { return '<li>' + lineHtml(c, depth + 1) + '</li>'; }).join('') + '</ul>' : '';
       return row + under;

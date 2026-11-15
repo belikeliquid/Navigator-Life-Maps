@@ -103,7 +103,7 @@ const attentionNotice = NMMCore.notice({
 });
 NMMCore.hoverCard({ root: root, selector: '.nmm-kb-card', info: function(el) {
   const n = findNode(+el.dataset.mapId, el.dataset.nodeId);
-  return n && { title: n.title, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot,
+  return n && { title: n.title, link: n.link, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot,
     where: [selectedMapIds.length > 1 ? n._map_title : '', pathOf(n)].filter(Boolean).join(' · ') };
 } });
 
@@ -136,9 +136,10 @@ function makeCard(n) {
     '<div class="nmm-kb-card-header"><span class="nmm-kb-card-title">' + esc(n.title) + '</span>' + badge + sefirot + '</div>' +
     ((n.subs && n.subs.length) ? '<div class="nmm-kb-subs">' + esc(n.subs.slice(0, 2).join(' · ')) + '</div>' : '') +
     (n.date ? '<div class="nmm-kb-date">📅 ' + esc(n.date) + '</div>' : '') +
-    (where ? '<div class="nmm-kb-map-label">' + esc(where) + '</div>' : '');
+    (where ? '<div class="nmm-kb-map-label">' + esc(where) + '</div>' : '') +
+    NMMCore.linkChip(n.link, n._map_id);
 
-  card.addEventListener('click', function() { openKbEdit(n); });
+  card.addEventListener('click', function(e) { if (!e.target.closest('[data-link]')) openKbEdit(n); });
   card.addEventListener('dragstart', function(e) { draggingCard = card; card.style.opacity = '0.5'; e.dataTransfer.effectAllowed = 'move'; });
   card.addEventListener('dragend', function() {
     card.style.opacity = '1'; draggingCard = null;

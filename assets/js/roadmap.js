@@ -504,7 +504,7 @@ $('nmm-rm-clear').addEventListener('click', function() {
 // ---------- hover card and next up ----------
 NMMCore.hoverCard({ root: root, selector: '.nmm-rm-bar, .nmm-rm-tcard', info: function(el) {
   const n = find(el.dataset.id);
-  return n && { title: n.title, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot, where: pathOf(n) };
+  return n && { title: n.title, link: n.link, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot, where: pathOf(n) };
 } });
 const nextUp = NMMCore.notice({
   root: root, key: 'roadmap_' + location.search,

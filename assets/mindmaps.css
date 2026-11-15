@@ -2455,3 +2455,108 @@ body:has(.nmm-app) .page-title:not(#footer-page *, #socket *) {
   .nmm-doc-text { font-size: 16px; }
   .nmm-doc-list .nmm-doc-list { padding-left: 18px; }
 }
+
+/* ============================================================
+   CARD LINKS (node.link; NMMCore.linkChip / hoverLink)
+   A chip on the card: icon + name. Teal mini-map = another map, gold compass = Navigator, globe = web.
+   In the Bubble layout it is a round icon just outside the circle, upper left (the date sits lower right).
+   ============================================================ */
+.nmm-app a.nmm-link {
+  display: inline-flex; align-items: center; gap: 5px; max-width: 100%; margin-top: 6px; padding: 2px 9px 2px 3px;
+  border: 1px solid var(--nmm-border); border-radius: 999px; background: var(--nmm-sand2);
+  font-family: var(--nmm-font); font-size: 11px; font-weight: 600; line-height: 1.3; color: var(--nmm-navy);
+  text-decoration: none; cursor: pointer; pointer-events: all; box-shadow: none;
+}
+.nmm-app a.nmm-link:hover { border-color: var(--nmm-teal); background: #ffffff; }
+.nmm-link i { flex: 0 0 18px; width: 18px; height: 18px; border-radius: 50%; background: var(--nmm-navy); display: flex; align-items: center; justify-content: center; }
+.nmm-link i svg { width: 10px; height: 10px; }
+.nmm-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nmm-link-map i { color: var(--nmm-teal); }
+.nmm-link-nav i { color: #C9A45C; }
+.nmm-link-web i { color: #ffffff; }
+/* Bubble: round icon outside the circle at about ten o'clock */
+.nmm-bubble .nmm-node a.nmm-link {
+  --nmm-lk: 28px;
+  position: absolute; margin: 0; padding: 0; gap: 0; width: var(--nmm-lk); height: var(--nmm-lk); border: 2px solid #ffffff;
+  border-radius: 50%; background: var(--nmm-navy); transform: translate(-50%, -50%);
+  left: calc(50% - (var(--nmm-bub) / 2 + var(--nmm-lk) / 2 - 4px) * 0.66);
+  top: calc(50% - (var(--nmm-bub) / 2 + var(--nmm-lk) / 2 - 4px) * 0.75);
+  box-shadow: 0 2px 6px rgba(1,28,47,0.28); transition: transform 0.15s; z-index: 2;
+}
+.nmm-bubble .nmm-node a.nmm-link:hover { transform: translate(-50%, -50%) scale(1.12); background: var(--nmm-navy); }
+.nmm-bubble .nmm-node a.nmm-link span { display: none; }
+.nmm-bubble .nmm-node a.nmm-link i { flex: none; width: auto; height: auto; background: none; }
+.nmm-bubble .nmm-node a.nmm-link i svg { width: 15px; height: 15px; }
+.nmm-print a.nmm-link { display: none !important; }
+
+/* Hover card: clickable while open (links in notes, and the card's link at the bottom) */
+.nmm-hovercard.open { pointer-events: auto; }
+.nmm-hovercard .nmm-hc-notes a { color: #2f6f8f; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.nmm-app a.nmm-hc-link {
+  display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--nmm-border);
+  color: var(--nmm-navy); text-decoration: none;
+}
+.nmm-hc-link i { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; background: var(--nmm-navy); display: flex; align-items: center; justify-content: center; }
+.nmm-hc-link i svg { width: 16px; height: 16px; }
+.nmm-hc-link span { min-width: 0; }
+.nmm-hc-link small { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nmm-light); }
+.nmm-hc-link strong { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nmm-hc-link b { margin-left: auto; color: var(--nmm-teal); font-size: 13px; white-space: nowrap; }
+.nmm-app a.nmm-hc-link:hover b { text-decoration: underline; }
+.nmm-doc-line a.nmm-link { flex: 0 1 auto; margin: 3px 4px 0 0; align-self: flex-start; }
+
+/* Card link picker (Edit card window) */
+.nmm-lp-ic { flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50%; background: var(--nmm-navy); display: inline-flex; align-items: center; justify-content: center; }
+.nmm-lp-ic svg { width: 14px; height: 14px; }
+.nmm-app .nmm-lp-add {
+  display: block; width: 100%; text-align: left; padding: 9px 12px; border: 1.5px dashed var(--nmm-border); border-radius: 10px;
+  background: #ffffff; color: var(--nmm-mid); font: 600 13px var(--nmm-font); cursor: pointer; box-shadow: none;
+}
+.nmm-app .nmm-lp-add:hover { border-color: var(--nmm-teal); color: var(--nmm-navy); }
+.nmm-lp-chosen:empty { display: none; }
+.nmm-lp-chosen { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: var(--nmm-sand2); margin-bottom: 8px; }
+.nmm-lp-what { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; text-align: left; }
+.nmm-lp-what b { font: 600 14px var(--nmm-font); color: var(--nmm-navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nmm-lp-what small { font: 12px var(--nmm-font); color: var(--nmm-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nmm-app .nmm-lp-chosen button { border: 0; background: none; padding: 4px 6px; font: 600 12px var(--nmm-font); color: var(--nmm-mid); text-decoration: underline; cursor: pointer; box-shadow: none; }
+.nmm-lp-picker { display: none; border: 1.5px solid var(--nmm-teal); border-radius: 12px; padding: 12px; background: #fbfdfd; }
+.nmm-lp-picker.open { display: block; }
+.nmm-lp-seg { display: flex; background: var(--nmm-sand); border-radius: 999px; padding: 3px; margin-bottom: 10px; }
+.nmm-app .nmm-lp-seg button {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 8px; border: 0; border-radius: 999px;
+  background: none; font: 600 13px var(--nmm-font); color: var(--nmm-navy2); cursor: pointer; box-shadow: none;
+}
+.nmm-lp-seg .nmm-lp-ic { flex-basis: 20px; width: 20px; height: 20px; }
+.nmm-lp-seg .nmm-lp-ic svg { width: 11px; height: 11px; }
+.nmm-app .nmm-lp-seg button.on { background: #ffffff; box-shadow: 0 1px 4px rgba(1,28,47,0.12); }
+.nmm-lp-pane { display: none; }
+.nmm-lp-pane.on { display: block; }
+.nmm-lp-list { margin-top: 8px; max-height: 220px; overflow: auto; border: 1px solid var(--nmm-border); border-radius: 10px; background: #ffffff; }
+.nmm-app .nmm-lp-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; border: 0; border-bottom: 1px solid var(--nmm-border);
+  background: #ffffff; cursor: pointer; text-align: left; box-shadow: none; border-radius: 0;
+}
+.nmm-app .nmm-lp-item:last-child { border-bottom: 0; }
+.nmm-app .nmm-lp-item:hover { background: var(--nmm-sand2); }
+.nmm-app .nmm-lp-item.sel { background: #e9f8f8; }
+.nmm-lp-check { margin-left: auto; color: var(--nmm-teal); font-weight: 700; visibility: hidden; }
+.nmm-lp-item.sel .nmm-lp-check { visibility: visible; }
+.nmm-lp-group { position: sticky; top: 0; padding: 8px 12px 4px; background: #ffffff; font: 700 11px var(--nmm-font); letter-spacing: 0.12em; text-transform: uppercase; color: #2f6f8f; }
+.nmm-lp-empty { padding: 12px; font: 13px var(--nmm-font); color: var(--nmm-light); }
+.nmm-lp-hint { margin-top: 8px; font: 12px var(--nmm-font); color: var(--nmm-light); }
+.nmm-app .nmm-lp-new {
+  display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 10px 12px; border: 1.5px dashed var(--nmm-teal);
+  border-radius: 10px; background: #ffffff; cursor: pointer; text-align: left; box-shadow: none;
+}
+.nmm-lp-new span { flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50%; background: var(--nmm-teal); color: #ffffff; display: flex; align-items: center; justify-content: center; font: 700 18px var(--nmm-font); }
+.nmm-lp-new b { display: flex; flex-direction: column; font: 600 14px var(--nmm-font); color: var(--nmm-navy); }
+.nmm-lp-new small { font: 400 12px var(--nmm-font); color: var(--nmm-light); }
+.nmm-lp-new:disabled { opacity: 0.6; cursor: wait; }
+.nmm-app .nmm-btn-nav.nmm-btn-back { border-color: #C9A45C; color: #C9A45C; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Read-only view: one rounded Layout button (no Harmony beside it) */
+.nmm-view-mode .nmm-editor-toolbar .nmm-btn-layout { border-radius: 999px; border-left: 0 !important; padding: 4px 12px 4px 9px; font-size: 13px; gap: 6px; }
+.nmm-lp-ic.nmm-link-map { color: var(--nmm-teal); }
+.nmm-lp-ic.nmm-link-nav { color: #C9A45C; }
+.nmm-lp-ic.nmm-link-web { color: #ffffff; }
+.nmm-app .nmm-lp-seg button { white-space: nowrap; font-size: 12.5px; padding: 6px 6px; }

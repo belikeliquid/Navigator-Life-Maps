@@ -14,6 +14,8 @@ $share_key = NMM_Shortcodes::share_key();
     <span class="nmm-sep"></span>
     <?php NMM_Shortcodes::view_tabs( 'map', $map_id ? [ $map_id ] : [], true ); ?>
     <span class="nmm-sep"></span>
+    <!-- Layout: arrange the map another way on this screen only (nothing is saved) -->
+    <button class="nmm-btn nmm-btn-harmony nmm-btn-layout nmm-btn-keep" id="nmm-layout-btn" type="button" onclick="nmmToggleLayoutMenu(event)" aria-haspopup="true" title="See this map in another layout (only on your screen)"><span id="nmm-layout-icon"></span> Layout ▾</button>
     <button class="nmm-btn nmm-wide-only" type="button" onclick="nmmCenter()" title="Re-center map">⊙ Center</button>
     <button class="nmm-btn nmm-wide-only" type="button" onclick="nmmExpandAll()">Expand all</button>
     <button class="nmm-btn nmm-wide-only" type="button" onclick="nmmCollapseAll()">Collapse</button>
@@ -25,6 +27,7 @@ $share_key = NMM_Shortcodes::share_key();
     <?php endif; ?>
   </div>
   <?php NMM_Shortcodes::more_menu( 'map' ); ?>
+  <?php $nmm_layout_ai = false; include __DIR__ . '/layout-menu.php'; ?>
 
   <!-- Phones: List / Map switch and the list view (assets/js/outline.js) -->
   <div class="nmm-view-switch" role="group" aria-label="Show the map as">
@@ -41,5 +44,7 @@ $share_key = NMM_Shortcodes::share_key();
       <div id="nmm-motif" class="nmm-motif"></div>
     </div>
   </div>
+  <!-- Outline (layout menu → Outline; assets/js/doc.js, read only here) -->
+  <div id="nmm-doc" class="nmm-doc"></div>
   <div id="nmm-export-overlay" class="nmm-export-overlay">Generating PNG...</div>
 </div>

@@ -242,6 +242,70 @@
       .sort(function(a, b) { return a.days - b.days; });
   }
 
+  // ---- Card links ----
+  // node.link = { type: 'map' | 'nav' | 'web', id, url, title, kind, locked } (resolved by the server per viewer).
+  // A map opens in the editor (it sends people who can only read it to the read-only view), with
+  // ?from= so that map offers a way back. Navigator and web links open in a new tab.
+  const LINK_ICONS = {
+    map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="4.5" cy="5" r="2.4"/><circle cx="19.5" cy="5" r="2.4"/><circle cx="12" cy="20.5" r="2.4"/><path d="M9.3 9.4 6.3 6.7M14.7 9.4l3-2.7M12 16v2"/></svg>',
+    nav: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 3.5l2.2 8.5L12 20.5 9.8 12z" fill="currentColor" stroke="none"/><path d="M3.5 12l8.5-2.2L20.5 12 12 14.2z" fill="currentColor" stroke="none" opacity=".55"/></svg>',
+    web: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c3 3.2 3 15.8 0 19M12 2.5c-3 3.2-3 15.8 0 19"/></svg>'
+  };
+  const LINK_KIND = { map: 'Linked map', nav: 'On Navigator', web: 'Web page' };
+  function safeUrl(u) { return /^https?:\/\//i.test(String(u || '')) ? String(u) : ''; }
+  // Where a link goes, or '' when it can't be opened here
+  function linkHref(link, fromId) {
+    if (!link || link.locked || !LINK_ICONS[link.type]) return '';
+    if (link.type === 'map') {
+      if (!link.id || !window.NMM || !NMM.isLoggedIn) return '';
+      const from = fromId || new URLSearchParams(location.search).get('map_id');
+      return NMM.editorUrl + '?map_id=' + encodeURIComponent(link.id) + (from && String(from) !== String(link.id) ? '&from=' + encodeURIComponent(from) : '');
+    }
+    return safeUrl(link.url);
+  }
+  function linkTitle(link) {
+    if (!link) return '';
+    if (link.title) return link.title;
+    if (link.type === 'web') { try { return new URL(link.url).hostname.replace(/^www\./, ''); } catch (e) { return 'Web page'; } }
+    return '';
+  }
+  // The small chip shown on a card (or a round icon in the Bubble layout): an <a>, so it works anywhere
+  function linkChip(link, fromId) {
+    const href = linkHref(link, fromId);
+    if (!href) return '';
+    const t = linkTitle(link), ext = link.type !== 'map';
+    return '<a class="nmm-link nmm-link-' + link.type + '" href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener"' : '') +
+      ' title="' + esc((link.type === 'map' ? 'Open the map ' : 'Open ') + t + (ext ? ' (new tab)' : '')) + '" data-link="1">' +
+      '<i>' + LINK_ICONS[link.type] + '</i><span>' + esc(t) + '</span></a>';
+  }
+  function hoverLink(link) {
+    const href = linkHref(link);
+    if (!href) return '';
+    const ext = link.type !== 'map';
+    return '<a class="nmm-hc-link nmm-link-' + link.type + '" href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener"' : '') + '>' +
+      '<i>' + LINK_ICONS[link.type] + '</i><span><small>' + esc(link.kind && link.type === 'nav' ? link.kind : LINK_KIND[link.type]) + '</small>' +
+      '<strong>' + esc(linkTitle(link)) + '</strong></span><b>Open →</b></a>';
+  }
+  // Notes text with web addresses made clickable (escaped first)
+  function linkify(text) {
+    return esc(text).replace(/\b(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"]|www\.[^\s<]+[^\s<.,;:!?)\]'"])/gi, function(u) {
+      const href = /^www\./i.test(u) ? 'https://' + u : u;
+      return '<a href="' + href + '" target="_blank" rel="noopener">' + u + '</a>';
+    });
+  }
+
+  // A map opened from a card link (?from=ID): the toolbar's Maps button becomes "← Back to <that map>"
+  function fromParam() { const f = new URLSearchParams(location.search).get('from'); return f && /^\d+$/.test(f) ? f : ''; }
+  async function backLink(root) {
+    const from = fromParam(), btn = root && root.querySelector('.nmm-btn-nav');
+    if (!from || !btn || !window.NMM || !NMM.isLoggedIn) return;
+    const m = await api('GET', 'maps/' + from);
+    if (!m || !m.id) return;
+    btn.href = NMM.editorUrl + '?map_id=' + m.id;
+    btn.textContent = '← Back to ' + (m.title || 'the map');
+    btn.classList.add('nmm-btn-back');
+  }
+
   // ---- Hover card: the whole card in an easy-to-read window (mouse and trackpad only) ----
   // opts: root (where it lives), selector (the cards), info(el) -> {title, subs, date, tag, sefirot, where} or null
   const CAN_HOVER = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -260,9 +324,10 @@
         '<div class="nmm-hc-title">' + esc(n.title || 'Untitled') + '</div>' +
         ((n.date || tc) ? '<div class="nmm-hc-meta">' + (n.date ? '<span class="nmm-hc-date">📅 ' + esc(longDate(n.date)) + (n.end ? ' → ' + esc(longDate(n.end)) : '') + '</span>' : '') +
           (tc ? '<span class="nmm-hc-tag" style="background:' + tc.bg + ';color:' + tc.text + '">' + tc.label + '</span>' : '') + '</div>' : '') +
-        (subs.length ? '<ul class="nmm-hc-notes">' + subs.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
+        (subs.length ? '<ul class="nmm-hc-notes">' + subs.map(function(s) { return '<li>' + linkify(s) + '</li>'; }).join('') + '</ul>' : '') +
         (n.sefirot && SEFIROT_LABELS[n.sefirot] ? '<div class="nmm-hc-where">✦ ' + esc(SEFIROT_LABELS[n.sefirot]) + '</div>' : '') +
-        (n.where ? '<div class="nmm-hc-where">' + esc(n.where) + '</div>' : '');
+        (n.where ? '<div class="nmm-hc-where">' + esc(n.where) + '</div>' : '') +
+        hoverLink(n.link);
       box.classList.add('open');
       const r = el.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
       const left = r.right + 12 + w < innerWidth ? r.right + 12 : Math.max(8, r.left - 12 - w);
@@ -276,11 +341,16 @@
       hide();
       timer = setTimeout(function() { show(el); }, opts.delay || 450);
     });
+    // Leaving the card closes it after a moment, so the pointer can move onto it to click a link
     opts.root.addEventListener('mouseout', function(e) {
       const el = e.target.closest(opts.selector);
-      if (el && !el.contains(e.relatedTarget)) hide();
+      if (el && !el.contains(e.relatedTarget) && !box.contains(e.relatedTarget)) { clearTimeout(timer); timer = setTimeout(hide, 220); }
     });
-    ['mousedown', 'wheel', 'keydown'].forEach(function(ev) { document.addEventListener(ev, hide, true); });
+    box.addEventListener('mouseenter', function() { clearTimeout(timer); });
+    box.addEventListener('mouseleave', hide);
+    ['mousedown', 'wheel', 'keydown'].forEach(function(ev) {
+      document.addEventListener(ev, function(e) { if (!box.contains(e.target)) hide(); }, true);
+    });
     window.addEventListener('scroll', hide, true);
   }
 
@@ -432,6 +502,7 @@
     loadHtml2Canvas: loadHtml2Canvas, mapFilter: mapFilter,
     TAG_COLORS: TAG_COLORS, SEFIROT_LABELS: SEFIROT_LABELS, isTask: isTask,
     setViewTabs: setViewTabs, dropdown: dropdown,
-    copyMap: copyMap, dayOf: dayOf, dayAfter: dayAfter, today: today, longDate: longDate, attention: attention, hoverCard: hoverCard, notice: notice
+    copyMap: copyMap, dayOf: dayOf, dayAfter: dayAfter, today: today, longDate: longDate, attention: attention, hoverCard: hoverCard, notice: notice,
+    LINK_ICONS: LINK_ICONS, linkHref: linkHref, linkTitle: linkTitle, linkChip: linkChip, linkify: linkify, safeUrl: safeUrl, backLink: backLink, fromParam: fromParam
   };
 })();

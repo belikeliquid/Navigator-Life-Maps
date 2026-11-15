@@ -32,6 +32,10 @@ class NMM_REST_API {
         register_rest_route( $namespace, '/maps/(?P<id>\d+)/people/remove', [
             'methods' => 'POST', 'callback' => [ __CLASS__, 'remove_person' ], 'permission_callback' => [ __CLASS__, 'auth' ],
         ]);
+        // Card links: search Navigator's courses, consults, communities and tools to link a card to
+        register_rest_route( $namespace, '/links/search', [
+            'methods' => 'GET', 'callback' => [ __CLASS__, 'search_links' ], 'permission_callback' => [ __CLASS__, 'auth' ],
+        ]);
         // Featured maps: an admin marks them; every member can read and copy them
         register_rest_route( $namespace, '/featured', [
             'methods' => 'GET', 'callback' => [ __CLASS__, 'get_featured' ], 'permission_callback' => '__return_true',
@@ -178,7 +182,7 @@ class NMM_REST_API {
         if ( is_user_logged_in() ) {
             wp_update_post([ 'ID' => $id, 'post_author' => get_current_user_id() ]);
         }
-        if ( isset( $params['nodes'] ) )    update_post_meta( $id, 'nmm_nodes', wp_slash( json_encode( $params['nodes'] ) ) );
+        if ( isset( $params['nodes'] ) )    update_post_meta( $id, 'nmm_nodes', wp_slash( json_encode( self::clean_links( $params['nodes'] ) ) ) );
         if ( isset( $params['settings'] ) ) update_post_meta( $id, 'nmm_settings', wp_slash( json_encode( $params['settings'] ) ) );
         if ( isset( $params['category'] ) ) update_post_meta( $id, 'nmm_category', sanitize_text_field( $params['category'] ) );
         if ( isset( $params['color'] ) )    update_post_meta( $id, 'nmm_color', sanitize_hex_color( $params['color'] ) );
@@ -200,7 +204,7 @@ class NMM_REST_API {
         update_post_meta( $post->ID, 'nmm_rev', $rev + 1 );
         update_post_meta( $post->ID, 'nmm_last_editor', get_current_user_id() );
         if ( isset( $params['title'] ) )    wp_update_post([ 'ID' => $post->ID, 'post_title' => sanitize_text_field( $params['title'] ) ]);
-        if ( isset( $params['nodes'] ) )    update_post_meta( $post->ID, 'nmm_nodes',    wp_slash( json_encode( $params['nodes'] ) ) );
+        if ( isset( $params['nodes'] ) )    update_post_meta( $post->ID, 'nmm_nodes',    wp_slash( json_encode( self::clean_links( $params['nodes'] ) ) ) );
         if ( isset( $params['settings'] ) ) update_post_meta( $post->ID, 'nmm_settings', wp_slash( json_encode( $params['settings'] ) ) );
         if ( isset( $params['category'] ) ) update_post_meta( $post->ID, 'nmm_category', sanitize_text_field( $params['category'] ) );
         if ( isset( $params['color'] ) )    update_post_meta( $post->ID, 'nmm_color',    sanitize_hex_color( $params['color'] ) );
@@ -1057,6 +1061,88 @@ Return ONLY a JSON array of cards with: id, title, subs, parent, date, end, tag,
         return $nodes;
     }
 
+    // ---- Card links ----
+    // A card can link to one place: node.link = { type: 'map' | 'nav' | 'web', id, title, url }.
+    //   map  another Life Map (id); opened in the editor, or the read-only view, if the viewer may open it
+    //   nav  a Navigator course, consult, community or tool (post id); url and title come from the post
+    //   web  any http(s) address (url), with an optional name (title)
+    // Saved: only those fields, cleaned. Sent out: resolved for the person asking (fresh titles and
+    // addresses; 'locked' when they can't open it, so the card shows no link).
+    const LINK_TYPES = [ 'nv_program' => 'Course', 'nv_consult' => 'Consult', 'nv_community' => 'Community', 'nv_tool' => 'Tool' ];
+
+    private static function clean_links( $nodes ) {
+        if ( ! is_array( $nodes ) ) return $nodes;
+        foreach ( $nodes as $i => $n ) {
+            if ( ! is_array( $n ) || ! array_key_exists( 'link', $n ) ) continue;
+            $l = is_array( $n['link'] ) ? $n['link'] : [];
+            $type  = $l['type'] ?? '';
+            $title = mb_substr( sanitize_text_field( (string) ( $l['title'] ?? '' ) ), 0, 120 );
+            $clean = null;
+            if ( ( $type === 'map' || $type === 'nav' ) && absint( $l['id'] ?? 0 ) ) {
+                $clean = [ 'type' => $type, 'id' => absint( $l['id'] ), 'title' => $title ];
+            } elseif ( $type === 'web' ) {
+                $url = esc_url_raw( trim( (string) ( $l['url'] ?? '' ) ), [ 'http', 'https' ] );
+                if ( $url ) $clean = [ 'type' => 'web', 'url' => mb_substr( $url, 0, 600 ), 'title' => $title ];
+            }
+            if ( $clean ) $nodes[ $i ]['link'] = $clean; else unset( $nodes[ $i ]['link'] );
+        }
+        return $nodes;
+    }
+
+    private static function resolve_links( $nodes ) {
+        if ( ! is_array( $nodes ) ) return $nodes;
+        foreach ( $nodes as $i => $n ) {
+            if ( ! is_array( $n ) || empty( $n['link'] ) || ! is_array( $n['link'] ) ) continue;
+            $l = $n['link'];
+            unset( $l['locked'], $l['kind'] );
+            if ( $l['type'] === 'map' ) {
+                $p = get_post( (int) ( $l['id'] ?? 0 ) );
+                if ( $p && $p->post_type === 'nmm_mindmap' && $p->post_status === 'publish' && self::can_read( $p ) ) {
+                    $l['title'] = $p->post_title; $l['kind'] = 'Life Map';
+                } else {
+                    // Kept as saved (so a save by someone who can't open it doesn't drop it), but not shown
+                    $l = [ 'type' => 'map', 'id' => (int) ( $l['id'] ?? 0 ), 'title' => (string) ( $l['title'] ?? '' ), 'locked' => true ];
+                }
+            } elseif ( $l['type'] === 'nav' ) {
+                $p = get_post( (int) ( $l['id'] ?? 0 ) );
+                if ( $p && isset( self::LINK_TYPES[ $p->post_type ] ) && $p->post_status === 'publish' ) {
+                    $l['title'] = $p->post_title; $l['url'] = get_permalink( $p ); $l['kind'] = self::link_kind( $p );
+                } else {
+                    $l = [ 'type' => 'nav', 'id' => (int) ( $l['id'] ?? 0 ), 'title' => (string) ( $l['title'] ?? '' ), 'locked' => true ];
+                }
+            }
+            $nodes[ $i ]['link'] = $l;
+        }
+        return $nodes;
+    }
+
+    // "Course", "Consult", "Community", or for a tool its section ("Somatic Tools", "Pattern Recognition")
+    private static function link_kind( $p ) {
+        if ( $p->post_type === 'nv_tool' && $p->post_parent ) {
+            $top = get_post( $p->post_parent );
+            while ( $top && $top->post_parent ) $top = get_post( $top->post_parent );
+            if ( $top ) return $top->post_title;
+        }
+        return self::LINK_TYPES[ $p->post_type ] ?? '';
+    }
+
+    // Navigator search for the card link picker. Empty search: a few of each kind.
+    public static function search_links( $request ) {
+        $q = mb_substr( sanitize_text_field( (string) $request->get_param( 'q' ) ), 0, 80 );
+        $out = [];
+        $groups = [ 'nv_program' => 'Courses', 'nv_consult' => 'Consults', 'nv_community' => 'Communities', 'nv_tool' => 'Tools' ];
+        foreach ( self::LINK_TYPES as $type => $label ) {
+            $args = [ 'post_type' => $type, 'post_status' => 'publish', 'posts_per_page' => $q !== '' ? 12 : 6,
+                      'orderby' => $q !== '' ? 'relevance' : 'menu_order title', 'order' => 'ASC', 'no_found_rows' => true ];
+            if ( $q !== '' ) $args['s'] = $q;
+            foreach ( get_posts( $args ) as $p ) {
+                $out[] = [ 'id' => $p->ID, 'title' => $p->post_title, 'url' => get_permalink( $p ),
+                           'group' => $groups[ $type ], 'kind' => self::link_kind( $p ) ];
+            }
+        }
+        return rest_ensure_response( $out );
+    }
+
     private static function format_map( $post, $include_data = false ) {
         $map = [
             'id'        => $post->ID,
@@ -1081,7 +1167,7 @@ Return ONLY a JSON array of cards with: id, title, subs, parent, date, end, tag,
             $map['shared_by'] = $owner ? $owner->display_name : 'Another member';
         }
         if ( $include_data ) {
-            $map['nodes']    = json_decode( get_post_meta( $post->ID, 'nmm_nodes',    true ) ?: '[]', true );
+            $map['nodes']    = self::resolve_links( json_decode( get_post_meta( $post->ID, 'nmm_nodes',    true ) ?: '[]', true ) );
             // Cast so empty settings go out as {} rather than [], which the editor can't add keys to
             $map['settings'] = (object) json_decode( get_post_meta( $post->ID, 'nmm_settings', true ) ?: '{}', true );
             $map['islands']  = json_decode( get_post_meta( $post->ID, 'nmm_islands',  true ) ?: '[]', true );

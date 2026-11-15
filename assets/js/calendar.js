@@ -224,7 +224,7 @@ grid.addEventListener('drop', async function(e) {
 
 NMMCore.hoverCard({ root: root, selector: '.nmm-cal-card', info: function(el) {
   const n = findCard(el);
-  return n && { title: n.title, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot, where: selectedMapIds.length > 1 ? n._map_title : '' };
+  return n && { title: n.title, link: n.link, subs: n.subs, date: n.date, end: n.end, tag: n.tag, sefirot: n.sefirot, where: selectedMapIds.length > 1 ? n._map_title : '' };
 } });
 
 // ---------- a day with more cards than fit ----------

@@ -74,7 +74,7 @@
         '<button class="nmm-na-btn" data-action="add">+ Child</button>' +
         '<button class="nmm-na-btn nmm-na-red" data-action="del">Delete</button></div>' : '';
       return '<div class="nmm-node-title-row"><span class="nmm-node-title">' + esc(n.title) + '</span>' + expander + '</div>' +
-        subs + date + linked + actions + tag + sef + bubbleDate(n.date);
+        subs + date + linked + actions + tag + sef + bubbleDate(n.date) + NMMCore.linkChip(n.link);
     }
 
     function render() {

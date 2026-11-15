@@ -35,34 +35,7 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
   </div>
   <?php NMM_Shortcodes::more_menu( 'map' ); ?>
 
-  <!-- Layout style menu (opened from the ▾ next to Harmony; outside the toolbar so it isn't clipped) -->
-  <div id="nmm-layout-menu" class="nmm-layout-menu" role="menu">
-    <button type="button" data-layout="flow" role="menuitem">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="8.5" y="2.5" width="7" height="5" rx="1.2" fill="currentColor"/><path d="M12 7.5v4M4.5 11.5h15M4.5 11.5v4M12 11.5v4M19.5 11.5v4"/><rect x="1.5" y="15.5" width="6" height="5" rx="1.2" fill="currentColor"/><rect x="9" y="15.5" width="6" height="5" rx="1.2" fill="currentColor"/><rect x="16.5" y="15.5" width="6" height="5" rx="1.2" fill="currentColor"/></svg>
-      <span><strong>Flow Chart</strong><small>Top to bottom</small></span>
-    </button>
-    <button type="button" data-layout="mind" role="menuitem">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><rect x="8" y="9.5" width="8" height="5" rx="2"/><rect x="1" y="2" width="5" height="4" rx="1.2"/><rect x="18" y="2" width="5" height="4" rx="1.2"/><rect x="1" y="10" width="5" height="4" rx="1.2"/><rect x="18" y="10" width="5" height="4" rx="1.2"/><rect x="1" y="18" width="5" height="4" rx="1.2"/><rect x="18" y="18" width="5" height="4" rx="1.2"/><path d="M8 12H6M16 12h2M9.5 9.5V4H6M14.5 9.5V4H18M9.5 14.5V20H6M14.5 14.5V20H18"/></svg>
-      <span><strong>Mind Map</strong><small>From the centre out</small></span>
-    </button>
-    <button type="button" data-layout="bubble" role="menuitem">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.6 9.8L6.4 6.4M14.6 10l3-3.4M9.4 14.2l-3 3.2M14.4 14.4l3 2.8M7 12H4"/><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="4.6" cy="4.6" r="2.4"/><circle cx="19.2" cy="5" r="2.4"/><circle cx="4.8" cy="19.2" r="2.4"/><circle cx="19.2" cy="19" r="2.4"/><circle cx="2.6" cy="12" r="1.4"/></svg>
-      <span><strong>Bubble</strong><small>Circles around the main idea</small></span>
-    </button>
-    <button type="button" data-layout="tol" role="menuitem">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 2.5v19M6 6.5h12M6 11.5h12M6 16.5h12M6 6.5v10M18 6.5v10M12 2.5L6 6.5M12 2.5l6 4M6 6.5l6 3.5 6-3.5M6 11.5l6 3 6-3M6 16.5l6 2 6-2"/><g fill="currentColor" stroke="none"><circle cx="12" cy="2.5" r="1.8"/><circle cx="6" cy="6.5" r="1.8"/><circle cx="18" cy="6.5" r="1.8"/><circle cx="12" cy="9.5" r="1.8"/><circle cx="6" cy="11.5" r="1.8"/><circle cx="18" cy="11.5" r="1.8"/><circle cx="12" cy="14.5" r="1.8"/><circle cx="6" cy="16.5" r="1.8"/><circle cx="18" cy="16.5" r="1.8"/><circle cx="12" cy="18.5" r="1.8"/><circle cx="12" cy="21.5" r="1.8"/></g></svg>
-      <span><strong>Tree of Life</strong><small>Cards by their Tree of Life position</small></span>
-    </button>
-    <button type="button" data-layout="outline" role="menuitem">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 4.5h14M11 9.5h10M11 14.5h10M7 19.5h14"/><g fill="currentColor" stroke="none"><circle cx="3.5" cy="4.5" r="1.6"/><circle cx="7.5" cy="9.5" r="1.6"/><circle cx="7.5" cy="14.5" r="1.6"/><circle cx="3.5" cy="19.5" r="1.6"/></g></svg>
-      <span><strong>Outline</strong><small>Your map as a list you can type in</small></span>
-    </button>
-    <div class="nmm-layout-sep"></div>
-    <button type="button" id="nmm-reorganize-btn" role="menuitem" onclick="nmmOpenReorganize()">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.5l1.6 4.4 4.4 1.6-4.4 1.6L12 14.5l-1.6-4.4L6 8.5l4.4-1.6z" fill="currentColor"/><path d="M18.5 14l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8zM5.5 15l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg>
-      <span><strong>Reorganize with AI</strong><small>Rewrite the map the way you ask</small></span>
-    </button>
-  </div>
+  <?php $nmm_layout_ai = true; include __DIR__ . '/layout-menu.php'; ?>
 
   <div id="nmm-mobile-menu" class="nmm-mobile-menu">
     <button onclick="nmmHarmony();nmmToggleMobileMenu()">✦ Harmony</button>
@@ -141,6 +114,33 @@ $map_id = isset($_GET['map_id']) ? intval($_GET['map_id']) : intval($map_id ?? 0
           <option value="yesod">Yesod — Foundation · Daily Practice · Rhythm</option>
           <option value="malkuth">Malkuth — Kingdom · Material · Grounded · Reality</option>
         </select>
+      </div>
+      <!-- Card link: another map, something on Navigator, or a web page (assets/js/editor.js, "CARD LINK") -->
+      <div class="nmm-field nmm-lp" id="nme-link">
+        <label>Link <small>(optional)</small></label>
+        <div class="nmm-lp-chosen" id="nme-link-chosen"></div>
+        <button type="button" class="nmm-lp-add" id="nme-link-add">+ Link this card to a map, a Navigator tool or a web page</button>
+        <div class="nmm-lp-picker" id="nme-link-picker">
+          <div class="nmm-lp-seg" role="tablist">
+            <button type="button" data-lt="map" role="tab"><i class="nmm-lp-ic nmm-link-map"></i>My maps</button>
+            <button type="button" data-lt="nav" role="tab"><i class="nmm-lp-ic nmm-link-nav"></i>Navigator</button>
+            <button type="button" data-lt="web" role="tab"><i class="nmm-lp-ic nmm-link-web"></i>Web link</button>
+          </div>
+          <div class="nmm-lp-pane" data-pane="map">
+            <input type="search" id="nme-link-mapq" class="nmm-input" placeholder="Search your maps…" autocomplete="off" />
+            <div class="nmm-lp-list" id="nme-link-maps"></div>
+            <button type="button" class="nmm-lp-new" id="nme-link-new"><span>+</span><b>Make a new linked map<small id="nme-link-new-note">Named after this card, linked to it, and opened next</small></b></button>
+          </div>
+          <div class="nmm-lp-pane" data-pane="nav">
+            <input type="search" id="nme-link-navq" class="nmm-input" placeholder="Search courses, consults, communities and tools…" autocomplete="off" />
+            <div class="nmm-lp-list" id="nme-link-nav"></div>
+          </div>
+          <div class="nmm-lp-pane" data-pane="web">
+            <input type="url" id="nme-link-url" class="nmm-input" placeholder="https://" autocomplete="off" />
+            <input type="text" id="nme-link-name" class="nmm-input" placeholder="Name it (optional)" maxlength="120" style="margin-top:8px" />
+            <div class="nmm-lp-hint" id="nme-link-web-hint">Any web page or shared document. It opens in a new tab.</div>
+          </div>
+        </div>
       </div>
       <div class="nmm-modal-actions">
         <button class="nmm-btn" onclick="nmmCloseNodeModal()">Cancel</button>
