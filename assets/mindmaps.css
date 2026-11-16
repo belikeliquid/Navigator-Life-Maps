@@ -2560,3 +2560,17 @@ body:has(.nmm-app) .page-title:not(#footer-page *, #socket *) {
 .nmm-lp-ic.nmm-link-nav { color: #C9A45C; }
 .nmm-lp-ic.nmm-link-web { color: #ffffff; }
 .nmm-app .nmm-lp-seg button { white-space: nowrap; font-size: 12.5px; padding: 6px 6px; }
+
+/* "Back to" portal: a teal circle left of the main card, for each map that links to this one */
+.nmm-app a.nmm-portal {
+  position: absolute; z-index: 10; width: 128px; height: 128px; border-radius: 50%; box-sizing: border-box; padding: 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 2px;
+  background: var(--nmm-teal); color: #ffffff; text-decoration: none; border: 3px solid #ffffff;
+  box-shadow: 0 4px 14px rgba(1,28,47,0.18); transition: transform 0.15s, box-shadow 0.15s; font-family: var(--nmm-font);
+}
+.nmm-app a.nmm-portal:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(1,28,47,0.25); color: #ffffff; }
+.nmm-portal i { display: flex; color: var(--nmm-navy); margin-bottom: 2px; }
+.nmm-portal i svg { width: 18px; height: 18px; }
+.nmm-portal small { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.9; }
+.nmm-portal b { font-size: 14px; font-weight: 700; line-height: 1.2; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.nmm-print .nmm-portal { display: none !important; }

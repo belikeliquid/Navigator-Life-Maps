@@ -273,6 +273,13 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.18.1 — Back to circles on linked maps <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        A map that another of your maps links to now shows a teal "Back to (that map)" circle beside its main card, joined to it by a dashed line, so the two feel connected. Clicking it opens that map. It sits in the widest clear gap around the main card, just past the cards that way, so its line never crosses a card; with several linking maps there is one circle each. It is not a card: not saved, not moved by Harmony, not printed, and shown only to people who can open the other map.<br>
+                        The toolbar's "← Back to" button now also shows when the map is opened from the maps list (it points to the first map that links here).
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.18.0 — Card links, layouts on shared maps <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         New: a card can link to one place, set in the Link section of the Edit card window. My maps: another of your maps, or "Make a new linked map", which makes a map named after the card, saves the link and opens it. Navigator: search the site's courses, consults, communities and tools (Somatic Tools, Pattern Recognition and the rest). Web link: any http or https address, with an optional name.<br>

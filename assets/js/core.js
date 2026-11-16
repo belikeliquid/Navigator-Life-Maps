@@ -296,10 +296,13 @@
 
   // A map opened from a card link (?from=ID): the toolbar's Maps button becomes "← Back to <that map>"
   function fromParam() { const f = new URLSearchParams(location.search).get('from'); return f && /^\d+$/.test(f) ? f : ''; }
-  async function backLink(root) {
+  // Opened some other way, it points to the first map that links here (linkedFrom, from the server).
+  async function backLink(root, linkedFrom) {
     const from = fromParam(), btn = root && root.querySelector('.nmm-btn-nav');
-    if (!from || !btn || !window.NMM || !NMM.isLoggedIn) return;
-    const m = await api('GET', 'maps/' + from);
+    if (!btn || !window.NMM || !NMM.isLoggedIn) return;
+    const known = (linkedFrom || []).find(function(x) { return !from || String(x.id) === from; });
+    if (!from && !known) return;
+    const m = known || await api('GET', 'maps/' + from);
     if (!m || !m.id) return;
     btn.href = NMM.editorUrl + '?map_id=' + m.id;
     btn.textContent = '← Back to ' + (m.title || 'the map');

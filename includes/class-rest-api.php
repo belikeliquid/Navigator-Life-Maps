@@ -1116,6 +1116,27 @@ Return ONLY a JSON array of cards with: id, title, subs, parent, date, end, tag,
         return $nodes;
     }
 
+    // Maps with a card that links to this map, that the current person can open: [{id, title}].
+    // The editor and view draw each as a "Back to" circle beside the main card, and the toolbar's
+    // Back button uses the first. Links are saved as {"type":"map","id":N,...} (see clean_links).
+    private static function linked_from( $id ) {
+        global $wpdb;
+        $id = (int) $id;
+        if ( ! $id || ! is_user_logged_in() ) return [];
+        $a = '%' . $wpdb->esc_like( '"type":"map","id":' . $id . ',' ) . '%';
+        $b = '%' . $wpdb->esc_like( '"type":"map","id":' . $id . '}' ) . '%';
+        $ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT p.ID FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = 'nmm_nodes'
+             WHERE p.post_type = 'nmm_mindmap' AND p.post_status = 'publish' AND p.ID <> %d AND ( m.meta_value LIKE %s OR m.meta_value LIKE %s )
+             ORDER BY p.post_modified DESC LIMIT 12", $id, $a, $b ) );
+        $out = [];
+        foreach ( $ids as $pid ) {
+            $p = get_post( (int) $pid );
+            if ( $p && self::can_read( $p ) ) $out[] = [ 'id' => $p->ID, 'title' => $p->post_title ];
+        }
+        return $out;
+    }
+
     // "Course", "Consult", "Community", or for a tool its section ("Somatic Tools", "Pattern Recognition")
     private static function link_kind( $p ) {
         if ( $p->post_type === 'nv_tool' && $p->post_parent ) {
@@ -1171,6 +1192,7 @@ Return ONLY a JSON array of cards with: id, title, subs, parent, date, end, tag,
             // Cast so empty settings go out as {} rather than [], which the editor can't add keys to
             $map['settings'] = (object) json_decode( get_post_meta( $post->ID, 'nmm_settings', true ) ?: '{}', true );
             $map['islands']  = json_decode( get_post_meta( $post->ID, 'nmm_islands',  true ) ?: '[]', true );
+            $map['linked_from'] = self::linked_from( $post->ID );
             $last = get_userdata( (int) get_post_meta( $post->ID, 'nmm_last_editor', true ) );
             $map['edited_by'] = $last ? $last->display_name : '';
         }

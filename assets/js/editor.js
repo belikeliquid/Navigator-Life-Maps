@@ -9,6 +9,7 @@ const api       = NMMCore.api;
 const $         = function(id) { return document.getElementById(id); };
 
 let nodes = [], settings = {}, mapTitle = '', mapCategory = '', linkedIslands = [];
+let linkedFrom = []; // maps with a card linking here: "Back to" circles and the Back button
 let selectedId = null, editingId = null, dragState = null;
 let saveTimer = null, isDirty = false;
 // mapRev: server revision this editor is based on. changeSeq counts edits so a
@@ -29,7 +30,8 @@ const C = NMMCanvas.create({
   editable: true,
   selectedId: function() { return selectedId; },
   defaults: NMM.defaults,
-  decorate: decorateNode
+  decorate: decorateNode,
+  portals: function() { return linkedFrom; }
 });
 const find = C.find;
 
@@ -116,7 +118,8 @@ async function loadMap() {
   if (!map || !map.id) { renderEmpty(); return; }
   // A featured map someone else made: open it read only (it can be copied from there)
   if (map.can_edit === false) { location.replace(NMM.shareUrl + '?map_id=' + MAP_ID + (NMMCore.fromParam() ? '&from=' + NMMCore.fromParam() : '')); return; }
-  NMMCore.backLink(root);
+  linkedFrom = map.linked_from || [];
+  NMMCore.backLink(root, linkedFrom);
   nodes         = map.nodes    || [];
   settings      = map.settings || {};
   mapTitle      = map.title    || 'Untitled';

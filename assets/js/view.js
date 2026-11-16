@@ -14,6 +14,7 @@ let nodes = [], map = null, view = {};   // view = the settings this screen draw
 const C = NMMCanvas.create({
   getNodes: function() { return nodes; },
   editable: false,
+  portals: function() { return map && !NMMCore.shareKey ? map.linked_from || [] : []; },
   decorate: function(el) {
     el.addEventListener('mousedown', function(e) {
       const n = e.target.dataset.eid && C.find(e.target.dataset.eid);
@@ -52,7 +53,7 @@ async function loadMap() {
     if (!map || !map.id) { showError(); return; }
     // Your own map (or one shared with you) opens in the editor instead
     if (!NMMCore.shareKey && map.can_edit) { location.replace(NMM.editorUrl + '?map_id=' + map.id + (NMMCore.fromParam() ? '&from=' + NMMCore.fromParam() : '')); return; }
-    NMMCore.backLink(root);
+    NMMCore.backLink(root, map.linked_from || []);
     nodes = map.nodes || [];
     // Featured maps can be copied by any member
     const copyBtn = document.getElementById('nmm-view-copy');
