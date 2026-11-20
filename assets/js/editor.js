@@ -31,7 +31,7 @@ const C = NMMCanvas.create({
   selectedId: function() { return selectedId; },
   defaults: NMM.defaults,
   decorate: decorateNode,
-  portals: function() { return linkedFrom; }
+  portals: function() { return NMMCore.backTargets(linkedFrom); }
 });
 const find = C.find;
 

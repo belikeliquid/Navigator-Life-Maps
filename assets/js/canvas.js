@@ -110,100 +110,38 @@
       applyZoom();
     }
 
-    // ---- "Back to" portals ----
-    // opts.portals() -> [{id, title}]: the maps with a card linking to this one. Each is a teal circle
-    // beside the main card, joined to it by a dashed line, that opens that map. It goes in the widest
-    // empty gap between the main card's branches (above the main card in a Flow Chart, between the
-    // branches in Bubble), just past the cards that way, so its line never crosses a branch.
-    // Not a card: not saved, not moved by the layouts, not draggable. It can sit past the canvas edge
-    // (in the room around the map), so bounds() counts it for centring and Fit.
+    // ---- "Back to" links ----
+    // opts.portals() -> [{id, title}]: maps with a card linking to this one. Each is a small
+    // "← Back to <map>" link on the canvas, off to the upper left of the map and apart from it
+    // (no line, nothing like a card). Not saved, not moved by the layouts, not printed. It can sit
+    // past the canvas edge (in the room around the map), so bounds() counts it for centring and Fit.
     let portalBoxes = [];
-    const PORTAL = 128, PORTAL_GAP = 28, PORTAL_SPACE = 70;
+    const PORTAL_SPACE = 90, PORTAL_GAP = 10;
     function renderPortals() {
       canvas.querySelectorAll('.nmm-portal').forEach(function(el) { el.remove(); });
       portalBoxes = [];
       const list = (opts.portals ? opts.portals() : []) || [];
       if (!list.length || !window.NMM || !NMM.isLoggedIn) return;
-      const roots = nodes().filter(function(n) { return !n.parent && isVisible(n.id) && !n._readonly; });
-      if (!roots.length) return;
-      function size(r) { return nodes().filter(function(n) { return n === r || isDescendant(n.id, r.id); }).length; }
-      const main = roots.slice().sort(function(a, b) { return size(b) - size(a); })[0];
-      function box(n) { const el = getEl(n.id); return el ? { cx: n.x + el.offsetWidth / 2, cy: n.y + el.offsetHeight / 2, r: Math.hypot(el.offsetWidth, el.offsetHeight) / 2 } : null; }
-      const R = box(main); if (!R) return;
-      const island = nodes().filter(function(n) { return n !== main && isDescendant(n.id, main.id) && isVisible(n.id); }).map(box).filter(Boolean);
-      // The widest gap between the directions of the main card's own branches (left when it has none)
-      const kids = nodes().filter(function(n) { return n.parent === main.id && isVisible(n.id); }).map(box).filter(Boolean)
-        .map(function(b) { return Math.atan2(b.cy - R.cy, b.cx - R.cx); }).sort(function(a, b) { return a - b; });
-      let dir = Math.PI;
-      if (kids.length === 1) dir = kids[0] + Math.PI;
-      else if (kids.length > 1) {
-        let best = -1;
-        kids.forEach(function(a, i) {
-          const next = i === kids.length - 1 ? kids[0] + 2 * Math.PI : kids[i + 1], gap = next - a;
-          if (gap > best + 0.01) { best = gap; dir = a + gap / 2; }
-        });
-      }
-      // Far enough out to clear every card in that direction
-      function clearance(a) {
-        let d = R.r + PORTAL / 2 + PORTAL_SPACE;
-        island.forEach(function(b) {
-          const dx = b.cx - R.cx, dy = b.cy - R.cy, along = dx * Math.cos(a) + dy * Math.sin(a), across = Math.abs(-dx * Math.sin(a) + dy * Math.cos(a));
-          if (along > 0 && across < b.r + PORTAL / 2 + 10) d = Math.max(d, along + b.r + PORTAL / 2 + PORTAL_SPACE / 2);
-        });
-        return d;
-      }
-      // Best spot: a direction whose whole line from the main card is clear of cards, with the circle
-      // touching nothing, as close in as possible (a little preference for the gap found above).
-      // Placed circles count as obstacles for the next one. Dense maps fall back to the gap.
-      const placed = [];
-      function spot(prefer) {
-        let best = null;
-        for (let k = 0; k < 72; k++) {
-          const a = k * Math.PI / 36, ca = Math.cos(a), sa = Math.sin(a);
-          const obstacles = island.concat(placed);
-          let d = R.r + PORTAL / 2 + PORTAL_SPACE, ok = true;
-          while (ok && d < 3000) {
-            const px = R.cx + d * ca, py = R.cy + d * sa;
-            if (!obstacles.some(function(b) { return Math.hypot(b.cx - px, b.cy - py) < b.r + PORTAL / 2 + 12; })) break;
-            d += 12;
-          }
-          // the line from the main card to the circle must not run through a card
-          ok = d < 3000 && !obstacles.some(function(b) {
-            const dx = b.cx - R.cx, dy = b.cy - R.cy, along = dx * ca + dy * sa, across = Math.abs(-dx * sa + dy * ca);
-            return along > 0 && along < d && across < b.r * 0.85 + 6;
-          });
-          if (!ok) continue;
-          let off = Math.abs(a - prefer) % (2 * Math.PI); if (off > Math.PI) off = 2 * Math.PI - off;
-          const cost = d + off * 40;
-          if (!best || cost < best.cost) best = { a: a, d: d, cost: cost };
-        }
-        return best;
-      }
-      list.forEach(function(m, i) {
-        const s = spot(dir) || { a: dir + i * (PORTAL + PORTAL_GAP) / clearance(dir), d: clearance(dir) };
-        const a0 = s.a, d = s.d;
-        const cx = R.cx + d * Math.cos(a0), cy = R.cy + d * Math.sin(a0), x = Math.round(cx - PORTAL / 2), y = Math.round(cy - PORTAL / 2);
-        placed.push({ cx: cx, cy: cy, r: PORTAL / 2 + PORTAL_GAP / 2 });
+      let minX = Infinity, minY = Infinity;
+      nodes().forEach(function(n) { if (isVisible(n.id)) { minX = Math.min(minX, n.x); minY = Math.min(minY, n.y); } });
+      if (minX === Infinity) return;
+      let y = minY;
+      list.forEach(function(m) {
         const a = document.createElement('a');
         a.className = 'nmm-portal';
         a.href = NMM.editorUrl + '?map_id=' + encodeURIComponent(m.id);
         a.title = 'Back to the map ' + (m.title || '');
-        a.style.left = x + 'px'; a.style.top = y + 'px';
-        a.innerHTML = '<i>' + NMMCore.LINK_ICONS.map + '</i><small>Back to</small><b>' + esc(m.title || 'the map') + '</b>';
+        a.innerHTML = '<i>' + NMMCore.LINK_ICONS.map + '</i><span>← Back to <b>' + esc(m.title || 'the map') + '</b></span>';
         canvas.appendChild(a);
-        portalBoxes.push({ x: x, y: y, w: PORTAL, h: PORTAL, rx: R.cx, ry: R.cy });
+        const w = a.offsetWidth, h = a.offsetHeight, x = Math.round(minX - PORTAL_SPACE - w);
+        a.style.left = x + 'px'; a.style.top = Math.round(y) + 'px';
+        portalBoxes.push({ x: x, y: y, w: w, h: h });
+        y += h + PORTAL_GAP;
       });
     }
 
     function drawLines() {
       svg.innerHTML = '';
-      portalBoxes.forEach(function(b) {
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', 'M' + (b.x + b.w / 2) + ',' + (b.y + b.h / 2) + ' L' + b.rx + ',' + b.ry);
-        path.setAttribute('fill', 'none'); path.setAttribute('stroke', '#0BBFBF'); path.setAttribute('stroke-width', 2);
-        path.setAttribute('stroke-dasharray', '7 7'); path.setAttribute('stroke-linecap', 'round');
-        svg.appendChild(path);
-      });
       nodes().forEach(function(n) {
         if (!n.parent || !isVisible(n.id)) return;
         const p = find(n.parent);

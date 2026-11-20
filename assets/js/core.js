@@ -296,6 +296,12 @@
 
   // A map opened from a card link (?from=ID): the toolbar's Maps button becomes "← Back to <that map>"
   function fromParam() { const f = new URLSearchParams(location.search).get('from'); return f && /^\d+$/.test(f) ? f : ''; }
+  // The maps to offer a way back to: just the one you came from (?from=) when it links here, else all of them
+  function backTargets(linkedFrom) {
+    const list = linkedFrom || [], from = fromParam();
+    const came = from && list.filter(function(x) { return String(x.id) === from; });
+    return came && came.length ? came : list;
+  }
   // Opened some other way, it points to the first map that links here (linkedFrom, from the server).
   async function backLink(root, linkedFrom) {
     const from = fromParam(), btn = root && root.querySelector('.nmm-btn-nav');
@@ -498,6 +504,18 @@
     sync();
   }
 
+  // Every dialog (.nmm-modal-overlay) moves to its own .nmm-app host on <body>: inside the page content
+  // the theme's stacking puts the site footer over it whatever its z-index (its links showed through
+  // and covered the buttons). Page scripts find dialogs by id, so moving them changes nothing else.
+  (function liftDialogs() {
+    const dialogs = document.querySelectorAll('.nmm-app .nmm-modal-overlay');
+    if (!dialogs.length) return;
+    const host = document.createElement('div');
+    host.className = 'nmm-app nmm-modal-host';
+    dialogs.forEach(function(d) { host.appendChild(d); });
+    document.body.appendChild(host);
+  })();
+
   window.NMMCore = {
     api: api, refreshNonce: refreshNonce, patchNode: patchNode, patchMap: patchMap,
     shareKey: SHARE_KEY, getMap: getMap, listMaps: listMaps, isViewOnly: isViewOnly, viewOnlyNotice: viewOnlyNotice, lockModal: lockModal, mapUrl: mapUrl,
@@ -506,6 +524,6 @@
     TAG_COLORS: TAG_COLORS, SEFIROT_LABELS: SEFIROT_LABELS, isTask: isTask,
     setViewTabs: setViewTabs, dropdown: dropdown,
     copyMap: copyMap, dayOf: dayOf, dayAfter: dayAfter, today: today, longDate: longDate, attention: attention, hoverCard: hoverCard, notice: notice,
-    LINK_ICONS: LINK_ICONS, linkHref: linkHref, linkTitle: linkTitle, linkChip: linkChip, linkify: linkify, safeUrl: safeUrl, backLink: backLink, fromParam: fromParam
+    LINK_ICONS: LINK_ICONS, linkHref: linkHref, linkTitle: linkTitle, linkChip: linkChip, linkify: linkify, safeUrl: safeUrl, backLink: backLink, fromParam: fromParam, backTargets: backTargets
   };
 })();

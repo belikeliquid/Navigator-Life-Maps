@@ -654,7 +654,8 @@ html body:has(.nmm-landing-page) { background-color: #F2F1EC !important; }
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(26,46,74,0.4);
+  background: rgba(1,28,47,0.72);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
   z-index: 2000;
   align-items: center;
   justify-content: center;
@@ -904,7 +905,7 @@ html body:has(.nmm-landing-page) { background-color: #F2F1EC !important; }
   font-size: 16px; font-weight: 700; line-height: 1;
 }
 /* The panel's host sits on <body>: no size or background of its own */
-.nmm-app.nmm-help-host, .nmm-app.nmm-notice-host { position: static; width: 0 !important; height: 0; min-height: 0; background: none !important; }
+.nmm-app.nmm-help-host, .nmm-app.nmm-notice-host, .nmm-app.nmm-modal-host { position: static; width: 0 !important; height: 0; min-height: 0; background: none !important; }
 .nmm-help-backdrop { position: fixed; inset: 0; z-index: 100000; background: rgba(1,28,47,0.28); opacity: 0; visibility: hidden; transition: opacity 0.25s, visibility 0s 0.25s; }
 .nmm-help-host.open .nmm-help-backdrop { opacity: 1; visibility: visible; transition: opacity 0.25s; }
 .nmm-help {
@@ -2561,16 +2562,24 @@ body:has(.nmm-app) .page-title:not(#footer-page *, #socket *) {
 .nmm-lp-ic.nmm-link-web { color: #ffffff; }
 .nmm-app .nmm-lp-seg button { white-space: nowrap; font-size: 12.5px; padding: 6px 6px; }
 
-/* "Back to" portal: a teal circle left of the main card, for each map that links to this one */
+/* "Back to" link: a small pill off to the upper left of the map, one per map that links here */
 .nmm-app a.nmm-portal {
-  position: absolute; z-index: 10; width: 128px; height: 128px; border-radius: 50%; box-sizing: border-box; padding: 14px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 2px;
-  background: var(--nmm-teal); color: #ffffff; text-decoration: none; border: 3px solid #ffffff;
-  box-shadow: 0 4px 14px rgba(1,28,47,0.18); transition: transform 0.15s, box-shadow 0.15s; font-family: var(--nmm-font);
+  position: absolute; z-index: 10; display: inline-flex; align-items: center; gap: 8px; max-width: 280px; white-space: nowrap;
+  padding: 6px 16px 6px 6px; border-radius: 999px; background: #ffffff; border: 1.5px solid var(--nmm-teal);
+  color: var(--nmm-navy); text-decoration: none; font: 500 14px var(--nmm-font); box-shadow: 0 2px 8px rgba(1,28,47,0.10);
+  transition: background 0.15s, color 0.15s;
 }
-.nmm-app a.nmm-portal:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(1,28,47,0.25); color: #ffffff; }
-.nmm-portal i { display: flex; color: var(--nmm-navy); margin-bottom: 2px; }
-.nmm-portal i svg { width: 18px; height: 18px; }
-.nmm-portal small { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.9; }
-.nmm-portal b { font-size: 14px; font-weight: 700; line-height: 1.2; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.nmm-app a.nmm-portal:hover { background: var(--nmm-teal); color: #ffffff; }
+.nmm-portal i { flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50%; background: var(--nmm-navy); color: var(--nmm-teal); display: flex; align-items: center; justify-content: center; }
+.nmm-portal i svg { width: 15px; height: 15px; }
+.nmm-portal span { overflow: hidden; text-overflow: ellipsis; }
+.nmm-portal b { font-weight: 700; }
 .nmm-print .nmm-portal { display: none !important; }
+
+/* Bubble buttons: an invisible bridge over the gap under the circle, so moving the pointer down to
+   Edit / + Child / Delete never leaves the card; and they linger a moment after the pointer leaves */
+.nmm-bubble .nmm-node-actions::before { content: ''; position: absolute; left: -12px; right: -12px; top: -16px; height: 16px; }
+.nmm-bubble .nmm-node .nmm-node-actions { display: flex; visibility: hidden; opacity: 0; transition: opacity 0.15s 0.35s, visibility 0s 0.5s; }
+.nmm-bubble .nmm-node:hover .nmm-node-actions, .nmm-bubble .nmm-node.nmm-selected .nmm-node-actions {
+  visibility: visible; opacity: 1; transition: opacity 0.1s 0s, visibility 0s 0s;
+}

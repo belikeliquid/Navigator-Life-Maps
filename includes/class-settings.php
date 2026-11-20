@@ -273,6 +273,14 @@ class NMM_Settings {
             <h2>📝 Changelog</h2>
             <div class="nmm-accordion">
                 <div class="nmm-accordion-item">
+                    <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.18.2 — Back link to the side, dialogs above the footer <span>▾</span></div>
+                    <div class="nmm-accordion-body">
+                        The "Back to" circle on a linked map is now a small "← Back to (map)" link off to the upper left of the map, with no line, so it reads as a link and not a card. Arriving through a card link shows only the map you came from; opened from the maps list, it lists every map that links here.<br>
+                        Dialogs (New map, Edit card, Share and the rest) now sit above the site footer. Before, on short pages the footer drew over them and its links covered the buttons, so Next on the New map window did nothing. The page behind a dialog is darker and slightly blurred.<br>
+                        Bubble: Edit, + Child and Delete under a circle no longer vanish while the pointer moves down to them (the gap is bridged, and they stay a moment after the pointer leaves).
+                    </div>
+                </div>
+                <div class="nmm-accordion-item">
                     <div class="nmm-accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">v1.18.1 — Back to circles on linked maps <span>▾</span></div>
                     <div class="nmm-accordion-body">
                         A map that another of your maps links to now shows a teal "Back to (that map)" circle beside its main card, joined to it by a dashed line, so the two feel connected. Clicking it opens that map. It sits in the widest clear gap around the main card, just past the cards that way, so its line never crosses a card; with several linking maps there is one circle each. It is not a card: not saved, not moved by Harmony, not printed, and shown only to people who can open the other map.<br>

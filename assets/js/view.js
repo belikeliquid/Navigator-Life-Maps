@@ -14,7 +14,7 @@ let nodes = [], map = null, view = {};   // view = the settings this screen draw
 const C = NMMCanvas.create({
   getNodes: function() { return nodes; },
   editable: false,
-  portals: function() { return map && !NMMCore.shareKey ? map.linked_from || [] : []; },
+  portals: function() { return map && !NMMCore.shareKey ? NMMCore.backTargets(map.linked_from) : []; },
   decorate: function(el) {
     el.addEventListener('mousedown', function(e) {
       const n = e.target.dataset.eid && C.find(e.target.dataset.eid);
